@@ -683,6 +683,24 @@ export default function ProjectDetailPage() {
                       <dd className="font-medium">{project.total_lots}</dd>
                     </div>
                   )}
+                  {project.source_opportunity_id && (
+                    <div>
+                      <dt className="text-muted-foreground">Source Opportunity</dt>
+                      <dd>
+                        <Button
+                          variant="link"
+                          size="sm"
+                          className="h-auto p-0 text-sm font-medium"
+                          onClick={() =>
+                            router.push(`/opportunities/${project.source_opportunity_id}`)
+                          }
+                        >
+                          <ExternalLink className="mr-1 h-3.5 w-3.5" />
+                          View Opportunity
+                        </Button>
+                      </dd>
+                    </div>
+                  )}
                 </dl>
               </CardContent>
             </Card>
