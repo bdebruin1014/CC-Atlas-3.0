@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useRef, useState } from "react"
+import { useMemo, useState } from "react"
 import { cn, formatDate } from "@/lib/utils/format"
 import {
   Tooltip,
@@ -23,13 +23,17 @@ interface GanttChartProps {
   endDate: string
 }
 
-const SCHEDULE_COLORS = {
-  on_schedule: "bg-green-500/80 hover:bg-green-500",
-  behind_1_7: "bg-yellow-500/80 hover:bg-yellow-500",
-  behind_8_plus: "bg-red-500/80 hover:bg-red-500",
-  complete: "bg-blue-500/80 hover:bg-blue-500",
-  not_started: "bg-gray-300/80 hover:bg-gray-400 dark:bg-gray-600/80 dark:hover:bg-gray-500",
+const ACTUAL_COLORS = {
+  on_schedule: "#22c55e",
+  behind_1_7: "#eab308",
+  behind_8_plus: "#ef4444",
+  complete: "#3b82f6",
+  blocked: "#f59e0b",
+  not_started: "#d1d5db",
 }
+
+const PLANNED_BORDER = "#94a3b8"
+const OVERDUE_COLOR = "#ef4444"
 
 const ROW_HEIGHT = 40
 const HEADER_HEIGHT = 48
@@ -53,7 +57,6 @@ function daysBetween(a: Date, b: Date): number {
 
 export function GanttChart({ units, startDate, endDate }: GanttChartProps) {
   const [hoveredMilestone, setHoveredMilestone] = useState<string | null>(null)
-  const containerRef = useRef<HTMLDivElement>(null)
 
   const chartStart = useMemo(() => new Date(startDate), [startDate])
   const chartEnd = useMemo(() => new Date(endDate), [endDate])
@@ -70,25 +73,48 @@ export function GanttChart({ units, startDate, endDate }: GanttChartProps) {
   const today = new Date()
   const todayOffset = daysBetween(chartStart, today) * DAY_WIDTH
 
-  const getBarPosition = (ms: Milestone) => {
-    const msStart = new Date(ms.actual_start || ms.planned_start)
-    const msEnd = new Date(ms.actual_end || ms.planned_end)
-    const left = Math.max(0, daysBetween(chartStart, msStart) * DAY_WIDTH)
-    const width = Math.max(
-      DAY_WIDTH * 2,
-      daysBetween(msStart, msEnd) * DAY_WIDTH
-    )
+  const getPlannedBar = (ms: Milestone) => {
+    const start = new Date(ms.planned_start)
+    const end = new Date(ms.planned_end)
+    const left = Math.max(0, daysBetween(chartStart, start) * DAY_WIDTH)
+    const width = Math.max(DAY_WIDTH * 2, daysBetween(start, end) * DAY_WIDTH)
     return { left, width }
   }
 
-  const getMilestoneColor = (ms: Milestone, unit: Unit): string => {
-    if (ms.status === "completed") return SCHEDULE_COLORS.complete
-    if (ms.status === "not_started") return SCHEDULE_COLORS.not_started
-    if (unit.schedule_status === "behind_8_plus")
-      return SCHEDULE_COLORS.behind_8_plus
-    if (unit.schedule_status === "behind_1_7")
-      return SCHEDULE_COLORS.behind_1_7
-    return SCHEDULE_COLORS.on_schedule
+  const getActualBar = (ms: Milestone) => {
+    if (ms.status === "not_started" && !ms.actual_start) return null
+    const start = new Date(ms.actual_start || ms.planned_start)
+    const end = ms.actual_end ? new Date(ms.actual_end) : today
+    const left = Math.max(0, daysBetween(chartStart, start) * DAY_WIDTH)
+    const width = Math.max(DAY_WIDTH * 2, daysBetween(start, end) * DAY_WIDTH)
+    return { left, width }
+  }
+
+  const isOverdue = (ms: Milestone): boolean => {
+    if (ms.status === "completed") return false
+    if (ms.status === "not_started") return false
+    return today > new Date(ms.planned_end)
+  }
+
+  const getOverdueBar = (ms: Milestone) => {
+    if (!isOverdue(ms)) return null
+    const plannedEnd = new Date(ms.planned_end)
+    const actualEnd = ms.actual_end ? new Date(ms.actual_end) : today
+    if (actualEnd <= plannedEnd) return null
+    const left = daysBetween(chartStart, plannedEnd) * DAY_WIDTH
+    const width = Math.max(DAY_WIDTH, daysBetween(plannedEnd, actualEnd) * DAY_WIDTH)
+    return { left, width }
+  }
+
+  const getActualColor = (ms: Milestone): string => {
+    if (ms.status === "completed") return ACTUAL_COLORS.complete
+    if (ms.status === "blocked") return ACTUAL_COLORS.blocked
+    if (ms.status === "not_started") return ACTUAL_COLORS.not_started
+    if (isOverdue(ms)) {
+      const daysOver = daysBetween(new Date(ms.planned_end), today)
+      return daysOver >= 8 ? ACTUAL_COLORS.behind_8_plus : ACTUAL_COLORS.behind_1_7
+    }
+    return ACTUAL_COLORS.on_schedule
   }
 
   return (
@@ -98,7 +124,6 @@ export function GanttChart({ units, startDate, endDate }: GanttChartProps) {
           <div
             className="relative"
             style={{ width: LABEL_WIDTH + chartWidth + 40 }}
-            ref={containerRef}
           >
             {/* Header Row - Week Labels */}
             <div
@@ -190,36 +215,77 @@ export function GanttChart({ units, startDate, endDate }: GanttChartProps) {
                     />
                   )}
 
-                  {/* Milestone bars */}
+                  {/* Milestone bars — dual: planned (outline) + actual (solid) */}
                   {milestones
-                    .filter((ms) => ms.status !== "not_started" || ms.planned_start)
+                    .filter((ms) => ms.planned_start)
                     .map((ms) => {
-                      const { left, width } = getBarPosition(ms)
-                      const barColor = getMilestoneColor(ms, unit)
+                      const planned = getPlannedBar(ms)
+                      const actual = getActualBar(ms)
+                      const overdue = getOverdueBar(ms)
                       const barId = `${unit.id}-${ms.phase_number}`
                       const phase = CONSTRUCTION_PHASES.find(
                         (p) => p.number === ms.phase_number
                       )
+                      const isHovered = hoveredMilestone === barId
+                      const barH = ROW_HEIGHT * 0.5
+                      const halfH = barH / 2
 
                       return (
                         <Tooltip key={ms.id}>
                           <TooltipTrigger asChild>
                             <div
-                              className={cn(
-                                "absolute top-1/2 -translate-y-1/2 rounded-sm cursor-pointer transition-all",
-                                barColor,
-                                hoveredMilestone === barId
-                                  ? "ring-2 ring-foreground/30 scale-y-125"
-                                  : "scale-y-100"
-                              )}
-                              style={{
-                                left,
-                                width,
-                                height: ROW_HEIGHT * 0.55,
-                              }}
+                              className="absolute inset-0"
                               onMouseEnter={() => setHoveredMilestone(barId)}
                               onMouseLeave={() => setHoveredMilestone(null)}
-                            />
+                            >
+                              {/* Planned bar — hollow/outline */}
+                              <div
+                                className={cn(
+                                  "absolute rounded-sm border-2 border-dashed transition-all",
+                                  isHovered ? "opacity-100" : "opacity-70"
+                                )}
+                                style={{
+                                  left: planned.left,
+                                  width: planned.width,
+                                  height: halfH,
+                                  top: `calc(50% - ${halfH + 1}px)`,
+                                  borderColor: PLANNED_BORDER,
+                                  backgroundColor: "transparent",
+                                }}
+                              />
+
+                              {/* Actual bar — filled/solid */}
+                              {actual && (
+                                <div
+                                  className={cn(
+                                    "absolute rounded-sm transition-all",
+                                    isHovered ? "ring-1 ring-foreground/30" : ""
+                                  )}
+                                  style={{
+                                    left: actual.left,
+                                    width: actual.width,
+                                    height: halfH,
+                                    top: `calc(50% + 1px)`,
+                                    backgroundColor: getActualColor(ms),
+                                  }}
+                                />
+                              )}
+
+                              {/* Overdue extension — red bar past planned end */}
+                              {overdue && (
+                                <div
+                                  className="absolute rounded-r-sm"
+                                  style={{
+                                    left: overdue.left,
+                                    width: overdue.width,
+                                    height: halfH,
+                                    top: `calc(50% + 1px)`,
+                                    backgroundColor: OVERDUE_COLOR,
+                                    opacity: 0.5,
+                                  }}
+                                />
+                              )}
+                            </div>
                           </TooltipTrigger>
                           <TooltipContent
                             side="top"
@@ -233,13 +299,24 @@ export function GanttChart({ units, startDate, endDate }: GanttChartProps) {
                               <p className="text-xs capitalize">
                                 Status: {ms.status.replace("_", " ")}
                               </p>
-                              <p className="text-xs">
-                                {formatDate(ms.actual_start || ms.planned_start)}{" "}
-                                - {formatDate(ms.actual_end || ms.planned_end)}
-                              </p>
+                              <div className="text-xs space-y-0.5">
+                                <p>
+                                  Planned: {formatDate(ms.planned_start)} – {formatDate(ms.planned_end)}
+                                </p>
+                                {ms.actual_start && (
+                                  <p>
+                                    Actual: {formatDate(ms.actual_start)} – {ms.actual_end ? formatDate(ms.actual_end) : "In Progress"}
+                                  </p>
+                                )}
+                              </div>
                               {ms.planned_duration && (
                                 <p className="text-xs">
                                   Duration: {ms.actual_duration ?? ms.planned_duration} days
+                                  {ms.actual_duration && ms.actual_duration !== ms.planned_duration && (
+                                    <span className={ms.actual_duration > ms.planned_duration ? " text-red-400" : " text-green-400"}>
+                                      {" "}({ms.actual_duration > ms.planned_duration ? "+" : ""}{ms.actual_duration - ms.planned_duration}d)
+                                    </span>
+                                  )}
                                 </p>
                               )}
                             </div>
@@ -270,14 +347,18 @@ export function GanttChart({ units, startDate, endDate }: GanttChartProps) {
         </ScrollArea>
 
         {/* Legend */}
-        <div className="flex items-center gap-4 border-t border-border px-4 py-2 bg-muted/30">
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-border px-4 py-2 bg-muted/30">
           <span className="text-xs text-muted-foreground">Legend:</span>
+          <div className="flex items-center gap-1.5">
+            <div className="h-2.5 w-5 rounded-sm border-2 border-dashed" style={{ borderColor: PLANNED_BORDER }} />
+            <span className="text-[10px] text-muted-foreground">Planned</span>
+          </div>
           {[
             { color: "bg-green-500", label: "On Schedule" },
             { color: "bg-yellow-500", label: "1-7 Days Behind" },
             { color: "bg-red-500", label: "8+ Days Behind" },
             { color: "bg-blue-500", label: "Complete" },
-            { color: "bg-gray-400", label: "Not Started" },
+            { color: "bg-gray-300", label: "Not Started" },
           ].map((item) => (
             <div key={item.label} className="flex items-center gap-1.5">
               <div className={cn("h-2.5 w-5 rounded-sm", item.color)} />
@@ -286,6 +367,14 @@ export function GanttChart({ units, startDate, endDate }: GanttChartProps) {
               </span>
             </div>
           ))}
+          <div className="flex items-center gap-1.5">
+            <div className="h-2.5 w-5 rounded-sm bg-red-500/50" />
+            <span className="text-[10px] text-muted-foreground">Overdue</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <div className="h-px w-5 bg-red-500" />
+            <span className="text-[10px] text-muted-foreground">Today</span>
+          </div>
         </div>
       </div>
     </TooltipProvider>
