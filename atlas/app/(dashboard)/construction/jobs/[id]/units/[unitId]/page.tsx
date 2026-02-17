@@ -14,7 +14,9 @@ import {
   ChevronRight,
   Home,
   MapPin,
+  CheckCircle2,
 } from "lucide-react"
+import Link from "next/link"
 import { cn, formatCurrency, formatDate, formatPercent } from "@/lib/utils/format"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -240,6 +242,22 @@ export default function UnitDetailPage() {
           }
         />
       </div>
+
+      {/* Disposition prompt — shown when unit reaches final milestone (CO) */}
+      {unit.current_phase >= 16 && (
+        <div className="flex items-center justify-between rounded-lg border border-green-200 bg-green-50 px-4 py-3">
+          <div className="flex items-center gap-2">
+            <CheckCircle2 className="h-5 w-5 text-green-600" />
+            <div>
+              <p className="text-sm font-medium text-green-800">This unit is complete. Create a listing?</p>
+              <p className="text-xs text-green-600">Unit has received Certificate of Occupancy and is ready for sale.</p>
+            </div>
+          </div>
+          <Link href={`/disposition?unit_id=${unitId}&job_id=${jobId}`}>
+            <Button size="sm" className="bg-[#1a5632] text-white hover:bg-[#164528]">Create Listing</Button>
+          </Link>
+        </div>
+      )}
 
       {/* Tabs */}
       <Tabs defaultValue="milestones" className="space-y-4">

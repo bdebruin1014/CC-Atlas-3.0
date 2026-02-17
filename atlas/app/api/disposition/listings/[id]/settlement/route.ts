@@ -59,12 +59,38 @@ const UpdateSettlementSchema = z.object({
 })
 
 /**
- * Accounting integration hook — PLAN-2 Phase 8 will replace this
- * with actual GL entry creation.
+ * Accounting integration hook — called when a settlement is recorded as closed.
+ *
+ * PLAN-2 Phase 8: Wire this to create GL entries — journal entry for revenue
+ * recognition, commission expense, closing costs.
+ *
+ * Expected implementation:
+ *   1. Debit Cash/Receivable for net_to_seller
+ *   2. Credit Revenue for gross_sale_price
+ *   3. Debit Commission Expense for charge_commission
+ *   4. Debit Closing Cost Expense for remaining charges
+ *   5. Credit Seller Credits for earnest money, other credits
+ *
+ * @param settlementId - The UUID of the closed settlement record
+ * @param metadata - Optional additional context for the GL entries
  */
-export function onClosingRecorded(settlementId: string) {
+export interface ClosingRecordedMetadata {
+  listingId?: string
+  contractId?: string
+  closingDate?: string
+  netToSeller?: number
+  grossSalePrice?: number
+}
+
+export function onClosingRecorded(
+  settlementId: string,
+  metadata?: ClosingRecordedMetadata
+) {
+  // PLAN-2 Phase 8: Wire this to create GL entries — journal entry for revenue
+  // recognition, commission expense, closing costs
   console.log(
-    `ACCOUNTING_HOOK: Settlement ${settlementId} closed — GL entries pending PLAN-2 integration`
+    `ACCOUNTING_HOOK: Settlement ${settlementId} closed — GL entries pending PLAN-2 integration`,
+    metadata ?? {}
   )
 }
 
@@ -200,13 +226,14 @@ export async function PATCH(
 
     const { id: settlementId, ...updates } = parsed.data
 
-    const { data, error } = await supabase
-      .from("disposition_settlements")
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data, error } = await (supabase
+      .from("disposition_settlements" as any)
       .update(updates)
       .eq("id", settlementId)
       .eq("listing_id", listingId)
       .select("*")
-      .single()
+      .single() as Promise<{ data: Record<string, any> | null; error: any }>)
 
     if (error) throw error
 
@@ -234,7 +261,13 @@ export async function PATCH(
       }
 
       // Trigger accounting hook
-      onClosingRecorded(settlementId)
+      onClosingRecorded(settlementId, {
+        listingId,
+        contractId: data.contract_id ?? undefined,
+        closingDate: data.closing_date ?? undefined,
+        netToSeller: data.net_to_seller ?? undefined,
+        grossSalePrice: data.gross_sale_price ?? undefined,
+      })
 
       // Update contract status to closed
       if (data.contract_id) {
