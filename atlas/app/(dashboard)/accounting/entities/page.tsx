@@ -10,6 +10,7 @@ import {
   X,
   List,
   GitBranch,
+  Loader2,
 } from "lucide-react"
 import { cn, formatDate } from "@/lib/utils/format"
 import { Button } from "@/components/ui/button"
@@ -53,62 +54,77 @@ import {
   ENTITY_USE_TYPE_LABELS,
   ENTITY_LEGAL_TYPE_LABELS,
 } from "@/lib/types/accounting"
+import { useOrganizationId } from "@/lib/hooks/use-organization"
 
 // ---------------------------------------------------------------------------
-// Mock data (fallback when no Supabase data)
+// DB <-> UI mapping helpers
 // ---------------------------------------------------------------------------
 
-const MOCK_ENTITIES: Entity[] = [
-  {
-    id: "e1", organization_id: "org1", name: "Olive Brynn LLC", legal_name: "Olive Brynn LLC",
-    use_type: "holding_company", legal_type: "llc", ein: "12-3456789",
-    state_of_formation: "SC", formation_date: "2020-01-15", registered_agent: "CT Corporation",
-    parent_entity_id: null, status: "active", notes: null,
-    created_at: "2020-01-15T00:00:00Z", updated_at: "2024-01-01T00:00:00Z",
-  },
-  {
-    id: "e2", organization_id: "org1", name: "Red Cedar Homes SC LLC", legal_name: "Red Cedar Homes SC LLC",
-    use_type: "operating_company", legal_type: "llc", ein: "23-4567890",
-    state_of_formation: "SC", formation_date: "2020-03-01", registered_agent: "CT Corporation",
-    parent_entity_id: "e1", status: "active", notes: null,
-    created_at: "2020-03-01T00:00:00Z", updated_at: "2024-01-01T00:00:00Z",
-  },
-  {
-    id: "e3", organization_id: "org1", name: "SPE - Greenview Phase I", legal_name: "RCH Greenview Phase I LLC",
-    use_type: "single_purpose_entity", legal_type: "llc", ein: "34-5678901",
-    state_of_formation: "SC", formation_date: "2022-06-01", registered_agent: "CT Corporation",
-    parent_entity_id: "e2", status: "active", notes: null,
-    created_at: "2022-06-01T00:00:00Z", updated_at: "2024-01-01T00:00:00Z",
-  },
-  {
-    id: "e4", organization_id: "org1", name: "SPE - Oakmont Reserve", legal_name: "RCH Oakmont Reserve LLC",
-    use_type: "single_purpose_entity", legal_type: "llc", ein: "45-6789012",
-    state_of_formation: "SC", formation_date: "2023-01-15", registered_agent: "CT Corporation",
-    parent_entity_id: "e2", status: "active", notes: null,
-    created_at: "2023-01-15T00:00:00Z", updated_at: "2024-01-01T00:00:00Z",
-  },
-  {
-    id: "e5", organization_id: "org1", name: "Red Cedar Homes NC LLC", legal_name: "Red Cedar Homes NC LLC",
-    use_type: "operating_company", legal_type: "llc", ein: "56-7890123",
-    state_of_formation: "NC", formation_date: "2023-06-01", registered_agent: "CT Corporation",
-    parent_entity_id: "e1", status: "active", notes: null,
-    created_at: "2023-06-01T00:00:00Z", updated_at: "2024-01-01T00:00:00Z",
-  },
-  {
-    id: "e6", organization_id: "org1", name: "Red Cedar Scattered Lot Fund I", legal_name: "Red Cedar Scattered Lot Fund I LP",
-    use_type: "fund_syndication", legal_type: "lp", ein: "67-8901234",
-    state_of_formation: "DE", formation_date: "2023-09-01", registered_agent: "Corporation Service Company",
-    parent_entity_id: null, status: "active", notes: null,
-    created_at: "2023-09-01T00:00:00Z", updated_at: "2024-01-01T00:00:00Z",
-  },
-  {
-    id: "e7", organization_id: "org1", name: "Red Cedar Scattered Lot Fund II", legal_name: "Red Cedar Scattered Lot Fund II LP",
-    use_type: "fund_syndication", legal_type: "lp", ein: "78-9012345",
-    state_of_formation: "DE", formation_date: "2024-06-01", registered_agent: "Corporation Service Company",
-    parent_entity_id: null, status: "active", notes: null,
-    created_at: "2024-06-01T00:00:00Z", updated_at: "2024-06-01T00:00:00Z",
-  },
-]
+/** Map DB use_type enum value to UI EntityUseType */
+function mapDbUseType(dbValue: string | null): EntityUseType {
+  if (dbValue === "spe") return "single_purpose_entity"
+  if (dbValue === "other") return "operating_company"
+  return (dbValue as EntityUseType) ?? "operating_company"
+}
+
+/** Map UI EntityUseType back to DB enum value */
+function mapUiUseType(uiValue: EntityUseType): string {
+  if (uiValue === "single_purpose_entity") return "spe"
+  return uiValue
+}
+
+/** Map DB entity row to the UI Entity type */
+function mapDbEntity(row: Record<string, unknown>): Entity {
+  const isActive = row.is_active as boolean | undefined
+  let status: EntityStatus = "active"
+  if (isActive === false) status = "inactive"
+
+  return {
+    id: row.id as string,
+    organization_id: (row.organization_id as string) ?? "",
+    name: row.name as string,
+    legal_name: (row.name as string) ?? null,
+    use_type: mapDbUseType(row.use_type as string | null),
+    legal_type: mapDbLegalType(row.legal_type as string | null),
+    ein: (row.ein as string) ?? null,
+    state_of_formation: (row.state_of_formation as string) ?? null,
+    formation_date: (row.formation_date as string) ?? null,
+    registered_agent: (row.registered_agent as string) ?? null,
+    parent_entity_id: (row.parent_entity_id as string) ?? null,
+    status,
+    notes: null,
+    created_at: (row.created_at as string) ?? "",
+    updated_at: (row.updated_at as string) ?? "",
+  }
+}
+
+/** Map DB legal_type enum to UI EntityLegalType */
+function mapDbLegalType(dbValue: string | null): EntityLegalType {
+  const mapping: Record<string, EntityLegalType> = {
+    llc: "llc",
+    s_corp: "s_corp",
+    partnership: "lp",
+    c_corp: "corp",
+    sole_proprietorship: "sole_proprietorship",
+    trust: "trust",
+    lp: "lp",
+    corp: "corp",
+  }
+  return mapping[dbValue ?? ""] ?? "llc"
+}
+
+/** Map UI EntityLegalType back to DB enum value */
+function mapUiLegalType(uiValue: EntityLegalType): string {
+  const mapping: Record<EntityLegalType, string> = {
+    llc: "llc",
+    lp: "partnership",
+    corp: "c_corp",
+    s_corp: "s_corp",
+    trust: "trust",
+    sole_proprietorship: "sole_proprietorship",
+  }
+  return mapping[uiValue] ?? "llc"
+}
 
 // ---------------------------------------------------------------------------
 // Page Component
@@ -116,13 +132,14 @@ const MOCK_ENTITIES: Entity[] = [
 
 export default function EntitiesPage() {
   const router = useRouter()
-  const [entities, setEntities] = useState<Entity[]>(MOCK_ENTITIES)
-  const [loading, setLoading] = useState(false)
+  const [entities, setEntities] = useState<Entity[]>([])
+  const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
   const [useTypeFilter, setUseTypeFilter] = useState<EntityUseType[]>([])
   const [statusFilter, setStatusFilter] = useState<"all" | EntityStatus>("all")
   const [viewMode, setViewMode] = useState<"tree" | "list">("tree")
   const [showAddDialog, setShowAddDialog] = useState(false)
+  const { organizationId } = useOrganizationId()
 
   useEffect(() => {
     async function loadEntities() {
@@ -130,7 +147,7 @@ export default function EntitiesPage() {
       const supabase = createClient()
       const { data } = await supabase.from("entities").select("*").order("name")
       if (data && data.length > 0) {
-        setEntities(data as Entity[])
+        setEntities(data.map((row) => mapDbEntity(row as unknown as Record<string, unknown>)))
       }
       setLoading(false)
     }
@@ -405,6 +422,7 @@ export default function EntitiesPage() {
         open={showAddDialog}
         onOpenChange={setShowAddDialog}
         entities={entities}
+        organizationId={organizationId}
         onSuccess={(newEntity) => {
           setShowAddDialog(false)
           setEntities((prev) => [...prev, newEntity])
@@ -422,11 +440,13 @@ function AddEntityDialog({
   open,
   onOpenChange,
   entities,
+  organizationId,
   onSuccess,
 }: {
   open: boolean
   onOpenChange: (open: boolean) => void
   entities: Entity[]
+  organizationId: string | null
   onSuccess: (entity: Entity) => void
 }) {
   const [formData, setFormData] = useState({
@@ -469,40 +489,44 @@ function AddEntityDialog({
       return
     }
 
-    setSaving(true)
-    const supabase = createClient()
-    const { data: { user } } = await supabase.auth.getUser()
+    if (!organizationId) {
+      setError("No organization context available. Please contact your administrator.")
+      return
+    }
 
-    const payload = {
+    setSaving(true)
+
+    // Build payload matching actual DB columns (lib/supabase/types.ts -> Entity)
+    const payload: Record<string, unknown> = {
       name: formData.name.trim(),
-      legal_name: formData.legal_name.trim() || formData.name.trim(),
-      use_type: formData.use_type,
-      legal_type: formData.legal_type,
+      use_type: mapUiUseType(formData.use_type),
+      legal_type: mapUiLegalType(formData.legal_type),
       ein: formData.ein.trim() || null,
       state_of_formation: formData.state_of_formation.trim() || null,
       formation_date: formData.formation_date || null,
       registered_agent: formData.registered_agent.trim() || null,
       parent_entity_id: formData.parent_entity_id || null,
-      status: "active" as EntityStatus,
-      notes: formData.notes.trim() || null,
-      organization_id: user?.user_metadata?.organization_id || "",
+      is_active: true,
+      organization_id: organizationId,
     }
 
+    const supabase = createClient()
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data, error: dbError } = await supabase
       .from("entities")
-      .insert(payload)
+      .insert(payload as any)
       .select()
       .single()
 
     if (dbError) {
-      setError(dbError.message)
+      setError(`Failed to create entity: ${dbError.message}`)
       setSaving(false)
       return
     }
 
     if (data) {
       resetForm()
-      onSuccess(data as Entity)
+      onSuccess(mapDbEntity(data as unknown as Record<string, unknown>))
     }
     setSaving(false)
   }

@@ -26,11 +26,53 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Separator } from "@/components/ui/separator"
 import { createClient } from "@/lib/supabase/client"
-import type { Entity, EntityUseType } from "@/lib/types/accounting"
+import type { Entity, EntityUseType, EntityStatus, EntityLegalType } from "@/lib/types/accounting"
 import {
   ENTITY_USE_TYPE_LABELS,
   ENTITY_LEGAL_TYPE_LABELS,
 } from "@/lib/types/accounting"
+
+// ---------------------------------------------------------------------------
+// DB -> UI mapping (mirrors entities/page.tsx)
+// ---------------------------------------------------------------------------
+
+function mapDbUseType(dbValue: string | null): EntityUseType {
+  if (dbValue === "spe") return "single_purpose_entity"
+  if (dbValue === "other") return "operating_company"
+  return (dbValue as EntityUseType) ?? "operating_company"
+}
+
+function mapDbLegalType(dbValue: string | null): EntityLegalType {
+  const mapping: Record<string, EntityLegalType> = {
+    llc: "llc", s_corp: "s_corp", partnership: "lp", c_corp: "corp",
+    sole_proprietorship: "sole_proprietorship", trust: "trust", lp: "lp", corp: "corp",
+  }
+  return mapping[dbValue ?? ""] ?? "llc"
+}
+
+function mapDbEntity(row: Record<string, unknown>): Entity {
+  const isActive = row.is_active as boolean | undefined
+  let status: EntityStatus = "active"
+  if (isActive === false) status = "inactive"
+
+  return {
+    id: row.id as string,
+    organization_id: (row.organization_id as string) ?? "",
+    name: row.name as string,
+    legal_name: (row.name as string) ?? null,
+    use_type: mapDbUseType(row.use_type as string | null),
+    legal_type: mapDbLegalType(row.legal_type as string | null),
+    ein: (row.ein as string) ?? null,
+    state_of_formation: (row.state_of_formation as string) ?? null,
+    formation_date: (row.formation_date as string) ?? null,
+    registered_agent: (row.registered_agent as string) ?? null,
+    parent_entity_id: (row.parent_entity_id as string) ?? null,
+    status,
+    notes: null,
+    created_at: (row.created_at as string) ?? "",
+    updated_at: (row.updated_at as string) ?? "",
+  }
+}
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -72,7 +114,7 @@ export default function EntityDetailPage() {
         .single()
 
       if (data) {
-        const e = data as Entity
+        const e = mapDbEntity(data as unknown as Record<string, unknown>)
         setEntity(e)
 
         // Load parent if exists
@@ -82,7 +124,7 @@ export default function EntityDetailPage() {
             .select("*")
             .eq("id", e.parent_entity_id)
             .single()
-          if (parentData) setParentEntity(parentData as Entity)
+          if (parentData) setParentEntity(mapDbEntity(parentData as unknown as Record<string, unknown>))
         }
       }
       setLoading(false)
