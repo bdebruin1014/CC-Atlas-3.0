@@ -72,6 +72,7 @@ import { useContacts } from "@/lib/hooks/use-contacts"
 import { useDebounce } from "@/lib/hooks/use-debounce"
 import { ProjectForm } from "@/components/projects/project-form"
 import { RecordTasksPanel, useRecordTaskCount } from "@/components/shared/record-tasks-panel"
+import { ProjectDispositionTab } from "@/components/projects/project-disposition-tab"
 
 // ---------------------------------------------------------------------------
 // Detail Skeleton
@@ -552,6 +553,7 @@ export default function ProjectDetailPage() {
           <TabsTrigger value="budget">Budget & Actuals</TabsTrigger>
           <TabsTrigger value="timeline">Timeline</TabsTrigger>
           <TabsTrigger value="jobs">Linked Jobs</TabsTrigger>
+          <TabsTrigger value="disposition">Disposition</TabsTrigger>
           <TabsTrigger value="documents">Documents</TabsTrigger>
           <TabsTrigger value="workflow">Workflow</TabsTrigger>
           <TabsTrigger value="tasks">
@@ -935,6 +937,11 @@ export default function ProjectDetailPage() {
               </CardContent>
             </Card>
           )}
+        </TabsContent>
+
+        {/* ---- Disposition Tab ---- */}
+        <TabsContent value="disposition" className="mt-6">
+          <ProjectDispositionTab projectId={project.id} projectType={project.type} budgetTotal={project.budget_total} />
         </TabsContent>
 
         {/* ---- Documents Tab ---- */}
