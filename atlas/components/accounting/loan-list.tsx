@@ -1,26 +1,16 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useMemo } from "react"
 import {
   Banknote,
   AlertTriangle,
-  Search,
-  XCircle,
+  Clock,
 } from "lucide-react"
 import { cn, formatCurrency, formatDate } from "@/lib/utils/format"
 import { formatPercent } from "@/lib/utils/format"
-import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Input } from "@/components/ui/input"
-import { Progress } from "@/components/ui/progress"
 import { Card, CardContent } from "@/components/ui/card"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
+import { Progress } from "@/components/ui/progress"
 import {
   Table,
   TableBody,
@@ -35,45 +25,86 @@ import { LOAN_TYPE_LABELS } from "@/lib/types/accounting"
 // ---------------------------------------------------------------------------
 // Props
 // ---------------------------------------------------------------------------
-
 interface LoanListProps {
   loans: Loan[]
-  onSelectLoan: (loan: Loan) => void
-  className?: string
+  onSelectLoan?: (id: string) => void
 }
 
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
-
-function getDaysUntilMaturity(maturityDate: string): number {
+function getMonthsUntilMaturity(maturityDate: string): number {
   const today = new Date()
-  today.setHours(0, 0, 0, 0)
   const maturity = new Date(maturityDate)
-  maturity.setHours(0, 0, 0, 0)
-  return Math.ceil(
-    (maturity.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
-  )
+  const diffMs = maturity.getTime() - today.getTime()
+  return diffMs / (1000 * 60 * 60 * 24 * 30.44)
 }
 
-function getMaturityColor(days: number): string {
-  if (days <= 0) return "text-red-700 bg-red-50"
-  if (days <= 30) return "text-red-600 bg-red-50"
-  if (days <= 60) return "text-orange-600 bg-orange-50"
-  if (days <= 90) return "text-yellow-600 bg-yellow-50"
-  return ""
+function getMaturityColor(months: number): string {
+  if (months < 0) return "text-red-900 bg-red-200"
+  if (months < 3) return "text-red-700 bg-red-100"
+  if (months < 6) return "text-yellow-700 bg-yellow-100"
+  return "text-green-700 bg-green-100"
 }
 
-function getStatusBadgeClass(status: LoanStatus): string {
+function getMaturityLabel(months: number): string {
+  if (months < 0) return "Past Due"
+  if (months < 1) return "<1 mo"
+  if (months < 12) return `${Math.floor(months)} mo`
+  const years = Math.floor(months / 12)
+  const remainMo = Math.floor(months % 12)
+  return remainMo > 0 ? `${years}y ${remainMo}m` : `${years}y`
+}
+
+function getLoanStatusBadge(status: LoanStatus): {
+  label: string
+  className: string
+} {
   switch (status) {
     case "active":
-      return "bg-green-100 text-green-800 hover:bg-green-100"
+      return {
+        label: "Active",
+        className: "bg-green-100 text-green-800 hover:bg-green-100",
+      }
     case "paid_off":
-      return "bg-blue-100 text-blue-800 hover:bg-blue-100"
+      return {
+        label: "Paid Off",
+        className: "bg-blue-100 text-blue-800 hover:bg-blue-100",
+      }
     case "defaulted":
-      return "bg-red-100 text-red-800 hover:bg-red-100"
+      return {
+        label: "Defaulted",
+        className: "bg-red-100 text-red-800 hover:bg-red-100",
+      }
     case "pending":
-      return "bg-yellow-100 text-yellow-800 hover:bg-yellow-100"
+      return {
+        label: "Pending",
+        className: "bg-yellow-100 text-yellow-800 hover:bg-yellow-100",
+      }
+    default:
+      return {
+        label: status,
+        className: "bg-gray-100 text-gray-800 hover:bg-gray-100",
+      }
+  }
+}
+
+function getLoanTypeBadge(loanType: LoanType): string {
+  switch (loanType) {
+    case "construction_loan":
+      return "bg-orange-100 text-orange-800 hover:bg-orange-100"
+    case "acquisition_loan":
+      return "bg-blue-100 text-blue-800 hover:bg-blue-100"
+    case "bridge_loan":
+      return "bg-purple-100 text-purple-800 hover:bg-purple-100"
+    case "permanent_loan":
+      return "bg-green-100 text-green-800 hover:bg-green-100"
+    case "line_of_credit":
+      return "bg-indigo-100 text-indigo-800 hover:bg-indigo-100"
+    case "mezzanine":
+      return "bg-pink-100 text-pink-800 hover:bg-pink-100"
+    case "seller_financing":
+      return "bg-teal-100 text-teal-800 hover:bg-teal-100"
     default:
       return "bg-gray-100 text-gray-800 hover:bg-gray-100"
   }
@@ -82,202 +113,118 @@ function getStatusBadgeClass(status: LoanStatus): string {
 // ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
-
-export function LoanList({
-  loans,
-  onSelectLoan,
-  className,
-}: LoanListProps) {
-  const [searchQuery, setSearchQuery] = useState("")
-  const [filterType, setFilterType] = useState<string>("all")
-  const [filterStatus, setFilterStatus] = useState<string>("all")
-
-  // Filtered loans
-  const filteredLoans = useMemo(() => {
-    let result = [...loans]
-
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase()
-      result = result.filter(
-        (l) =>
-          l.lender_name.toLowerCase().includes(q) ||
-          l.project_name?.toLowerCase().includes(q) ||
-          LOAN_TYPE_LABELS[l.loan_type].toLowerCase().includes(q)
-      )
-    }
-
-    if (filterType && filterType !== "all") {
-      result = result.filter((l) => l.loan_type === filterType)
-    }
-
-    if (filterStatus && filterStatus !== "all") {
-      result = result.filter((l) => l.status === filterStatus)
-    }
-
-    return result
-  }, [loans, searchQuery, filterType, filterStatus])
-
-  // Aggregate totals
-  const totals = useMemo(() => {
-    return filteredLoans.reduce(
-      (acc, loan) => ({
-        originalAmount: acc.originalAmount + loan.original_amount,
-        amountDrawn: acc.amountDrawn + loan.amount_drawn,
-        availableAmount: acc.availableAmount + loan.available_amount,
-        currentBalance: acc.currentBalance + loan.current_balance,
-      }),
+export function LoanList({ loans, onSelectLoan }: LoanListProps) {
+  // Aggregates
+  const aggregate = useMemo(() => {
+    return loans.reduce(
+      (acc, loan) => {
+        acc.totalOriginal += loan.original_amount
+        acc.totalDrawn += loan.amount_drawn
+        acc.totalAvailable += loan.available_amount
+        acc.totalBalance += loan.current_balance
+        return acc
+      },
       {
-        originalAmount: 0,
-        amountDrawn: 0,
-        availableAmount: 0,
-        currentBalance: 0,
+        totalOriginal: 0,
+        totalDrawn: 0,
+        totalAvailable: 0,
+        totalBalance: 0,
       }
     )
-  }, [filteredLoans])
+  }, [loans])
 
-  const hasActiveFilters =
-    searchQuery || filterType !== "all" || filterStatus !== "all"
-
-  const clearFilters = () => {
-    setSearchQuery("")
-    setFilterType("all")
-    setFilterStatus("all")
-  }
+  const overallUtilization = useMemo(() => {
+    if (aggregate.totalOriginal === 0) return 0
+    return (aggregate.totalDrawn / aggregate.totalOriginal) * 100
+  }, [aggregate])
 
   return (
-    <div className={cn("space-y-6", className)}>
+    <div className="space-y-6">
       {/* Summary Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Card>
-          <CardContent className="pt-6 text-center">
-            <p className="text-xs text-muted-foreground">Total Committed</p>
-            <p className="text-xl font-bold tabular-nums">
-              {formatCurrency(totals.originalAmount, { decimals: 0 })}
+          <CardContent className="p-4">
+            <p className="text-xs text-muted-foreground">Total Commitments</p>
+            <p className="text-2xl font-bold">
+              {formatCurrency(aggregate.totalOriginal, { decimals: 0 })}
             </p>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="pt-6 text-center">
+          <CardContent className="p-4">
             <p className="text-xs text-muted-foreground">Total Drawn</p>
-            <p className="text-xl font-bold tabular-nums text-orange-600">
-              {formatCurrency(totals.amountDrawn, { decimals: 0 })}
+            <p className="text-2xl font-bold text-orange-600">
+              {formatCurrency(aggregate.totalDrawn, { decimals: 0 })}
             </p>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="pt-6 text-center">
-            <p className="text-xs text-muted-foreground">Available</p>
-            <p className="text-xl font-bold tabular-nums text-green-600">
-              {formatCurrency(totals.availableAmount, { decimals: 0 })}
+          <CardContent className="p-4">
+            <p className="text-xs text-muted-foreground">Total Available</p>
+            <p className="text-2xl font-bold text-green-600">
+              {formatCurrency(aggregate.totalAvailable, { decimals: 0 })}
             </p>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="pt-6 text-center">
-            <p className="text-xs text-muted-foreground">Current Balance</p>
-            <p className="text-xl font-bold tabular-nums">
-              {formatCurrency(totals.currentBalance, { decimals: 0 })}
+          <CardContent className="p-4">
+            <p className="text-xs text-muted-foreground">
+              Overall Utilization
+            </p>
+            <p className="text-2xl font-bold">
+              {formatPercent(overallUtilization, 1)}
             </p>
           </CardContent>
         </Card>
-      </div>
-
-      {/* Filters */}
-      <div className="flex flex-wrap items-center gap-3">
-        <div className="relative flex-1 min-w-[200px]">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            placeholder="Search by lender, project..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-9"
-          />
-        </div>
-
-        <Select value={filterType} onValueChange={setFilterType}>
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="All Types" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Types</SelectItem>
-            {(
-              Object.entries(LOAN_TYPE_LABELS) as [LoanType, string][]
-            ).map(([value, label]) => (
-              <SelectItem key={value} value={value}>
-                {label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        <Select value={filterStatus} onValueChange={setFilterStatus}>
-          <SelectTrigger className="w-[150px]">
-            <SelectValue placeholder="All Statuses" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Statuses</SelectItem>
-            <SelectItem value="active">Active</SelectItem>
-            <SelectItem value="pending">Pending</SelectItem>
-            <SelectItem value="paid_off">Paid Off</SelectItem>
-            <SelectItem value="defaulted">Defaulted</SelectItem>
-          </SelectContent>
-        </Select>
-
-        {hasActiveFilters && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={clearFilters}
-            className="text-xs"
-          >
-            <XCircle className="h-3.5 w-3.5" />
-            Clear
-          </Button>
-        )}
       </div>
 
       {/* Loan Table */}
-      <div className="overflow-x-auto rounded-md border border-border">
-        {filteredLoans.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+      {loans.length === 0 ? (
+        <Card>
+          <CardContent className="flex flex-col items-center justify-center py-12 text-muted-foreground">
             <Banknote className="h-8 w-8 mb-2 opacity-50" />
-            <p className="text-sm">No loans found</p>
-          </div>
-        ) : (
+            <p className="text-sm">No loans recorded</p>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="overflow-x-auto rounded-md border border-border">
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>Lender</TableHead>
                 <TableHead>Type</TableHead>
-                <TableHead className="text-right">Original</TableHead>
-                <TableHead className="text-right">Drawn</TableHead>
+                <TableHead className="text-right">Original Amount</TableHead>
+                <TableHead className="text-right">Amount Drawn</TableHead>
                 <TableHead className="text-right">Available</TableHead>
                 <TableHead className="text-right">Rate</TableHead>
                 <TableHead>Maturity</TableHead>
+                <TableHead className="w-[140px]">Utilization</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead className="w-[120px]">Utilization</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredLoans.map((loan) => {
-                const daysToMaturity = getDaysUntilMaturity(
-                  loan.maturity_date
-                )
-                const maturityColor = getMaturityColor(daysToMaturity)
+              {loans.map((loan) => {
+                const months = getMonthsUntilMaturity(loan.maturity_date)
+                const maturityColor = getMaturityColor(months)
+                const maturityLabel = getMaturityLabel(months)
                 const utilization =
                   loan.original_amount > 0
                     ? (loan.amount_drawn / loan.original_amount) * 100
                     : 0
+                const statusCfg = getLoanStatusBadge(loan.status)
 
                 return (
                   <TableRow
                     key={loan.id}
-                    className="cursor-pointer hover:bg-muted/50"
-                    onClick={() => onSelectLoan(loan)}
+                    className={cn(
+                      onSelectLoan && "cursor-pointer",
+                      months < 0 && "bg-red-50/50 dark:bg-red-950/20"
+                    )}
+                    onClick={() => onSelectLoan?.(loan.id)}
                   >
-                    <TableCell>
+                    <TableCell className="font-medium">
                       <div>
-                        <p className="font-medium">{loan.lender_name}</p>
+                        {loan.lender_name}
                         {loan.project_name && (
                           <p className="text-xs text-muted-foreground">
                             {loan.project_name}
@@ -286,7 +233,13 @@ export function LoanList({
                       </div>
                     </TableCell>
                     <TableCell>
-                      <Badge variant="outline" className="text-[10px]">
+                      <Badge
+                        variant="secondary"
+                        className={cn(
+                          "text-[10px] whitespace-nowrap",
+                          getLoanTypeBadge(loan.loan_type)
+                        )}
+                      >
                         {LOAN_TYPE_LABELS[loan.loan_type]}
                       </Badge>
                     </TableCell>
@@ -300,86 +253,98 @@ export function LoanList({
                       {formatCurrency(loan.available_amount, { decimals: 0 })}
                     </TableCell>
                     <TableCell className="text-right font-mono tabular-nums">
-                      <div>
-                        <span>{formatPercent(loan.interest_rate)}</span>
-                        <span className="text-[10px] text-muted-foreground ml-1">
-                          {loan.rate_type === "variable" ? "var" : "fix"}
+                      {formatPercent(loan.interest_rate)}
+                      {loan.rate_type === "variable" && (
+                        <span className="text-[10px] text-muted-foreground block">
+                          Variable
+                        </span>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-1.5">
+                        <Badge
+                          variant="secondary"
+                          className={cn(
+                            "text-[10px] border-0",
+                            maturityColor
+                          )}
+                        >
+                          {months < 0 && (
+                            <AlertTriangle className="h-3 w-3 mr-0.5" />
+                          )}
+                          {months >= 0 && months < 3 && (
+                            <Clock className="h-3 w-3 mr-0.5" />
+                          )}
+                          {maturityLabel}
+                        </Badge>
+                        <span className="text-xs text-muted-foreground whitespace-nowrap">
+                          {formatDate(loan.maturity_date, { short: true })}
                         </span>
                       </div>
                     </TableCell>
                     <TableCell>
-                      <div
-                        className={cn(
-                          "rounded px-1.5 py-0.5 text-xs inline-block",
-                          maturityColor
-                        )}
-                      >
-                        {formatDate(loan.maturity_date, { short: true })}
-                        {daysToMaturity <= 90 && daysToMaturity > 0 && (
-                          <span className="ml-1 font-medium">
-                            ({daysToMaturity}d)
-                          </span>
-                        )}
-                        {daysToMaturity <= 0 && (
-                          <span className="ml-1 flex items-center gap-0.5 inline-flex">
-                            <AlertTriangle className="h-3 w-3" />
-                            Matured
-                          </span>
-                        )}
+                      <div className="flex items-center gap-2 min-w-[100px]">
+                        <Progress
+                          value={Math.min(utilization, 100)}
+                          className={cn(
+                            "h-2 flex-1",
+                            utilization >= 90 && "[&>div]:bg-red-500",
+                            utilization >= 75 &&
+                              utilization < 90 &&
+                              "[&>div]:bg-orange-500"
+                          )}
+                        />
+                        <span className="text-xs font-medium w-10 text-right tabular-nums">
+                          {formatPercent(utilization, 0)}
+                        </span>
                       </div>
                     </TableCell>
                     <TableCell>
                       <Badge
                         variant="secondary"
-                        className={cn(
-                          "text-[10px] px-1.5 py-0",
-                          getStatusBadgeClass(loan.status)
-                        )}
+                        className={cn("text-[10px]", statusCfg.className)}
                       >
-                        {loan.status.replace("_", " ")}
+                        {statusCfg.label}
                       </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <Progress
-                          value={utilization}
-                          className={cn(
-                            "h-2 flex-1",
-                            utilization > 90 && "[&>div]:bg-red-500",
-                            utilization > 75 &&
-                              utilization <= 90 &&
-                              "[&>div]:bg-yellow-500"
-                          )}
-                        />
-                        <span className="text-[10px] text-muted-foreground whitespace-nowrap">
-                          {formatPercent(utilization, 0)}
-                        </span>
-                      </div>
                     </TableCell>
                   </TableRow>
                 )
               })}
 
-              {/* Aggregate totals */}
-              <TableRow className="border-t-2 bg-muted/30 font-semibold">
-                <TableCell colSpan={2}>
-                  Totals ({filteredLoans.length} loans)
+              {/* Aggregate row */}
+              <TableRow className="font-semibold bg-muted/50">
+                <TableCell>
+                  {loans.length} loan{loans.length !== 1 ? "s" : ""}
+                </TableCell>
+                <TableCell />
+                <TableCell className="text-right font-mono tabular-nums">
+                  {formatCurrency(aggregate.totalOriginal, { decimals: 0 })}
                 </TableCell>
                 <TableCell className="text-right font-mono tabular-nums">
-                  {formatCurrency(totals.originalAmount, { decimals: 0 })}
-                </TableCell>
-                <TableCell className="text-right font-mono tabular-nums">
-                  {formatCurrency(totals.amountDrawn, { decimals: 0 })}
+                  {formatCurrency(aggregate.totalDrawn, { decimals: 0 })}
                 </TableCell>
                 <TableCell className="text-right font-mono tabular-nums text-green-600">
-                  {formatCurrency(totals.availableAmount, { decimals: 0 })}
+                  {formatCurrency(aggregate.totalAvailable, { decimals: 0 })}
                 </TableCell>
-                <TableCell colSpan={4} />
+                <TableCell />
+                <TableCell />
+                <TableCell>
+                  <div className="flex items-center gap-2 min-w-[100px]">
+                    <Progress
+                      value={Math.min(overallUtilization, 100)}
+                      className="h-2 flex-1"
+                    />
+                    <span className="text-xs font-medium w-10 text-right tabular-nums">
+                      {formatPercent(overallUtilization, 0)}
+                    </span>
+                  </div>
+                </TableCell>
+                <TableCell />
               </TableRow>
             </TableBody>
           </Table>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   )
 }

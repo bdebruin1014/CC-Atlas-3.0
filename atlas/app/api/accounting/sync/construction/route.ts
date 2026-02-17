@@ -7,45 +7,28 @@ import { z } from "zod"
 // ---------------------------------------------------------------------------
 const ConstructionSyncSchema = z.object({
   event_type: z.enum([
-    "invoice_approved",
-    "payment_issued",
-    "draw_funded",
-    "retainage_released",
-    "change_order_approved",
+    "invoice_created",
+    "payment_processed",
+    "draw_requested",
+    "draw_paid",
   ]),
-  event_data: z.record(z.unknown()),
-  source_record_id: z.string().uuid("source_record_id is required"),
+  event_data: z.object({
+    entity_id: z.string().uuid(),
+    project_id: z.string().uuid().optional().nullable(),
+    unit_id: z.string().uuid().optional().nullable(),
+    amount: z.number().positive("Amount must be positive"),
+    date: z.string().min(1, "Date is required"),
+    description: z.string().optional().nullable(),
+    reference_number: z.string().optional().nullable(),
+    vendor_name: z.string().optional().nullable(),
+    source_record_id: z.string().uuid().optional().nullable(),
+    cost_code: z.string().optional().nullable(),
+    job_id: z.string().uuid().optional().nullable(),
+  }),
 })
 
 // ---------------------------------------------------------------------------
-// Helper: Resolve entity from job -> project -> entity chain
-// ---------------------------------------------------------------------------
-async function resolveEntityFromJob(
-  supabase: Awaited<ReturnType<typeof createServerSupabaseClient>>,
-  jobId: string
-): Promise<{ entity_id: string; project_id: string | null } | null> {
-  // Try jobs -> project -> entity
-  const { data: job } = await supabase
-    .from("jobs")
-    .select("id, project_id")
-    .eq("id", jobId)
-    .single()
-
-  if (!job?.project_id) return null
-
-  const { data: project } = await supabase
-    .from("projects")
-    .select("id, entity_id")
-    .eq("id", job.project_id)
-    .single()
-
-  if (!project?.entity_id) return null
-
-  return { entity_id: project.entity_id, project_id: project.id }
-}
-
-// ---------------------------------------------------------------------------
-// Helper: Find or create an account by pattern
+// Helper: Find account by name pattern and type
 // ---------------------------------------------------------------------------
 async function findAccount(
   supabase: Awaited<ReturnType<typeof createServerSupabaseClient>>,
@@ -67,7 +50,7 @@ async function findAccount(
 }
 
 // ---------------------------------------------------------------------------
-// POST: Sync construction event to accounting
+// POST: Sync construction event to accounting (idempotent)
 // ---------------------------------------------------------------------------
 export async function POST(request: Request) {
   try {
@@ -90,49 +73,42 @@ export async function POST(request: Request) {
       )
     }
 
-    const { event_type, event_data, source_record_id } = parsed.data
+    const { event_type, event_data } = parsed.data
 
-    // Check for existing sync to prevent duplicates
-    const { data: existingSync } = await supabase
-      .from("transactions")
-      .select("id")
-      .eq("source_record_id", source_record_id)
-      .eq("source_type", "construction")
-      .limit(1)
-      .single()
+    // Idempotency check: if source_record_id provided, check if already synced
+    if (event_data.source_record_id) {
+      const { data: existingSync } = await supabase
+        .from("transactions")
+        .select("id, batch_id")
+        .eq("source_record_id", event_data.source_record_id)
+        .limit(1)
+        .single()
 
-    if (existingSync) {
-      return NextResponse.json(
-        {
-          error: "Duplicate sync",
-          details: `Construction event ${source_record_id} has already been synced to accounting.`,
-          existing_transaction_id: existingSync.id,
-        },
-        { status: 409 }
-      )
-    }
-
-    // Resolve entity from event data
-    const jobId = event_data.job_id as string | undefined
-    const projectId = event_data.project_id as string | undefined
-    let entityId = event_data.entity_id as string | undefined
-
-    if (!entityId && jobId) {
-      const resolved = await resolveEntityFromJob(supabase, jobId)
-      if (resolved) {
-        entityId = resolved.entity_id
+      if (existingSync) {
+        return NextResponse.json({
+          data: {
+            batch_id: existingSync.batch_id,
+            transaction_id: existingSync.id,
+          },
+          message: "Already synced (idempotent)",
+          idempotent: true,
+        })
       }
     }
 
-    if (!entityId && projectId) {
+    // Resolve entity
+    let entityId = event_data.entity_id
+
+    // If no entity directly, try to resolve via project
+    if (!entityId && event_data.project_id) {
       const { data: project } = await supabase
         .from("projects")
-        .select("entity_id")
-        .eq("id", projectId)
+        .select("owner_entity_id")
+        .eq("id", event_data.project_id)
         .single()
 
-      if (project?.entity_id) {
-        entityId = project.entity_id
+      if (project?.owner_entity_id) {
+        entityId = project.owner_entity_id
       }
     }
 
@@ -140,97 +116,92 @@ export async function POST(request: Request) {
       return NextResponse.json(
         {
           error: "Cannot determine entity",
-          details: "Could not resolve entity from job/project chain. Provide entity_id in event_data.",
+          details: "Could not resolve entity from event data. Provide entity_id.",
         },
         { status: 400 }
       )
     }
 
     const batchId = crypto.randomUUID()
-    const eventDate = (event_data.date as string) || new Date().toISOString().split("T")[0]
-    const period = eventDate.slice(0, 7)
-    const amount = event_data.amount as number
-
-    if (!amount || amount <= 0) {
-      return NextResponse.json(
-        { error: "Invalid amount", details: "event_data.amount must be a positive number." },
-        { status: 400 }
-      )
-    }
+    const txDate = event_data.date
+    const period = txDate.slice(0, 7)
+    const amount = event_data.amount
 
     let debitAccountId: string | null = null
     let creditAccountId: string | null = null
     let description = ""
+    let txType = "journal_entry"
 
     // Determine accounts based on event type
     switch (event_type) {
-      case "invoice_approved": {
+      case "invoice_created": {
         // Debit: Construction in Progress (asset)
         // Credit: Accounts Payable (liability)
-        debitAccountId = await findAccount(supabase, entityId, "construction in progress", "asset")
-          || await findAccount(supabase, entityId, "CIP", "asset")
-          || await findAccount(supabase, entityId, "construction cost", "asset")
-        creditAccountId = await findAccount(supabase, entityId, "accounts payable", "liability")
-          || await findAccount(supabase, entityId, "AP", "liability")
+        debitAccountId =
+          (await findAccount(supabase, entityId, "construction in progress", "asset")) ||
+          (await findAccount(supabase, entityId, "CIP", "asset")) ||
+          (await findAccount(supabase, entityId, "hard cost", "expense"))
+        creditAccountId =
+          (await findAccount(supabase, entityId, "accounts payable", "liability")) ||
+          (await findAccount(supabase, entityId, "AP", "liability"))
 
-        const vendorName = (event_data.vendor_name as string) || "Vendor"
-        const invoiceNumber = (event_data.invoice_number as string) || ""
-        description = `Construction invoice approved - ${vendorName}${invoiceNumber ? ` #${invoiceNumber}` : ""} - $${amount}`
+        const vendorName = event_data.vendor_name || "Vendor"
+        const refNum = event_data.reference_number || ""
+        description =
+          event_data.description ||
+          `Construction invoice - ${vendorName}${refNum ? ` #${refNum}` : ""} - $${amount}`
+        txType = "invoice"
         break
       }
 
-      case "payment_issued": {
+      case "payment_processed": {
         // Debit: Accounts Payable (liability)
         // Credit: Cash (asset)
-        debitAccountId = await findAccount(supabase, entityId, "accounts payable", "liability")
-          || await findAccount(supabase, entityId, "AP", "liability")
-        creditAccountId = await findAccount(supabase, entityId, "cash", "asset")
-          || await findAccount(supabase, entityId, "operating", "asset")
+        debitAccountId =
+          (await findAccount(supabase, entityId, "accounts payable", "liability")) ||
+          (await findAccount(supabase, entityId, "AP", "liability"))
+        creditAccountId =
+          (await findAccount(supabase, entityId, "cash", "asset")) ||
+          (await findAccount(supabase, entityId, "operating", "asset"))
 
-        const payeeName = (event_data.payee_name as string) || "Payee"
-        const checkNumber = (event_data.check_number as string) || ""
-        description = `Construction payment issued - ${payeeName}${checkNumber ? ` check #${checkNumber}` : ""} - $${amount}`
+        const payeeName = event_data.vendor_name || "Payee"
+        description =
+          event_data.description ||
+          `Payment to ${payeeName} - $${amount}`
+        txType = "payment"
         break
       }
 
-      case "draw_funded": {
+      case "draw_requested": {
+        // Debit: Accounts Receivable or Draw Receivable (asset)
+        // Credit: Construction Loan (liability)
+        debitAccountId =
+          (await findAccount(supabase, entityId, "accounts receivable", "asset")) ||
+          (await findAccount(supabase, entityId, "draw receivable", "asset"))
+        creditAccountId =
+          (await findAccount(supabase, entityId, "construction loan", "liability")) ||
+          (await findAccount(supabase, entityId, "development loan", "liability"))
+
+        description =
+          event_data.description ||
+          `Construction draw requested - $${amount}`
+        break
+      }
+
+      case "draw_paid": {
         // Debit: Cash (asset)
         // Credit: Construction Loan (liability)
-        debitAccountId = await findAccount(supabase, entityId, "cash", "asset")
-          || await findAccount(supabase, entityId, "operating", "asset")
-        creditAccountId = await findAccount(supabase, entityId, "construction loan", "liability")
-          || await findAccount(supabase, entityId, "loan", "liability")
+        debitAccountId =
+          (await findAccount(supabase, entityId, "cash", "asset")) ||
+          (await findAccount(supabase, entityId, "operating", "asset"))
+        creditAccountId =
+          (await findAccount(supabase, entityId, "construction loan", "liability")) ||
+          (await findAccount(supabase, entityId, "development loan", "liability"))
 
-        const drawNumber = (event_data.draw_number as string | number) || ""
-        description = `Construction draw funded${drawNumber ? ` #${drawNumber}` : ""} - $${amount}`
-        break
-      }
-
-      case "retainage_released": {
-        // Debit: Retainage Payable (liability)
-        // Credit: Cash (asset)
-        debitAccountId = await findAccount(supabase, entityId, "retainage", "liability")
-          || await findAccount(supabase, entityId, "retention", "liability")
-        creditAccountId = await findAccount(supabase, entityId, "cash", "asset")
-          || await findAccount(supabase, entityId, "operating", "asset")
-
-        const retainageVendor = (event_data.vendor_name as string) || "Vendor"
-        description = `Retainage released - ${retainageVendor} - $${amount}`
-        break
-      }
-
-      case "change_order_approved": {
-        // Debit: Construction in Progress (asset)
-        // Credit: Accounts Payable or Contingency (liability)
-        debitAccountId = await findAccount(supabase, entityId, "construction in progress", "asset")
-          || await findAccount(supabase, entityId, "CIP", "asset")
-          || await findAccount(supabase, entityId, "construction cost", "asset")
-        creditAccountId = await findAccount(supabase, entityId, "contingency", "liability")
-          || await findAccount(supabase, entityId, "accounts payable", "liability")
-          || await findAccount(supabase, entityId, "AP", "liability")
-
-        const coNumber = (event_data.change_order_number as string) || ""
-        description = `Change order approved${coNumber ? ` #${coNumber}` : ""} - $${amount}`
+        description =
+          event_data.description ||
+          `Construction draw funded - $${amount}`
+        txType = "receipt"
         break
       }
     }
@@ -238,8 +209,8 @@ export async function POST(request: Request) {
     if (!debitAccountId || !creditAccountId) {
       return NextResponse.json(
         {
-          error: "Missing accounts",
-          details: `Could not find required accounts for event type '${event_type}'. Ensure the chart of accounts has appropriate accounts configured.`,
+          error: "Account mapping not found",
+          details: `Could not find required accounts for event type '${event_type}'. Ensure the entity has the standard COA configured.`,
           debit_account_found: !!debitAccountId,
           credit_account_found: !!creditAccountId,
         },
@@ -247,39 +218,41 @@ export async function POST(request: Request) {
       )
     }
 
-    // Create double-entry transactions
+    // Create double-entry journal entries
     const { data: transactions, error: txError } = await supabase
       .from("transactions")
       .insert([
         {
           entity_id: entityId,
-          date: eventDate,
+          date: txDate,
           description,
           account_id: debitAccountId,
           debit: amount,
           credit: 0,
-          transaction_type: "journal_entry",
+          transaction_type: txType,
           status: "pending",
           period,
           batch_id: batchId,
-          source_type: "construction",
-          source_record_id,
-          project_id: projectId || null,
+          source_record_id: event_data.source_record_id || null,
+          project_id: event_data.project_id || null,
+          unit_id: event_data.unit_id || null,
+          reference_number: event_data.reference_number || null,
         },
         {
           entity_id: entityId,
-          date: eventDate,
+          date: txDate,
           description,
           account_id: creditAccountId,
           debit: 0,
           credit: amount,
-          transaction_type: "journal_entry",
+          transaction_type: txType,
           status: "pending",
           period,
           batch_id: batchId,
-          source_type: "construction",
-          source_record_id,
-          project_id: projectId || null,
+          source_record_id: event_data.source_record_id || null,
+          project_id: event_data.project_id || null,
+          unit_id: event_data.unit_id || null,
+          reference_number: event_data.reference_number || null,
         },
       ])
       .select("id")
@@ -299,13 +272,13 @@ export async function POST(request: Request) {
         organization_id: orgId,
         user_id: user.id,
         record_type: "construction_sync",
-        record_id: source_record_id,
+        record_id: event_data.source_record_id || batchId,
         action: "synced",
         description: `Synced construction ${event_type} to accounting - $${amount}`,
         metadata: {
           event_type,
           entity_id: entityId,
-          source_record_id,
+          source_record_id: event_data.source_record_id,
           batch_id: batchId,
           amount,
         },
@@ -323,6 +296,7 @@ export async function POST(request: Request) {
           description,
           status: "pending",
         },
+        idempotent: false,
       },
       { status: 201 }
     )
