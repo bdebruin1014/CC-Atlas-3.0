@@ -44,6 +44,7 @@ export interface TaskFilters {
   search?: string
   overdue?: boolean
   due_today?: boolean
+  linked_record_id?: string
 }
 
 export interface CreateTaskInput {
@@ -80,6 +81,8 @@ export const taskKeys = {
   my: (userId: string) => [...taskKeys.all, "my", userId] as const,
   overdue: () => [...taskKeys.all, "overdue"] as const,
   stats: () => [...taskKeys.all, "stats"] as const,
+  record: (recordType: string, recordId: string) =>
+    [...taskKeys.all, "record", recordType, recordId] as const,
 }
 
 // ---------------------------------------------------------------------------
@@ -97,6 +100,8 @@ function buildQueryString(filters: TaskFilters): string {
   if (filters.search) params.set("search", filters.search)
   if (filters.overdue) params.set("overdue", "true")
   if (filters.due_today) params.set("due_today", "true")
+  if (filters.linked_record_id)
+    params.set("linked_record_id", filters.linked_record_id)
   return params.toString()
 }
 
@@ -240,5 +245,26 @@ export function useDeleteTask() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: taskKeys.all })
     },
+  })
+}
+
+/**
+ * Fetch tasks linked to a specific record (by linked_record_id).
+ */
+export function useRecordTasks(recordType: string, recordId: string) {
+  return useQuery({
+    queryKey: taskKeys.record(recordType, recordId),
+    queryFn: async () => {
+      const res = await fetch(
+        `/api/tasks?linked_record_id=${recordId}`
+      )
+      if (!res.ok) {
+        const err = await res.json()
+        throw new Error(err.error || "Failed to fetch tasks")
+      }
+      const { data } = await res.json()
+      return data as StandaloneTask[]
+    },
+    enabled: !!recordId,
   })
 }

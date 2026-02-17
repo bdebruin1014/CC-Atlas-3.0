@@ -40,6 +40,7 @@ import {
 } from '@/lib/types/opportunities'
 import { toast } from '@/lib/hooks/use-toast'
 import { ConversionDialog } from '@/components/opportunities/conversion-dialog'
+import { RecordTasksPanel, useRecordTaskCount } from '@/components/shared/record-tasks-panel'
 import type { ProjectType } from '@/lib/hooks/use-projects'
 import {
   ArrowLeft,
@@ -112,6 +113,8 @@ export default function OpportunityDetailPage() {
   const [activeTab, setActiveTab] = useState('overview')
   const [showConvertDialog, setShowConvertDialog] = useState(false)
   const [converting, setConverting] = useState(false)
+
+  const taskCount = useRecordTaskCount('opportunity', id)
 
   const fetchOpportunity = useCallback(async () => {
     setLoading(true)
@@ -460,6 +463,9 @@ export default function OpportunityDetailPage() {
           <TabsTrigger value="workflow">Workflow</TabsTrigger>
           <TabsTrigger value="contacts">Contacts</TabsTrigger>
           <TabsTrigger value="documents">Documents</TabsTrigger>
+          <TabsTrigger value="tasks">
+            Tasks{taskCount > 0 ? ` (${taskCount})` : ''}
+          </TabsTrigger>
           <TabsTrigger value="notes">Notes</TabsTrigger>
           <TabsTrigger value="activity">Activity</TabsTrigger>
         </TabsList>
@@ -883,6 +889,18 @@ export default function OpportunityDetailPage() {
         {/* ================================================================ */}
         <TabsContent value="notes">
           <NotesTab opportunityId={id} initialNotes={opportunity.notes} />
+        </TabsContent>
+
+        {/* ================================================================ */}
+        {/* TASKS TAB                                                        */}
+        {/* ================================================================ */}
+        <TabsContent value="tasks">
+          <RecordTasksPanel
+            recordType="opportunity"
+            recordId={id}
+            recordName={opportunity.name || opportunity.address_line1 || 'Opportunity'}
+            recordUrl={`/opportunities/${id}`}
+          />
         </TabsContent>
 
         {/* ================================================================ */}

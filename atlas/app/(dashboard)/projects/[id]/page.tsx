@@ -71,6 +71,7 @@ import {
 import { useContacts } from "@/lib/hooks/use-contacts"
 import { useDebounce } from "@/lib/hooks/use-debounce"
 import { ProjectForm } from "@/components/projects/project-form"
+import { RecordTasksPanel, useRecordTaskCount } from "@/components/shared/record-tasks-panel"
 
 // ---------------------------------------------------------------------------
 // Detail Skeleton
@@ -406,6 +407,7 @@ export default function ProjectDetailPage() {
 
   const { data: project, isLoading, error, refetch } = useProject(projectId)
   const updateMutation = useUpdateProject()
+  const taskCount = useRecordTaskCount("project", projectId)
 
   // Fetch linked jobs inline
   const [linkedJobs, setLinkedJobs] = useState<LinkedJob[]>([])
@@ -552,6 +554,9 @@ export default function ProjectDetailPage() {
           <TabsTrigger value="jobs">Linked Jobs</TabsTrigger>
           <TabsTrigger value="documents">Documents</TabsTrigger>
           <TabsTrigger value="workflow">Workflow</TabsTrigger>
+          <TabsTrigger value="tasks">
+            Tasks{taskCount > 0 ? ` (${taskCount})` : ""}
+          </TabsTrigger>
           <TabsTrigger value="contacts">Contacts</TabsTrigger>
           <TabsTrigger value="notes">Notes</TabsTrigger>
           <TabsTrigger value="activity">Activity</TabsTrigger>
@@ -956,6 +961,16 @@ export default function ProjectDetailPage() {
               Open Workflow
             </Button>
           </div>
+        </TabsContent>
+
+        {/* ---- Tasks Tab ---- */}
+        <TabsContent value="tasks" className="mt-6">
+          <RecordTasksPanel
+            recordType="project"
+            recordId={projectId}
+            recordName={project.name}
+            recordUrl={`/projects/${projectId}`}
+          />
         </TabsContent>
 
         {/* ---- Contacts Tab ---- */}

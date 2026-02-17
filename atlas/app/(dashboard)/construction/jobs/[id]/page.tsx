@@ -43,11 +43,14 @@ import {
   CONSTRUCTION_PHASES,
 } from "@/lib/construction/types"
 import type { ChangeOrderStatus } from "@/lib/construction/types"
+import { RecordTasksPanel, useRecordTaskCount } from "@/components/shared/record-tasks-panel"
 
 export default function JobDetailPage() {
   const router = useRouter()
   const params = useParams()
   const jobId = params.id as string
+
+  const taskCount = useRecordTaskCount("job", jobId)
 
   const job = MOCK_JOBS.find((j) => j.id === jobId)
 
@@ -220,6 +223,9 @@ export default function JobDetailPage() {
           <TabsTrigger value="schedule">Schedule</TabsTrigger>
           <TabsTrigger value="change-orders">Change Orders</TabsTrigger>
           <TabsTrigger value="financials">Financials</TabsTrigger>
+          <TabsTrigger value="tasks">
+            Tasks{taskCount > 0 ? ` (${taskCount})` : ""}
+          </TabsTrigger>
         </TabsList>
 
         {/* ============ DASHBOARD TAB ============ */}
@@ -843,6 +849,16 @@ export default function JobDetailPage() {
               />
             </CardContent>
           </Card>
+        </TabsContent>
+
+        {/* ============ TASKS TAB ============ */}
+        <TabsContent value="tasks" className="space-y-4">
+          <RecordTasksPanel
+            recordType="job"
+            recordId={jobId}
+            recordName={job.name}
+            recordUrl={`/construction/jobs/${jobId}`}
+          />
         </TabsContent>
       </Tabs>
     </div>
