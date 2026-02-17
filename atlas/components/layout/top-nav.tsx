@@ -1,23 +1,14 @@
 "use client"
 
 import React from "react"
-import { useRouter } from "next/navigation"
-import { useTheme } from "next-themes"
-import {
-  Bell,
-  LogOut,
-  Moon,
-  Search,
-  Settings,
-  Sun,
-  User,
-} from "lucide-react"
+import Link from "next/link"
+import { usePathname, useRouter } from "next/navigation"
+import { Bell, Search, LogOut, Settings, User } from "lucide-react"
 
 import { cn } from "@/lib/utils/format"
 import { useUIStore } from "@/lib/stores/ui-store"
 import { createClient } from "@/lib/supabase/client"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -26,9 +17,20 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Breadcrumbs } from "@/components/layout/breadcrumbs"
 
-interface HeaderProps {
+const MODULE_TABS = [
+  { label: "Opportunities", href: "/opportunities" },
+  { label: "Projects", href: "/projects" },
+  { label: "Disposition", href: "/disposition" },
+  { label: "Construction", href: "/construction" },
+  { label: "Tasks", href: "/tasks" },
+  { label: "Contacts", href: "/contacts" },
+  { label: "Calendar", href: "/calendar" },
+  { label: "Accounting", href: "/accounting" },
+  { label: "Admin", href: "/admin" },
+] as const
+
+interface TopNavProps {
   user?: {
     id: string
     first_name: string | null
@@ -39,16 +41,11 @@ interface HeaderProps {
   } | null
 }
 
-export function Header({ user }: HeaderProps) {
+export function TopNav({ user }: TopNavProps) {
+  const pathname = usePathname()
   const router = useRouter()
-  const { theme, setTheme } = useTheme()
   const { notificationCount, setSearchOpen } = useUIStore()
   const supabase = createClient()
-  const [mounted, setMounted] = React.useState(false)
-
-  React.useEffect(() => {
-    setMounted(true)
-  }, [])
 
   const handleLogout = async () => {
     await supabase.auth.signOut()
@@ -65,85 +62,88 @@ export function Header({ user }: HeaderProps) {
     : "User"
 
   return (
-    <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b border-border bg-background/95 px-6 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      {/* Breadcrumbs */}
-      <Breadcrumbs className="flex-1" />
+    <header
+      className="flex h-12 shrink-0 items-center bg-[var(--nav-bg)] px-4"
+      style={{ minHeight: 48, maxHeight: 48 }}
+    >
+      {/* Left: ATLAS wordmark */}
+      <Link href="/" className="mr-6 flex items-center">
+        <span className="text-base font-bold tracking-widest text-white">
+          ATLAS
+        </span>
+      </Link>
 
-      {/* Actions */}
+      {/* Center: Module tabs */}
+      <nav className="flex flex-1 items-center gap-0.5 overflow-x-auto">
+        {MODULE_TABS.map((tab) => {
+          const isActive =
+            pathname === tab.href || pathname.startsWith(`${tab.href}/`)
+          return (
+            <Link
+              key={tab.href}
+              href={tab.href}
+              className={cn(
+                "relative flex items-center px-3 py-1.5 text-[14px] font-medium text-white/80 transition-colors hover:bg-white/10 rounded",
+                isActive && "text-white"
+              )}
+            >
+              {tab.label}
+              {isActive && (
+                <span className="absolute bottom-0 left-1 right-1 h-[3px] rounded-t bg-[#1a5632]" />
+              )}
+            </Link>
+          )
+        })}
+      </nav>
+
+      {/* Right: Search, Notifications, User */}
       <div className="flex items-center gap-2">
-        {/* Global Search */}
-        <Button
-          variant="outline"
-          size="sm"
-          className="hidden h-8 w-56 justify-start gap-2 text-muted-foreground md:flex"
+        {/* Search input */}
+        <button
           onClick={() => setSearchOpen(true)}
+          className="hidden md:flex items-center gap-2 rounded border border-white/20 bg-white/10 px-3 py-1 text-[13px] text-white/70 transition-colors hover:bg-white/15"
+          style={{ width: 200 }}
+        >
+          <Search className="h-3.5 w-3.5" />
+          <span>Search...</span>
+          <kbd className="ml-auto text-[10px] text-white/40">⌘K</kbd>
+        </button>
+
+        {/* Mobile search */}
+        <button
+          onClick={() => setSearchOpen(true)}
+          className="flex md:hidden items-center justify-center rounded p-1.5 text-white/80 hover:bg-white/10"
         >
           <Search className="h-4 w-4" />
-          <span className="text-xs">Search...</span>
-          <kbd className="pointer-events-none ml-auto inline-flex h-5 select-none items-center gap-1 rounded border border-border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground">
-            <span className="text-xs">&#8984;</span>K
-          </kbd>
-        </Button>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-8 w-8 md:hidden"
-          onClick={() => setSearchOpen(true)}
-        >
-          <Search className="h-4 w-4" />
-          <span className="sr-only">Search</span>
-        </Button>
+        </button>
 
         {/* Notifications */}
-        <Button
-          variant="ghost"
-          size="icon"
-          className="relative h-8 w-8"
+        <button
           onClick={() => router.push("/admin/notifications")}
+          className="relative flex items-center justify-center rounded p-1.5 text-white/80 hover:bg-white/10"
         >
           <Bell className="h-4 w-4" />
           {notificationCount > 0 && (
-            <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-bold text-destructive-foreground">
+            <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#ef4444] px-1 text-[10px] font-bold text-white">
               {notificationCount > 99 ? "99+" : notificationCount}
             </span>
           )}
-          <span className="sr-only">Notifications</span>
-        </Button>
+        </button>
 
-        {/* Theme Toggle */}
-        {mounted && (
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8"
-            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-          >
-            {theme === "dark" ? (
-              <Sun className="h-4 w-4" />
-            ) : (
-              <Moon className="h-4 w-4" />
-            )}
-            <span className="sr-only">Toggle theme</span>
-          </Button>
-        )}
-
-        {/* User Dropdown */}
+        {/* User dropdown */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button
-              variant="ghost"
-              className="relative h-8 w-8 rounded-full"
-            >
-              <Avatar className="h-8 w-8">
+            <button className="flex items-center justify-center rounded-full p-0.5 hover:ring-2 hover:ring-white/20">
+              <Avatar className="h-7 w-7">
                 <AvatarImage
                   src={user?.avatar_url || undefined}
                   alt={displayName}
                 />
-                <AvatarFallback className="text-xs">
+                <AvatarFallback className="bg-[#1a5632] text-[10px] text-white">
                   {initials}
                 </AvatarFallback>
               </Avatar>
-            </Button>
+            </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent className="w-56" align="end" forceMount>
             <DropdownMenuLabel className="font-normal">

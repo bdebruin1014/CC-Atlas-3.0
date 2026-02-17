@@ -24,6 +24,7 @@ export interface ColumnDef<T> {
   cell?: (row: T) => React.ReactNode
   sortable?: boolean
   className?: string
+  mono?: boolean
 }
 
 export interface DataTableProps<T> {
@@ -62,9 +63,9 @@ function TableSkeleton({ columns, rows }: { columns: number; rows: number }) {
   return (
     <>
       {Array.from({ length: rows }).map((_, rowIdx) => (
-        <tr key={rowIdx} className="border-b border-border">
+        <tr key={rowIdx} className="border-b border-[#E5E7EB]">
           {Array.from({ length: columns }).map((_, colIdx) => (
-            <td key={colIdx} className="px-4 py-3">
+            <td key={colIdx} className="px-4 py-2">
               <div className="h-4 w-full animate-pulse rounded bg-muted" />
             </td>
           ))}
@@ -205,9 +206,36 @@ export function DataTable<T extends Record<string, unknown>>({
 
   // ---- Render sort icon ----
   const renderSortIcon = (key: string) => {
-    if (sortKey !== key) return <ChevronsUpDown className="ml-1 h-3.5 w-3.5 text-muted-foreground" />
-    if (sortDirection === "asc") return <ChevronUp className="ml-1 h-3.5 w-3.5" />
-    return <ChevronDown className="ml-1 h-3.5 w-3.5" />
+    const isActiveSort = sortKey === key
+    if (!isActiveSort) return <ChevronsUpDown className="ml-1 h-3 w-3 text-[#5A6B75]" />
+    if (sortDirection === "asc")
+      return <ChevronUp className="ml-1 h-3 w-3 text-[#1a5632]" />
+    return <ChevronDown className="ml-1 h-3 w-3 text-[#1a5632]" />
+  }
+
+  // ---- Render cell value ----
+  const renderCellValue = (col: ColumnDef<T>, row: T) => {
+    if (col.cell) return col.cell(row)
+    const value = getNestedValue(row, col.key)
+    if (value == null || value === "") {
+      return <span className="text-[#9CA3AF] italic">—</span>
+    }
+    return String(value)
+  }
+
+  // ---- Page numbers for pagination ----
+  const getPageNumbers = () => {
+    const pages: number[] = []
+    const maxVisible = 5
+    let start = Math.max(1, safePage - Math.floor(maxVisible / 2))
+    const end = Math.min(totalPages, start + maxVisible - 1)
+    if (end - start + 1 < maxVisible) {
+      start = Math.max(1, end - maxVisible + 1)
+    }
+    for (let i = start; i <= end; i++) {
+      pages.push(i)
+    }
+    return pages
   }
 
   return (
@@ -216,7 +244,7 @@ export function DataTable<T extends Record<string, unknown>>({
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         {searchKey && (
           <div className="relative max-w-sm flex-1">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#5A6B75]" />
             <Input
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -227,11 +255,11 @@ export function DataTable<T extends Record<string, unknown>>({
         )}
 
         <div className="flex items-center gap-2">
-          <span className="text-sm text-muted-foreground">Rows per page</span>
+          <span className="text-[13px] text-[#5A6B75]">Rows per page</span>
           <select
             value={pageSize}
             onChange={(e) => setPageSize(Number(e.target.value))}
-            className="h-9 rounded-md border border-input bg-transparent px-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+            className="h-8 rounded border border-[#E5E7EB] bg-transparent px-2 text-[13px] focus:outline-none focus:ring-1 focus:ring-[#1a5632]"
           >
             <option value={10}>10</option>
             <option value={20}>20</option>
@@ -241,17 +269,17 @@ export function DataTable<T extends Record<string, unknown>>({
       </div>
 
       {/* Table */}
-      <div className="overflow-x-auto rounded-md border border-border">
-        <table className="w-full text-sm">
+      <div className="overflow-x-auto rounded-md border border-[#E5E7EB]">
+        <table className="w-full">
           <thead>
-            <tr className="border-b border-border bg-muted/50">
+            <tr className="bg-[#F3F4F6]">
               {selectable && (
-                <th className="w-10 px-4 py-3">
+                <th className="w-10 px-4 py-2.5">
                   <input
                     type="checkbox"
                     checked={allOnPageSelected && paginatedData.length > 0}
                     onChange={handleSelectAll}
-                    className="h-4 w-4 rounded border-input"
+                    className="h-4 w-4 rounded border-[#E5E7EB]"
                   />
                 </th>
               )}
@@ -259,8 +287,9 @@ export function DataTable<T extends Record<string, unknown>>({
                 <th
                   key={col.key}
                   className={cn(
-                    "px-4 py-3 text-left font-medium text-muted-foreground",
-                    col.sortable && "cursor-pointer select-none hover:text-foreground",
+                    "px-4 py-2.5 text-left text-[11px] font-medium uppercase tracking-[0.3px] text-[#5A6B75]",
+                    col.sortable && "cursor-pointer select-none hover:text-[#1F2937]",
+                    sortKey === col.key && "text-[#1a5632]",
                     col.className
                   )}
                   onClick={col.sortable ? () => handleSort(col.key) : undefined}
@@ -283,7 +312,7 @@ export function DataTable<T extends Record<string, unknown>>({
               <tr>
                 <td
                   colSpan={columns.length + (selectable ? 1 : 0)}
-                  className="px-4 py-12 text-center text-muted-foreground"
+                  className="px-4 py-12 text-center text-[13px] text-[#5A6B75]"
                 >
                   {emptyMessage}
                 </td>
@@ -296,14 +325,15 @@ export function DataTable<T extends Record<string, unknown>>({
                   <tr
                     key={globalIdx}
                     className={cn(
-                      "border-b border-border transition-colors",
-                      onRowClick && "cursor-pointer hover:bg-muted/50",
-                      isSelected && "bg-muted/30"
+                      "border-b border-[#E5E7EB] transition-colors",
+                      onRowClick && "cursor-pointer hover:bg-[#f9fafb]",
+                      isSelected && "bg-[#f0fdf4]"
                     )}
+                    style={{ height: "38px" }}
                     onClick={() => onRowClick?.(row)}
                   >
                     {selectable && (
-                      <td className="px-4 py-3">
+                      <td className="px-4 py-1.5">
                         <input
                           type="checkbox"
                           checked={isSelected}
@@ -312,15 +342,20 @@ export function DataTable<T extends Record<string, unknown>>({
                             handleSelectRow(globalIdx)
                           }}
                           onClick={(e) => e.stopPropagation()}
-                          className="h-4 w-4 rounded border-input"
+                          className="h-4 w-4 rounded border-[#E5E7EB]"
                         />
                       </td>
                     )}
                     {columns.map((col) => (
-                      <td key={col.key} className={cn("px-4 py-3", col.className)}>
-                        {col.cell
-                          ? col.cell(row)
-                          : String(getNestedValue(row, col.key) ?? "")}
+                      <td
+                        key={col.key}
+                        className={cn(
+                          "px-4 py-1.5 text-[13px] text-[#1F2937]",
+                          col.mono && "font-mono",
+                          col.className
+                        )}
+                      >
+                        {renderCellValue(col, row)}
                       </td>
                     ))}
                   </tr>
@@ -333,7 +368,7 @@ export function DataTable<T extends Record<string, unknown>>({
 
       {/* Pagination */}
       <div className="flex items-center justify-between">
-        <p className="text-sm text-muted-foreground">
+        <p className="text-[13px] text-[#5A6B75]">
           {selectable && selectedRows.size > 0
             ? `${selectedRows.size} of ${sortedData.length} row(s) selected`
             : `Showing ${sortedData.length === 0 ? 0 : (safePage - 1) * pageSize + 1}-${Math.min(
@@ -341,21 +376,34 @@ export function DataTable<T extends Record<string, unknown>>({
                 sortedData.length
               )} of ${sortedData.length}`}
         </p>
-        <div className="flex items-center gap-1">
+        <div className="flex items-center justify-center gap-1">
           <Button
             variant="outline"
             size="icon"
+            className="h-8 w-8"
             disabled={safePage <= 1}
             onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
           >
             <ChevronLeft className="h-4 w-4" />
           </Button>
-          <span className="px-3 text-sm">
-            Page {safePage} of {totalPages}
-          </span>
+          {getPageNumbers().map((page) => (
+            <button
+              key={page}
+              onClick={() => setCurrentPage(page)}
+              className={cn(
+                "flex h-8 w-8 items-center justify-center rounded text-[13px] font-medium transition-colors",
+                page === safePage
+                  ? "bg-[#1a5632] text-white"
+                  : "text-[#1F2937] hover:bg-[#f3f4f6]"
+              )}
+            >
+              {page}
+            </button>
+          ))}
           <Button
             variant="outline"
             size="icon"
+            className="h-8 w-8"
             disabled={safePage >= totalPages}
             onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
           >

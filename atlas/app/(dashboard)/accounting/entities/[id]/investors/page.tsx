@@ -183,16 +183,15 @@ export default function InvestorsPage({ params }: { params: Promise<{ id: string
             {entityName} - {investors.length} investor{investors.length !== 1 ? "s" : ""}
           </p>
         </div>
-          <div className="flex items-center gap-2">
-            <Button variant="outline" onClick={() => setShowCapitalCall(true)}>
-              <Phone className="h-4 w-4" />
-              Capital Call
-            </Button>
-            <Button onClick={() => setShowAddInvestor(true)}>
-              <Plus className="h-4 w-4" />
-              Add Investor
-            </Button>
-          </div>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" onClick={() => setShowCapitalCall(true)}>
+            <Phone className="h-4 w-4" />
+            Capital Call
+          </Button>
+          <Button onClick={() => setShowAddInvestor(true)}>
+            <Plus className="h-4 w-4" />
+            Add Investor
+          </Button>
         </div>
       </div>
 

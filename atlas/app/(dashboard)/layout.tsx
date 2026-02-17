@@ -5,13 +5,12 @@ import { useRouter } from "next/navigation"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 
 import { createClient } from "@/lib/supabase/client"
-import { Sidebar } from "@/components/layout/sidebar"
-import { Header } from "@/components/layout/header"
+import { TopNav } from "@/components/layout/top-nav"
+import { ContextSidebar } from "@/components/layout/context-sidebar"
+import { RightPanel } from "@/components/layout/right-panel"
 import { SearchCommand } from "@/components/shared/search-command"
 import { Toaster } from "@/components/ui/toaster"
 import { Skeleton } from "@/components/ui/skeleton"
-import { cn } from "@/lib/utils/format"
-import { useUIStore } from "@/lib/stores/ui-store"
 import { OrgGuard } from "@/components/shared/org-guard"
 
 interface UserProfile {
@@ -39,7 +38,6 @@ export default function DashboardLayout({
 }) {
   const router = useRouter()
   const supabase = createClient()
-  const { sidebarCollapsed } = useUIStore()
   const [user, setUser] = React.useState<UserProfile | null>(null)
   const [isLoading, setIsLoading] = React.useState(true)
 
@@ -116,17 +114,14 @@ export default function DashboardLayout({
 
   return (
     <QueryClientProvider client={queryClient}>
-      <div className="flex h-screen overflow-hidden bg-background">
-        <Sidebar user={user} />
-        <div
-          className={cn(
-            "flex flex-1 flex-col overflow-hidden transition-all duration-300"
-          )}
-        >
-          <Header user={user} />
-          <main className="flex-1 overflow-y-auto p-6">
+      <div className="flex h-screen flex-col overflow-hidden">
+        <TopNav user={user} />
+        <div className="flex flex-1 overflow-hidden">
+          <ContextSidebar />
+          <main className="flex-1 overflow-y-auto bg-[var(--background)] p-6">
             <OrgGuard>{children}</OrgGuard>
           </main>
+          <RightPanel />
         </div>
       </div>
       <SearchCommand />
