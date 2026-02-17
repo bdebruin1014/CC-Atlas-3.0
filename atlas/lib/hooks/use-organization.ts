@@ -6,7 +6,9 @@ import { createClient } from "@/lib/supabase/client"
 /**
  * Resolves the current user's organization_id from their profile.
  * If the profile has no organization_id yet, auto-assigns the first
- * available organization and patches the profile so subsequent loads are instant.
+ * available organization. If NO organizations exist at all, creates a
+ * default "Red Cedar Homes" organization so the user can start working
+ * immediately. The profile is upserted so subsequent loads are instant.
  */
 export function useOrganizationId() {
   const [organizationId, setOrganizationId] = useState<string | null>(null)
@@ -41,25 +43,62 @@ export function useOrganizationId() {
           return
         }
 
-        // 2. No org on profile — find the first organization the user can see
-        const { data: org } = await supabase
+        // 2. No org on profile — find the first organization
+        const { data: orgs } = await supabase
           .from("organizations")
           .select("id")
           .limit(1)
-          .single()
 
-        if (!org) {
-          if (!cancelled) setError("No organization found. Please contact your administrator.")
-          return
+        let orgId: string
+
+        if (orgs && orgs.length > 0) {
+          orgId = orgs[0].id
+        } else {
+          // 3. No organizations exist — create the default one.
+          //    The RLS policy allows this when the user has no profile
+          //    or has no organization_id assigned yet (migration 017).
+          const { data: newOrg, error: createErr } = await supabase
+            .from("organizations")
+            .insert({ name: "Red Cedar Homes" })
+            .select("id")
+            .single()
+
+          if (createErr || !newOrg) {
+            if (!cancelled) {
+              setError(
+                createErr?.message ??
+                  "Failed to create default organization. Please contact your administrator."
+              )
+            }
+            return
+          }
+
+          orgId = newOrg.id
         }
 
-        // 3. Patch the profile so future loads are instant
-        await supabase
-          .from("profiles")
-          .update({ organization_id: org.id })
-          .eq("id", user.id)
+        // 4. Upsert the profile so future loads are instant.
+        //    Makes the first user a global_admin for full access.
+        if (profile) {
+          // Profile row exists — just update it
+          await supabase
+            .from("profiles")
+            .update({ organization_id: orgId, role: "global_admin" })
+            .eq("id", user.id)
+        } else {
+          // No profile row yet — insert one
+          await supabase
+            .from("profiles")
+            .insert({
+              id: user.id,
+              organization_id: orgId,
+              role: "global_admin",
+              email: user.email ?? null,
+              first_name: user.user_metadata?.first_name ?? null,
+              last_name: user.user_metadata?.last_name ?? null,
+            })
+        }
 
-        if (!cancelled) setOrganizationId(org.id)
+        if (!cancelled) setOrganizationId(orgId)
       } catch (err) {
         if (!cancelled) {
           setError(err instanceof Error ? err.message : "Failed to resolve organization")
