@@ -43,7 +43,7 @@ import {
 // ---------------------------------------------------------------------------
 
 const opportunitySchema = z.object({
-  // Step 1 — Basic Info
+  // Step 1 — Basic Info (field names match DB columns)
   type: z.enum([
     'scattered_lot',
     'lot_development',
@@ -51,53 +51,51 @@ const opportunitySchema = z.object({
     'lot_purchase',
     'other',
   ]),
-  address_line1: z.string().min(1, 'Address is required'),
+  address_street: z.string().min(1, 'Address is required'),
   address_city: z.string().min(1, 'City is required'),
   address_county: z.string().optional().default(''),
   address_state: z.string().min(2, 'State is required'),
   address_zip: z.string().min(5, 'ZIP is required'),
-  parcel_tms: z.string().optional().default(''),
+  parcel_tms_number: z.string().optional().default(''),
   source: z.string().optional().default(''),
   assigned_to: z.string().optional().default(''),
-  entity_id: z.string().optional().default(''),
+  owner_entity_id: z.string().optional().default(''),
 
   // Step 2 — Type-Specific (scattered lot)
-  zoning: z.string().optional().default(''),
+  zoning_current: z.string().optional().default(''),
   build_type: z.string().optional().default(''),
-  road_type: z.string().optional().default(''),
+  road_surrounding: z.string().optional().default(''),
   road_frontage: z.string().optional().default(''),
   setback_front: z.coerce.number().optional(),
   setback_rear: z.coerce.number().optional(),
   setback_left: z.coerce.number().optional(),
   setback_right: z.coerce.number().optional(),
-  historic_overlay: z.boolean().optional().default(false),
-  has_water: z.boolean().optional().default(false),
-  has_sewer: z.boolean().optional().default(false),
-  has_electric: z.boolean().optional().default(false),
+  historic_district: z.boolean().optional().default(false),
+  water_available: z.boolean().optional().default(false),
+  sewer_available: z.boolean().optional().default(false),
+  electric_available: z.boolean().optional().default(false),
   floor_plan_id: z.string().optional().default(''),
   garage_position: z.string().optional().default(''),
-  survey_status: z.string().optional().default(''),
+  survey_complete: z.boolean().optional().default(false),
   lot_width: z.coerce.number().optional(),
   lot_depth: z.coerce.number().optional(),
   lot_sqft: z.coerce.number().optional(),
-  lot_acreage: z.coerce.number().optional(),
 
   // Step 2 — Type-Specific (lot development)
   total_acreage: z.coerce.number().optional(),
-  estimated_lots: z.coerce.number().optional(),
+  estimated_total_lots: z.coerce.number().optional(),
   zoning_required: z.boolean().optional().default(false),
   preliminary_plat_status: z.string().optional().default(''),
   target_builders: z.string().optional().default(''),
-  infrastructure_estimate: z.coerce.number().optional(),
+  infrastructure_scope_estimate: z.coerce.number().optional(),
 
   // Step 3 — Financial
   projected_purchase_price: z.coerce.number().optional(),
   projected_sale_price: z.coerce.number().optional(),
-  projected_arv: z.coerce.number().optional(),
-  date_offer: z.string().optional().default(''),
-  date_contract: z.string().optional().default(''),
-  date_dd_expiration: z.string().optional().default(''),
-  date_closing: z.string().optional().default(''),
+  date_identified: z.string().optional().default(''),
+  date_under_contract: z.string().optional().default(''),
+  due_diligence_deadline: z.string().optional().default(''),
+  projected_close_date: z.string().optional().default(''),
 
   notes: z.string().optional().default(''),
 })
@@ -127,58 +125,56 @@ export function OpportunityForm({
 }: OpportunityFormProps) {
   const [step, setStep] = useState(1)
   const [submitting, setSubmitting] = useState(false)
-  const [users, setUsers] = useState<{ id: string; full_name: string }[]>([])
+  const [users, setUsers] = useState<{ id: string; first_name: string | null; last_name: string | null }[]>([])
   const [entities, setEntities] = useState<{ id: string; name: string }[]>([])
   const [floorPlans, setFloorPlans] = useState<
-    { id: string; name: string; sqft: number }[]
+    { id: string; name: string; square_footage: number | null }[]
   >([])
 
   const form = useForm<OpportunityFormData>({
-    resolver: zodResolver(opportunitySchema),
+    resolver: zodResolver(opportunitySchema) as never,
     defaultValues: {
       type: (defaultValues?.type as OpportunityType) || 'scattered_lot',
-      address_line1: defaultValues?.address_line1 || '',
+      address_street: (defaultValues as Record<string, unknown>)?.address_street as string || '',
       address_city: defaultValues?.address_city || '',
       address_county: defaultValues?.address_county || '',
       address_state: defaultValues?.address_state || '',
       address_zip: defaultValues?.address_zip || '',
-      parcel_tms: defaultValues?.parcel_tms || '',
+      parcel_tms_number: (defaultValues as Record<string, unknown>)?.parcel_tms_number as string || '',
       source: defaultValues?.source || '',
       assigned_to: defaultValues?.assigned_to || '',
-      entity_id: defaultValues?.entity_id || '',
-      zoning: defaultValues?.zoning || '',
-      build_type: defaultValues?.build_type || '',
-      road_type: defaultValues?.road_type || '',
-      road_frontage: defaultValues?.road_frontage || '',
-      setback_front: defaultValues?.setback_front ?? undefined,
-      setback_rear: defaultValues?.setback_rear ?? undefined,
-      setback_left: defaultValues?.setback_left ?? undefined,
-      setback_right: defaultValues?.setback_right ?? undefined,
-      historic_overlay: defaultValues?.historic_overlay || false,
-      has_water: defaultValues?.has_water || false,
-      has_sewer: defaultValues?.has_sewer || false,
-      has_electric: defaultValues?.has_electric || false,
+      owner_entity_id: (defaultValues as Record<string, unknown>)?.owner_entity_id as string || '',
+      zoning_current: (defaultValues as Record<string, unknown>)?.zoning_current as string || '',
+      build_type: (defaultValues as Record<string, unknown>)?.build_type as string || '',
+      road_surrounding: (defaultValues as Record<string, unknown>)?.road_surrounding as string || '',
+      road_frontage: '',
+      setback_front: (defaultValues as Record<string, unknown>)?.setback_front as number ?? undefined,
+      setback_rear: (defaultValues as Record<string, unknown>)?.setback_rear as number ?? undefined,
+      setback_left: (defaultValues as Record<string, unknown>)?.setback_left as number ?? undefined,
+      setback_right: (defaultValues as Record<string, unknown>)?.setback_right as number ?? undefined,
+      historic_district: (defaultValues as Record<string, unknown>)?.historic_district as boolean || false,
+      water_available: (defaultValues as Record<string, unknown>)?.water_available as boolean || false,
+      sewer_available: (defaultValues as Record<string, unknown>)?.sewer_available as boolean || false,
+      electric_available: (defaultValues as Record<string, unknown>)?.electric_available as boolean || false,
       floor_plan_id: defaultValues?.floor_plan_id || '',
-      garage_position: defaultValues?.garage_position || '',
-      survey_status: defaultValues?.survey_status || '',
+      garage_position: (defaultValues as Record<string, unknown>)?.garage_position as string || '',
+      survey_complete: (defaultValues as Record<string, unknown>)?.survey_complete as boolean || false,
       lot_width: defaultValues?.lot_width ?? undefined,
       lot_depth: defaultValues?.lot_depth ?? undefined,
-      lot_sqft: defaultValues?.lot_sqft ?? undefined,
-      lot_acreage: defaultValues?.lot_acreage ?? undefined,
+      lot_sqft: (defaultValues as Record<string, unknown>)?.lot_sqft as number ?? undefined,
       total_acreage: defaultValues?.total_acreage ?? undefined,
-      estimated_lots: defaultValues?.estimated_lots ?? undefined,
-      zoning_required: defaultValues?.zoning_required || false,
+      estimated_total_lots: (defaultValues as Record<string, unknown>)?.estimated_total_lots as number ?? undefined,
+      zoning_required: (defaultValues as Record<string, unknown>)?.zoning_required ? true : false,
       preliminary_plat_status: defaultValues?.preliminary_plat_status || '',
       target_builders: defaultValues?.target_builders || '',
-      infrastructure_estimate: defaultValues?.infrastructure_estimate ?? undefined,
+      infrastructure_scope_estimate: (defaultValues as Record<string, unknown>)?.infrastructure_scope_estimate as number ?? undefined,
       projected_purchase_price: defaultValues?.projected_purchase_price ?? undefined,
       projected_sale_price: defaultValues?.projected_sale_price ?? undefined,
-      projected_arv: defaultValues?.projected_arv ?? undefined,
-      date_offer: defaultValues?.date_offer || '',
-      date_contract: defaultValues?.date_contract || '',
-      date_dd_expiration: defaultValues?.date_dd_expiration || '',
-      date_closing: defaultValues?.date_closing || '',
-      notes: defaultValues?.notes || '',
+      date_identified: (defaultValues as Record<string, unknown>)?.date_identified as string || '',
+      date_under_contract: (defaultValues as Record<string, unknown>)?.date_under_contract as string || '',
+      due_diligence_deadline: (defaultValues as Record<string, unknown>)?.due_diligence_deadline as string || '',
+      projected_close_date: (defaultValues as Record<string, unknown>)?.projected_close_date as string || '',
+      notes: (defaultValues as Record<string, unknown>)?.notes as string || '',
     },
   })
 
@@ -192,21 +188,21 @@ export function OpportunityForm({
       const [usersRes, entitiesRes, plansRes] = await Promise.all([
         supabase
           .from('profiles')
-          .select('id, full_name')
-          .order('full_name'),
+          .select('id, first_name, last_name')
+          .order('last_name'),
         supabase
           .from('entities')
           .select('id, name')
           .order('name'),
         supabase
           .from('floor_plans')
-          .select('id, name, sqft')
+          .select('id, name, square_footage')
           .order('name'),
       ])
 
-      if (usersRes.data) setUsers(usersRes.data as { id: string; full_name: string }[])
-      if (entitiesRes.data) setEntities(entitiesRes.data as { id: string; name: string }[])
-      if (plansRes.data) setFloorPlans(plansRes.data as { id: string; name: string; sqft: number }[])
+      if (usersRes.data) setUsers(usersRes.data as unknown as { id: string; first_name: string | null; last_name: string | null }[])
+      if (entitiesRes.data) setEntities(entitiesRes.data as unknown as { id: string; name: string }[])
+      if (plansRes.data) setFloorPlans(plansRes.data as unknown as { id: string; name: string; square_footage: number | null }[])
     }
 
     fetchRefData()
@@ -226,7 +222,7 @@ export function OpportunityForm({
     if (step === 1) {
       const valid = await form.trigger([
         'type',
-        'address_line1',
+        'address_street',
         'address_city',
         'address_state',
         'address_zip',
@@ -241,7 +237,7 @@ export function OpportunityForm({
   }
 
   return (
-    <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+    <form onSubmit={form.handleSubmit(handleSubmit as never)} className="space-y-6">
       {/* Step indicator */}
       <div className="flex items-center gap-2">
         {[1, 2, 3].map((s) => (
@@ -321,15 +317,15 @@ export function OpportunityForm({
 
             {/* Address */}
             <div className="space-y-1.5">
-              <Label htmlFor="address_line1">Street Address *</Label>
+              <Label htmlFor="address_street">Street Address *</Label>
               <Input
-                id="address_line1"
-                {...form.register('address_line1')}
+                id="address_street"
+                {...form.register('address_street')}
                 placeholder="123 Main Street"
               />
-              {form.formState.errors.address_line1 && (
+              {form.formState.errors.address_street && (
                 <p className="text-xs text-destructive">
-                  {form.formState.errors.address_line1.message}
+                  {form.formState.errors.address_street.message}
                 </p>
               )}
             </div>
@@ -387,10 +383,10 @@ export function OpportunityForm({
 
             {/* Parcel / TMS */}
             <div className="space-y-1.5">
-              <Label htmlFor="parcel_tms">Parcel / TMS Number</Label>
+              <Label htmlFor="parcel_tms_number">Parcel / TMS Number</Label>
               <Input
-                id="parcel_tms"
-                {...form.register('parcel_tms')}
+                id="parcel_tms_number"
+                {...form.register('parcel_tms_number')}
                 placeholder="460-00-00-123"
               />
             </div>
@@ -428,7 +424,7 @@ export function OpportunityForm({
                   <SelectContent>
                     {users.map((u) => (
                       <SelectItem key={u.id} value={u.id}>
-                        {u.full_name}
+                        {[u.first_name, u.last_name].filter(Boolean).join(' ') || 'Unnamed'}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -438,8 +434,8 @@ export function OpportunityForm({
               <div className="space-y-1.5">
                 <Label>Owner Entity</Label>
                 <Select
-                  value={form.watch('entity_id') || ''}
-                  onValueChange={(v) => form.setValue('entity_id', v)}
+                  value={form.watch('owner_entity_id') || ''}
+                  onValueChange={(v) => form.setValue('owner_entity_id', v)}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select entity" />
@@ -473,7 +469,7 @@ export function OpportunityForm({
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
               <div className="space-y-1.5">
                 <Label>Zoning</Label>
-                <Input {...form.register('zoning')} placeholder="R-4" />
+                <Input {...form.register('zoning_current')} placeholder="R-4" />
               </div>
               <div className="space-y-1.5">
                 <Label>Build Type</Label>
@@ -485,32 +481,20 @@ export function OpportunityForm({
                     <SelectValue placeholder="Select" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="new_construction">
-                      New Construction
-                    </SelectItem>
-                    <SelectItem value="teardown_rebuild">
-                      Teardown & Rebuild
-                    </SelectItem>
-                    <SelectItem value="renovation">Renovation</SelectItem>
+                    <SelectItem value="spec">Spec</SelectItem>
+                    <SelectItem value="pre_sale">Pre-Sale</SelectItem>
+                    <SelectItem value="custom">Custom</SelectItem>
+                    <SelectItem value="model">Model</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
-              <div className="space-y-1.5">
-                <Label>Survey Status</Label>
-                <Select
-                  value={form.watch('survey_status') || ''}
-                  onValueChange={(v) => form.setValue('survey_status', v)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="not_started">Not Started</SelectItem>
-                    <SelectItem value="ordered">Ordered</SelectItem>
-                    <SelectItem value="completed">Completed</SelectItem>
-                    <SelectItem value="existing">Existing on File</SelectItem>
-                  </SelectContent>
-                </Select>
+              <div className="flex items-center justify-between rounded-lg border border-border p-3">
+                <Label htmlFor="survey_complete">Survey Complete</Label>
+                <Switch
+                  id="survey_complete"
+                  checked={form.watch('survey_complete')}
+                  onCheckedChange={(v) => form.setValue('survey_complete', v)}
+                />
               </div>
             </div>
 
@@ -519,8 +503,8 @@ export function OpportunityForm({
               <div className="space-y-1.5">
                 <Label>Road Type</Label>
                 <Select
-                  value={form.watch('road_type') || ''}
-                  onValueChange={(v) => form.setValue('road_type', v)}
+                  value={form.watch('road_surrounding') || ''}
+                  onValueChange={(v) => form.setValue('road_surrounding', v)}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select" />
@@ -589,37 +573,37 @@ export function OpportunityForm({
             {/* Toggles */}
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div className="flex items-center justify-between rounded-lg border border-border p-3">
-                <Label htmlFor="historic_overlay">Historic Overlay</Label>
+                <Label htmlFor="historic_district">Historic District</Label>
                 <Switch
-                  id="historic_overlay"
-                  checked={form.watch('historic_overlay')}
+                  id="historic_district"
+                  checked={form.watch('historic_district')}
                   onCheckedChange={(v) =>
-                    form.setValue('historic_overlay', v)
+                    form.setValue('historic_district', v)
                   }
                 />
               </div>
               <div className="flex items-center justify-between rounded-lg border border-border p-3">
-                <Label htmlFor="has_water">Water Available</Label>
+                <Label htmlFor="water_available">Water Available</Label>
                 <Switch
-                  id="has_water"
-                  checked={form.watch('has_water')}
-                  onCheckedChange={(v) => form.setValue('has_water', v)}
+                  id="water_available"
+                  checked={form.watch('water_available')}
+                  onCheckedChange={(v) => form.setValue('water_available', v)}
                 />
               </div>
               <div className="flex items-center justify-between rounded-lg border border-border p-3">
-                <Label htmlFor="has_sewer">Sewer Available</Label>
+                <Label htmlFor="sewer_available">Sewer Available</Label>
                 <Switch
-                  id="has_sewer"
-                  checked={form.watch('has_sewer')}
-                  onCheckedChange={(v) => form.setValue('has_sewer', v)}
+                  id="sewer_available"
+                  checked={form.watch('sewer_available')}
+                  onCheckedChange={(v) => form.setValue('sewer_available', v)}
                 />
               </div>
               <div className="flex items-center justify-between rounded-lg border border-border p-3">
-                <Label htmlFor="has_electric">Electric Available</Label>
+                <Label htmlFor="electric_available">Electric Available</Label>
                 <Switch
-                  id="has_electric"
-                  checked={form.watch('has_electric')}
-                  onCheckedChange={(v) => form.setValue('has_electric', v)}
+                  id="electric_available"
+                  checked={form.watch('electric_available')}
+                  onCheckedChange={(v) => form.setValue('electric_available', v)}
                 />
               </div>
             </div>
@@ -638,7 +622,7 @@ export function OpportunityForm({
                   <SelectContent>
                     {floorPlans.map((fp) => (
                       <SelectItem key={fp.id} value={fp.id}>
-                        {fp.name} ({fp.sqft.toLocaleString()} SF)
+                        {fp.name} ({(fp.square_footage ?? 0).toLocaleString()} SF)
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -654,9 +638,9 @@ export function OpportunityForm({
                     <SelectValue placeholder="Select" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="front_load">Front Load</SelectItem>
-                    <SelectItem value="side_load">Side Load</SelectItem>
-                    <SelectItem value="rear_load">Rear Load</SelectItem>
+                    <SelectItem value="front_entry">Front Entry</SelectItem>
+                    <SelectItem value="side_entry">Side Entry</SelectItem>
+                    <SelectItem value="rear_entry">Rear Entry</SelectItem>
                     <SelectItem value="detached">Detached</SelectItem>
                     <SelectItem value="none">None</SelectItem>
                   </SelectContent>
@@ -705,7 +689,7 @@ export function OpportunityForm({
                   <Input
                     type="number"
                     step="0.01"
-                    {...form.register('lot_acreage')}
+                    {...form.register('total_acreage')}
                     placeholder="0.14"
                   />
                 </div>
@@ -739,7 +723,7 @@ export function OpportunityForm({
                 <Label>Estimated Lots</Label>
                 <Input
                   type="number"
-                  {...form.register('estimated_lots')}
+                  {...form.register('estimated_total_lots')}
                   placeholder="45"
                 />
               </div>
@@ -787,7 +771,7 @@ export function OpportunityForm({
               <Label>Infrastructure Estimate ($)</Label>
               <Input
                 type="number"
-                {...form.register('infrastructure_estimate')}
+                {...form.register('infrastructure_scope_estimate')}
                 placeholder="500000"
               />
             </div>
@@ -811,7 +795,7 @@ export function OpportunityForm({
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div className="space-y-1.5">
                   <Label>Zoning</Label>
-                  <Input {...form.register('zoning')} placeholder="Zoning" />
+                  <Input {...form.register('zoning_current')} placeholder="Zoning" />
                 </div>
                 <div className="space-y-1.5">
                   <Label>Total Acreage</Label>
@@ -847,7 +831,7 @@ export function OpportunityForm({
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div className="space-y-1.5">
                 <Label>Projected Purchase Price ($)</Label>
                 <Input
@@ -864,32 +848,24 @@ export function OpportunityForm({
                   placeholder="350000"
                 />
               </div>
-              <div className="space-y-1.5">
-                <Label>Projected ARV ($)</Label>
-                <Input
-                  type="number"
-                  {...form.register('projected_arv')}
-                  placeholder="365000"
-                />
-              </div>
             </div>
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
               <div className="space-y-1.5">
-                <Label>Offer Date</Label>
-                <Input type="date" {...form.register('date_offer')} />
+                <Label>Date Identified</Label>
+                <Input type="date" {...form.register('date_identified')} />
               </div>
               <div className="space-y-1.5">
-                <Label>Contract Date</Label>
-                <Input type="date" {...form.register('date_contract')} />
+                <Label>Under Contract</Label>
+                <Input type="date" {...form.register('date_under_contract')} />
               </div>
               <div className="space-y-1.5">
-                <Label>DD Expiration</Label>
-                <Input type="date" {...form.register('date_dd_expiration')} />
+                <Label>DD Deadline</Label>
+                <Input type="date" {...form.register('due_diligence_deadline')} />
               </div>
               <div className="space-y-1.5">
-                <Label>Closing Date</Label>
-                <Input type="date" {...form.register('date_closing')} />
+                <Label>Projected Close</Label>
+                <Input type="date" {...form.register('projected_close_date')} />
               </div>
             </div>
 

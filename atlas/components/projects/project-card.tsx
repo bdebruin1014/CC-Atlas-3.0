@@ -26,13 +26,16 @@ interface ProjectCardProps {
 export function ProjectCard({ project }: ProjectCardProps) {
   const router = useRouter()
 
+  const budgetTotal = project.budget_total ?? 0
+  const actualCost = project.actual_total_cost ?? 0
+
   const budgetPct =
-    project.total_budget > 0
-      ? Math.min((project.current_spend / project.total_budget) * 100, 100)
+    budgetTotal > 0
+      ? Math.min((actualCost / budgetTotal) * 100, 100)
       : 0
 
-  const overBudget = project.current_spend > project.total_budget
-  const budgetBarColor = getBudgetHealthColor(project.current_spend, project.total_budget)
+  const overBudget = actualCost > budgetTotal
+  const budgetBarColor = getBudgetHealthColor(actualCost, budgetTotal)
 
   return (
     <Card
@@ -68,13 +71,13 @@ export function ProjectCard({ project }: ProjectCardProps) {
         </h3>
 
         {/* Address */}
-        {project.address && (
+        {project.address_street && (
           <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-3">
             <MapPin className="h-3 w-3 shrink-0" />
             <span className="truncate">
-              {project.address}
-              {project.city ? `, ${project.city}` : ""}
-              {project.state ? `, ${project.state}` : ""}
+              {project.address_street}
+              {project.address_city ? `, ${project.address_city}` : ""}
+              {project.address_state ? `, ${project.address_state}` : ""}
             </span>
           </div>
         )}
@@ -92,7 +95,7 @@ export function ProjectCard({ project }: ProjectCardProps) {
           <div className="flex items-center justify-between text-xs">
             <span className="text-muted-foreground">Budget</span>
             <span className={cn("font-medium", overBudget && "text-red-600 dark:text-red-400")}>
-              {formatCurrency(project.current_spend, { compact: true })} / {formatCurrency(project.total_budget, { compact: true })}
+              {formatCurrency(actualCost, { compact: true })} / {formatCurrency(budgetTotal, { compact: true })}
             </span>
           </div>
           <div className="h-2 w-full rounded-full bg-muted overflow-hidden">
@@ -105,7 +108,7 @@ export function ProjectCard({ project }: ProjectCardProps) {
             <span>{formatPercent(budgetPct, 0)} used</span>
             {overBudget && (
               <span className="text-red-600 dark:text-red-400 font-medium">
-                {formatCurrency(project.current_spend - project.total_budget, { compact: true })} over
+                {formatCurrency(actualCost - budgetTotal, { compact: true })} over
               </span>
             )}
           </div>

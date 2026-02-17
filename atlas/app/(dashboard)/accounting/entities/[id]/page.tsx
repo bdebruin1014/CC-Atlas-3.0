@@ -30,59 +30,52 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Separator } from "@/components/ui/separator"
 import { createClient } from "@/lib/supabase/client"
-import type { Entity, EntityUseType } from "@/lib/types/accounting"
+import type { Entity, EntityUseType, EntityStatus, EntityLegalType } from "@/lib/types/accounting"
 import {
   ENTITY_USE_TYPE_LABELS,
   ENTITY_LEGAL_TYPE_LABELS,
 } from "@/lib/types/accounting"
 
 // ---------------------------------------------------------------------------
-// Mock data for demo when entity not found via Supabase
+// DB -> UI mapping (mirrors entities/page.tsx)
 // ---------------------------------------------------------------------------
 
-const MOCK_ENTITY: Entity = {
-  id: "e3",
-  organization_id: "org1",
-  name: "SPE - Greenview Phase I",
-  legal_name: "RCH Greenview Phase I LLC",
-  use_type: "single_purpose_entity",
-  legal_type: "llc",
-  ein: "34-5678901",
-  state_of_formation: "SC",
-  formation_date: "2022-06-01",
-  registered_agent: "CT Corporation",
-  parent_entity_id: "e2",
-  status: "active",
-  notes: "Single-purpose entity for the Greenview Phase I residential development. 48 townhome units across 12 buildings.",
-  created_at: "2022-06-01T00:00:00Z",
-  updated_at: "2024-01-01T00:00:00Z",
+function mapDbUseType(dbValue: string | null): EntityUseType {
+  if (dbValue === "spe") return "single_purpose_entity"
+  if (dbValue === "other") return "operating_company"
+  return (dbValue as EntityUseType) ?? "operating_company"
 }
 
-const MOCK_PARENT: Entity = {
-  id: "e2",
-  organization_id: "org1",
-  name: "Red Cedar Homes SC LLC",
-  legal_name: "Red Cedar Homes SC LLC",
-  use_type: "operating_company",
-  legal_type: "llc",
-  ein: "23-4567890",
-  state_of_formation: "SC",
-  formation_date: "2020-03-01",
-  registered_agent: "CT Corporation",
-  parent_entity_id: "e1",
-  status: "active",
-  notes: null,
-  created_at: "2020-03-01T00:00:00Z",
-  updated_at: "2024-01-01T00:00:00Z",
+function mapDbLegalType(dbValue: string | null): EntityLegalType {
+  const mapping: Record<string, EntityLegalType> = {
+    llc: "llc", s_corp: "s_corp", partnership: "lp", c_corp: "corp",
+    sole_proprietorship: "sole_proprietorship", trust: "trust", lp: "lp", corp: "corp",
+  }
+  return mapping[dbValue ?? ""] ?? "llc"
 }
 
-const MOCK_FINANCIALS = {
-  totalAssets: 4_850_000,
-  totalLiabilities: 2_450_000,
-  netEquity: 2_400_000,
-  cashBalance: 385_000,
-  pendingTransactions: 7,
-  investorCount: 4,
+function mapDbEntity(row: Record<string, unknown>): Entity {
+  const isActive = row.is_active as boolean | undefined
+  let status: EntityStatus = "active"
+  if (isActive === false) status = "inactive"
+
+  return {
+    id: row.id as string,
+    organization_id: (row.organization_id as string) ?? "",
+    name: row.name as string,
+    legal_name: (row.name as string) ?? null,
+    use_type: mapDbUseType(row.use_type as string | null),
+    legal_type: mapDbLegalType(row.legal_type as string | null),
+    ein: (row.ein as string) ?? null,
+    state_of_formation: (row.state_of_formation as string) ?? null,
+    formation_date: (row.formation_date as string) ?? null,
+    registered_agent: (row.registered_agent as string) ?? null,
+    parent_entity_id: (row.parent_entity_id as string) ?? null,
+    status,
+    notes: null,
+    created_at: (row.created_at as string) ?? "",
+    updated_at: (row.updated_at as string) ?? "",
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -124,7 +117,7 @@ export default function EntityDetailPage({ params }: { params: Promise<{ id: str
         .single()
 
       if (data) {
-        const e = data as Entity
+        const e = mapDbEntity(data as unknown as Record<string, unknown>)
         setEntity(e)
 
         // Load parent if exists
@@ -134,7 +127,7 @@ export default function EntityDetailPage({ params }: { params: Promise<{ id: str
             .select("*")
             .eq("id", e.parent_entity_id)
             .single()
-          if (parentData) setParentEntity(parentData as Entity)
+          if (parentData) setParentEntity(mapDbEntity(parentData as unknown as Record<string, unknown>))
         }
       } else {
         // Use mock data for demo

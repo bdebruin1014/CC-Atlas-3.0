@@ -12,6 +12,7 @@ import { Toaster } from "@/components/ui/toaster"
 import { Skeleton } from "@/components/ui/skeleton"
 import { cn } from "@/lib/utils/format"
 import { useUIStore } from "@/lib/stores/ui-store"
+import { OrgGuard } from "@/components/shared/org-guard"
 
 interface UserProfile {
   id: string
@@ -123,7 +124,9 @@ export default function DashboardLayout({
           )}
         >
           <Header user={user} />
-          <main className="flex-1 overflow-y-auto p-6">{children}</main>
+          <main className="flex-1 overflow-y-auto p-6">
+            <OrgGuard>{children}</OrgGuard>
+          </main>
         </div>
       </div>
       <SearchCommand />

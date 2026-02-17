@@ -51,7 +51,7 @@ export function OpportunityCard({ opportunity, onClick }: OpportunityCardProps) 
   const typeColor = OPPORTUNITY_TYPE_COLORS[opportunity.type] ?? '#6b7280'
 
   const address =
-    opportunity.address_line1 ||
+    opportunity.address_street ||
     opportunity.name ||
     'Untitled Opportunity'
 

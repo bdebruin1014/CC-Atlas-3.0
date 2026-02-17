@@ -136,64 +136,63 @@ export const OPPORTUNITY_SOURCES = [
 export interface Opportunity {
   id: string
   organization_id: string
-  name: string
+  name: string | null
   type: OpportunityType
-  stage: string
+  current_stage: string
   source: string | null
   assigned_to: string | null
-  entity_id: string | null
+  owner_entity_id: string | null
 
-  // Address
-  address_line1: string | null
+  // Address — DB column is address_street, NOT address_line1
+  address_street: string | null
   address_city: string | null
   address_county: string | null
   address_state: string | null
   address_zip: string | null
-  parcel_tms: string | null
+  parcel_tms_number: string | null
 
   // Financial
   projected_purchase_price: number | null
   projected_sale_price: number | null
-  projected_arv: number | null
+  projected_profit: number | null
+  projected_margin_pct: number | null
 
   // Key dates
-  date_offer: string | null
-  date_contract: string | null
-  date_dd_expiration: string | null
-  date_closing: string | null
+  date_identified: string | null
+  date_under_contract: string | null
+  due_diligence_deadline: string | null
+  projected_close_date: string | null
 
   // Scattered lot fields
-  zoning: string | null
+  zoning_current: string | null
   build_type: string | null
-  road_type: string | null
-  road_frontage: string | null
-  setback_front: number | null
-  setback_rear: number | null
-  setback_left: number | null
-  setback_right: number | null
-  historic_overlay: boolean | null
-  has_water: boolean | null
-  has_sewer: boolean | null
-  has_electric: boolean | null
+  road_surrounding: string | null
+  buffers: string | null
+  historic_district: boolean
+  water_available: boolean | null
+  sewer_available: boolean | null
+  electric_available: boolean | null
+  gas_available: boolean | null
   floor_plan_id: string | null
+  best_fit_model: string | null
   garage_position: string | null
-  survey_status: string | null
+  survey_complete: boolean
   lot_width: number | null
   lot_depth: number | null
   lot_sqft: number | null
-  lot_acreage: number | null
+  total_acreage: number | null
 
   // Lot development fields
-  total_acreage: number | null
-  estimated_lots: number | null
-  zoning_required: boolean | null
+  estimated_total_lots: number | null
+  zoning_required: string | null
   preliminary_plat_status: string | null
   target_builders: string | null
-  infrastructure_estimate: number | null
+  infrastructure_scope_estimate: number | null
 
-  // Meta
-  notes: string | null
-  archived: boolean
+  // Status
+  status: string
+  converted_to_project_id: string | null
+  archived_reason: string | null
   created_at: string
   updated_at: string
 
@@ -210,7 +209,7 @@ export interface Opportunity {
   floor_plan?: {
     id: string
     name: string
-    sqft: number
+    square_footage: number
     base_cost: number
   } | null
 }
@@ -276,7 +275,7 @@ export interface FloorPlan {
   id: string
   organization_id: string
   name: string
-  sqft: number
+  square_footage: number
   base_cost: number
   bedrooms: number | null
   bathrooms: number | null
