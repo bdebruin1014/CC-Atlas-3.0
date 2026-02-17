@@ -39,6 +39,8 @@ import {
   type OpportunityType,
 } from '@/lib/types/opportunities'
 import { toast } from '@/lib/hooks/use-toast'
+import { ConversionDialog } from '@/components/opportunities/conversion-dialog'
+import type { ProjectType } from '@/lib/hooks/use-projects'
 import {
   ArrowLeft,
   Pencil,
@@ -56,6 +58,8 @@ import {
   Zap,
   Trees,
   Home,
+  CheckCircle2,
+  ExternalLink,
 } from 'lucide-react'
 
 // ---------------------------------------------------------------------------
@@ -106,6 +110,8 @@ export default function OpportunityDetailPage() {
   const [opportunity, setOpportunity] = useState<Opportunity | null>(null)
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState('overview')
+  const [showConvertDialog, setShowConvertDialog] = useState(false)
+  const [converting, setConverting] = useState(false)
 
   const fetchOpportunity = useCallback(async () => {
     setLoading(true)
@@ -178,12 +184,44 @@ export default function OpportunityDetailPage() {
     }
   }
 
-  const handleConvert = async () => {
-    toast({
-      title: 'Convert to Project',
-      description:
-        'This will create a new project from this opportunity. Feature coming soon.',
-    })
+  const handleConvert = async (data: {
+    project_name: string
+    project_type: ProjectType
+    owner_entity_id: string | null
+    builder_entity_id: string | null
+  }) => {
+    setConverting(true)
+    try {
+      const res = await fetch(`/api/opportunities/${id}/convert`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      })
+
+      if (!res.ok) {
+        const err = await res.json()
+        throw new Error(err.error || 'Conversion failed')
+      }
+
+      const { data: result } = await res.json()
+
+      toast({
+        title: 'Success',
+        description: 'Opportunity converted to project successfully',
+      })
+
+      setShowConvertDialog(false)
+      router.push(`/projects/${result.project_id}`)
+    } catch (err) {
+      toast({
+        title: 'Error',
+        description:
+          err instanceof Error ? err.message : 'Failed to convert opportunity.',
+        variant: 'destructive',
+      })
+    } finally {
+      setConverting(false)
+    }
   }
 
   // ---- Loading ----
@@ -288,18 +326,47 @@ export default function OpportunityDetailPage() {
         </div>
 
         {/* Action buttons */}
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <Link href={`/opportunities/${id}/deal-analyzer`}>
             <Button variant="outline" size="sm">
               <DollarSign className="mr-1.5 h-4 w-4" />
               Deal Analyzer
             </Button>
           </Link>
-          {opportunity.stage === 'closed_won' && (
-            <Button size="sm" onClick={handleConvert}>
-              <FolderUp className="mr-1.5 h-4 w-4" />
-              Convert to Project
-            </Button>
+          {opportunity.status === 'converted' && opportunity.converted_to_project_id ? (
+            <Link href={`/projects/${opportunity.converted_to_project_id}`}>
+              <Badge
+                className="cursor-pointer gap-1.5 px-3 py-1.5"
+                style={{
+                  backgroundColor: '#1a563215',
+                  color: '#1a5632',
+                  borderColor: '#1a563240',
+                }}
+              >
+                <CheckCircle2 className="h-3.5 w-3.5" />
+                Converted
+                <ExternalLink className="h-3 w-3" />
+              </Badge>
+            </Link>
+          ) : (
+            (() => {
+              const underContractIdx = stages.findIndex(
+                (s) => s.id === 'under_contract'
+              )
+              const isClosable =
+                underContractIdx >= 0 && currentStageIndex >= underContractIdx
+              return isClosable ? (
+                <Button
+                  size="sm"
+                  onClick={() => setShowConvertDialog(true)}
+                  style={{ backgroundColor: '#1a5632' }}
+                  className="text-white hover:opacity-90"
+                >
+                  <FolderUp className="mr-1.5 h-4 w-4" />
+                  Convert to Project
+                </Button>
+              ) : null
+            })()
           )}
           <Button
             variant="outline"
@@ -825,6 +892,17 @@ export default function OpportunityDetailPage() {
           <ActivityTab opportunityId={id} />
         </TabsContent>
       </Tabs>
+
+      {/* Convert to Project Dialog */}
+      {opportunity && (
+        <ConversionDialog
+          open={showConvertDialog}
+          onOpenChange={setShowConvertDialog}
+          opportunity={opportunity}
+          onConvert={handleConvert}
+          converting={converting}
+        />
+      )}
     </div>
   )
 }
