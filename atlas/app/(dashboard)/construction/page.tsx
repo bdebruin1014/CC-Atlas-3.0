@@ -10,6 +10,11 @@ import {
   ChevronRight,
   MapPin,
   X,
+  FileText,
+  CreditCard,
+  Receipt,
+  BarChart3,
+  Shield,
 } from "lucide-react"
 import { cn, formatCurrency, formatPercent, formatDate } from "@/lib/utils/format"
 import { Button } from "@/components/ui/button"
@@ -111,6 +116,77 @@ export default function ConstructionDashboardPage() {
         pendingInspections={pendingInspections}
         openChangeOrders={openCOs.length}
       />
+
+      {/* Accounting Quick Access */}
+      <div>
+        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+          Construction Accounting
+        </h2>
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+          {[
+            {
+              label: "Invoices",
+              href: "/construction/invoices",
+              icon: FileText,
+              description: "AP invoices & approvals",
+              color: "text-blue-600 bg-blue-50",
+            },
+            {
+              label: "Payments",
+              href: "/construction/payments",
+              icon: CreditCard,
+              description: "Payment runs & history",
+              color: "text-green-600 bg-green-50",
+            },
+            {
+              label: "AR / Draws",
+              href: "/construction/ar",
+              icon: Receipt,
+              description: "Receivables & draw requests",
+              color: "text-purple-600 bg-purple-50",
+            },
+            {
+              label: "Job Cost",
+              href: "/construction/job-cost",
+              icon: BarChart3,
+              description: "Cost tracking & analysis",
+              color: "text-orange-600 bg-orange-50",
+            },
+            {
+              label: "Vendors",
+              href: "/construction/vendors",
+              icon: Users,
+              description: "Vendor management & 1099s",
+              color: "text-slate-600 bg-slate-50",
+            },
+            {
+              label: "Warranty",
+              href: "/construction/warranty",
+              icon: Shield,
+              description: "Warranty claims & tracking",
+              color: "text-amber-600 bg-amber-50",
+            },
+          ].map((item) => (
+            <Card
+              key={item.href}
+              className="group cursor-pointer transition-all hover:shadow-md hover:border-primary/30"
+              onClick={() => router.push(item.href)}
+            >
+              <CardContent className="p-4 flex flex-col gap-2">
+                <div className={cn("w-9 h-9 rounded-lg flex items-center justify-center", item.color)}>
+                  <item.icon className="h-5 w-5" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-semibold group-hover:text-primary transition-colors">
+                    {item.label}
+                  </h3>
+                  <p className="text-xs text-muted-foreground">{item.description}</p>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
 
       {/* Filters */}
       <div className="flex flex-wrap items-center gap-3">
