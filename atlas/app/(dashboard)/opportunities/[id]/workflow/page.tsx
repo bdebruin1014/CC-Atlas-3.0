@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
@@ -11,13 +11,13 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Skeleton } from '@/components/ui/skeleton'
 import { cn, formatDate } from '@/lib/utils/format'
-import { createClient } from '@/lib/supabase/client'
 import {
   useWorkflowInstance,
   useUpdateTaskStatus,
+  useAssignTask,
+  useOrgProfiles,
   type MilestoneInstance,
   type TaskInstance,
 } from '@/lib/hooks/use-workflow'
@@ -33,21 +33,15 @@ import {
   Flag,
   Loader2,
   Ban,
+  SkipForward,
+  User,
 } from 'lucide-react'
+import { TaskCard } from '@/components/workflow/task-card'
+import type { TaskInstance as TaskCardInstance } from '@/components/workflow/task-card'
 
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
-
-function getInitials(name: string | undefined | null): string {
-  if (!name) return '?'
-  return name
-    .split(' ')
-    .map((p) => p[0])
-    .join('')
-    .toUpperCase()
-    .slice(0, 2)
-}
 
 const STATUS_CONFIG: Record<
   string,
@@ -102,16 +96,6 @@ function getStatusConfig(status: string) {
 }
 
 // ---------------------------------------------------------------------------
-// Task Status Cycle
-// ---------------------------------------------------------------------------
-
-function nextStatus(current: string): TaskInstance['status'] {
-  if (current === 'not_started') return 'in_progress'
-  if (current === 'in_progress') return 'completed'
-  return 'not_started'
-}
-
-// ---------------------------------------------------------------------------
 // Page Component
 // ---------------------------------------------------------------------------
 
@@ -126,6 +110,8 @@ export default function WorkflowPage() {
   } = useWorkflowInstance('opportunity', opportunityId)
 
   const updateTaskMutation = useUpdateTaskStatus()
+  const assignTaskMutation = useAssignTask()
+  const { data: orgProfiles } = useOrgProfiles()
 
   const [expandedMilestones, setExpandedMilestones] = useState<Set<string>>(
     new Set()
@@ -155,11 +141,10 @@ export default function WorkflowPage() {
 
   // ---- Update task status ----
   const handleTaskStatusChange = useCallback(
-    async (task: TaskInstance) => {
-      const newStatus = nextStatus(task.status)
+    async (taskId: string, newStatus: TaskInstance['status']) => {
       try {
         await updateTaskMutation.mutateAsync({
-          id: task.id,
+          id: taskId,
           status: newStatus,
         })
         toast({ title: 'Task Updated' })
@@ -174,10 +159,67 @@ export default function WorkflowPage() {
     [updateTaskMutation]
   )
 
+  // ---- Skip task ----
+  const handleTaskSkip = useCallback(
+    async (taskId: string, reason: string) => {
+      try {
+        await updateTaskMutation.mutateAsync({
+          id: taskId,
+          status: 'skipped',
+          skip_reason: reason,
+        })
+        toast({ title: 'Task Skipped' })
+      } catch {
+        toast({
+          title: 'Error',
+          description: 'Failed to skip task.',
+          variant: 'destructive',
+        })
+      }
+    },
+    [updateTaskMutation]
+  )
+
+  // ---- Assign task ----
+  const handleTaskAssign = useCallback(
+    async (taskId: string, userId: string | null) => {
+      try {
+        await assignTaskMutation.mutateAsync({
+          taskId,
+          assignedTo: userId,
+        })
+        toast({ title: 'Task Assigned' })
+      } catch {
+        toast({
+          title: 'Error',
+          description: 'Failed to assign task.',
+          variant: 'destructive',
+        })
+      }
+    },
+    [assignTaskMutation]
+  )
+
   // ---- Milestone progress ----
   const milestones = workflowInstance?.milestone_instances ?? []
   const completedCount = milestones.filter(
     (m) => m.status === 'completed'
+  ).length
+
+  // ---- Task progress ----
+  const allTasks = milestones.flatMap((m) => m.task_instances ?? [])
+  const totalTasks = allTasks.length
+  const completedTasks = allTasks.filter(
+    (t) => t.status === 'completed' || t.status === 'skipped'
+  ).length
+  const taskPct =
+    totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0
+  const overdueTasks = allTasks.filter(
+    (t) =>
+      t.due_date &&
+      t.status !== 'completed' &&
+      t.status !== 'skipped' &&
+      new Date(t.due_date) < new Date()
   ).length
 
   // ---- Loading ----
@@ -227,16 +269,26 @@ export default function WorkflowPage() {
       </Link>
 
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Workflow</h1>
-        <p className="text-sm text-muted-foreground">
-          Track milestones and tasks for this opportunity.
-          {workflowInstance.progress_percentage != null && (
-            <span className="ml-2 font-medium">
-              Overall progress: {Math.round(workflowInstance.progress_percentage)}%
-            </span>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Workflow</h1>
+          <p className="text-sm text-muted-foreground">
+            Track milestones and tasks for this opportunity.
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          {overdueTasks > 0 && (
+            <Badge
+              variant="secondary"
+              className="text-xs bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-200"
+            >
+              {overdueTasks} overdue
+            </Badge>
           )}
-        </p>
+          <Badge variant="secondary" className="text-xs">
+            {completedTasks}/{totalTasks} tasks ({taskPct}%)
+          </Badge>
+        </div>
       </div>
 
       {/* Milestone progress bar */}
@@ -289,9 +341,16 @@ export default function WorkflowPage() {
           const statusCfg = getStatusConfig(milestone.status)
           const StatusIcon = statusCfg.icon
           const tasks = milestone.task_instances ?? []
-          const totalTasks = tasks.length
-          const completedTasks = tasks.filter(
-            (t) => t.status === 'completed'
+          const mTotalTasks = tasks.length
+          const mCompletedTasks = tasks.filter(
+            (t) => t.status === 'completed' || t.status === 'skipped'
+          ).length
+          const mOverdueTasks = tasks.filter(
+            (t) =>
+              t.due_date &&
+              t.status !== 'completed' &&
+              t.status !== 'skipped' &&
+              new Date(t.due_date) < new Date()
           ).length
 
           return (
@@ -314,7 +373,12 @@ export default function WorkflowPage() {
                         {milestone.name}
                       </CardTitle>
                       <p className="text-xs text-muted-foreground">
-                        {completedTasks} / {totalTasks} tasks complete
+                        {mCompletedTasks} / {mTotalTasks} tasks complete
+                        {mOverdueTasks > 0 && (
+                          <span className="ml-1 text-red-600 font-medium">
+                            ({mOverdueTasks} overdue)
+                          </span>
+                        )}
                         {milestone.planned_start_date && (
                           <>
                             {' '}
@@ -356,93 +420,22 @@ export default function WorkflowPage() {
                       No tasks in this milestone.
                     </p>
                   ) : (
-                    <div className="rounded-lg border border-border divide-y divide-border">
+                    <div className="space-y-2">
                       {tasks.map((task) => {
-                        const taskStatus = getStatusConfig(task.status)
-                        const TaskIcon = taskStatus.icon
                         const isUpdating =
                           updateTaskMutation.isPending &&
                           updateTaskMutation.variables?.id === task.id
 
                         return (
-                          <div
+                          <TaskCard
                             key={task.id}
-                            className={cn(
-                              'flex items-center gap-3 px-4 py-2.5',
-                              task.is_required && 'border-l-2 border-l-primary'
-                            )}
-                          >
-                            {/* Status toggle */}
-                            <button
-                              className="flex-shrink-0"
-                              onClick={() => handleTaskStatusChange(task)}
-                              disabled={isUpdating}
-                            >
-                              {isUpdating ? (
-                                <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-                              ) : (
-                                <TaskIcon
-                                  className={cn(
-                                    'h-4 w-4',
-                                    taskStatus.color
-                                  )}
-                                />
-                              )}
-                            </button>
-
-                            {/* Task info */}
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2">
-                                <p
-                                  className={cn(
-                                    'text-sm',
-                                    task.status === 'completed' &&
-                                      'line-through text-muted-foreground'
-                                  )}
-                                >
-                                  {task.name}
-                                </p>
-                                {task.is_required && (
-                                  <span className="text-[10px] text-primary font-medium">
-                                    Required
-                                  </span>
-                                )}
-                              </div>
-                              {task.description && (
-                                <p className="text-xs text-muted-foreground truncate">
-                                  {task.description}
-                                </p>
-                              )}
-                            </div>
-
-                            {/* Meta */}
-                            <div className="flex items-center gap-2 flex-shrink-0">
-                              {task.due_date && (
-                                <span
-                                  className={cn(
-                                    'text-xs',
-                                    new Date(task.due_date) < new Date() &&
-                                      task.status !== 'completed'
-                                      ? 'text-destructive font-medium'
-                                      : 'text-muted-foreground'
-                                  )}
-                                >
-                                  {formatDate(task.due_date, {
-                                    short: true,
-                                  })}
-                                </span>
-                              )}
-
-                              {task.assigned_to_name && (
-                                <Badge
-                                  variant="outline"
-                                  className="text-[10px]"
-                                >
-                                  {task.assigned_to_name}
-                                </Badge>
-                              )}
-                            </div>
-                          </div>
+                            task={task as unknown as TaskCardInstance}
+                            onStatusChange={handleTaskStatusChange}
+                            onSkip={handleTaskSkip}
+                            onAssign={handleTaskAssign}
+                            orgProfiles={orgProfiles ?? []}
+                            isUpdating={isUpdating}
+                          />
                         )
                       })}
                     </div>

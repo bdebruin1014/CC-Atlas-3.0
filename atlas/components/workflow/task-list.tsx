@@ -4,6 +4,7 @@ import { useMemo } from "react"
 import { CheckCircle2, ListTodo } from "lucide-react"
 import { cn } from "@/lib/utils/format"
 import { TaskCard, type TaskInstance } from "@/components/workflow/task-card"
+import type { OrgProfile } from "@/lib/hooks/use-workflow"
 
 // ---------------------------------------------------------------------------
 // Props
@@ -12,7 +13,10 @@ interface TaskListProps {
   milestoneInstanceId: string
   tasks: TaskInstance[]
   onStatusChange?: (taskId: string, newStatus: TaskInstance["status"]) => void
-  onAssign?: (taskId: string) => void
+  onSkip?: (taskId: string, reason: string) => void
+  onAssign?: (taskId: string, userId: string | null) => void
+  orgProfiles?: OrgProfile[]
+  updatingTaskId?: string | null
 }
 
 // ---------------------------------------------------------------------------
@@ -22,7 +26,10 @@ export function TaskList({
   milestoneInstanceId,
   tasks,
   onStatusChange,
+  onSkip,
   onAssign,
+  orgProfiles,
+  updatingTaskId,
 }: TaskListProps) {
   // Group tasks by task_list_name
   const groupedTasks = useMemo(() => {
@@ -107,7 +114,10 @@ export function TaskList({
                   key={task.id}
                   task={task}
                   onStatusChange={onStatusChange}
+                  onSkip={onSkip}
                   onAssign={onAssign}
+                  orgProfiles={orgProfiles}
+                  isUpdating={updatingTaskId === task.id}
                 />
               ))}
             </div>

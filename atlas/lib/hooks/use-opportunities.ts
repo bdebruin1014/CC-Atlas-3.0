@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
+import { autoInstantiateWorkflow } from '@/lib/hooks/use-workflow'
 
 // ---------------------------------------------------------------------------
 // Types — aligned to DB schema (migrations 001-008)
@@ -174,8 +175,12 @@ export function useCreateOpportunity() {
       if (error) throw error
       return data as unknown as Opportunity
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: keys.lists() })
+      // Auto-instantiate the matching workflow template
+      if (data.type) {
+        autoInstantiateWorkflow('opportunity', data.id, data.type)
+      }
     },
     onError: (error) => {
       console.error('Failed to create opportunity:', error)

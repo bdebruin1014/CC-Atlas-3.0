@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
+import { autoInstantiateWorkflow } from '@/lib/hooks/use-workflow'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -157,6 +158,10 @@ export function useCreateJob() {
       queryClient.invalidateQueries({
         queryKey: ['projects', 'detail', data.project_id],
       })
+      // Auto-instantiate the construction workflow
+      if (data.type) {
+        autoInstantiateWorkflow('job', data.id, data.type)
+      }
     },
     onError: (error) => {
       console.error('Failed to create job:', error)
