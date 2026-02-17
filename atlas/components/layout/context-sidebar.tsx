@@ -434,8 +434,18 @@ function getDispositionIndexSidebar(): SidebarConfig {
       {
         links: [
           { label: "All Listings", href: "/disposition", icon: Home },
-          { label: "Active", href: "/disposition?status=active", icon: Activity },
-          { label: "Closed", href: "/disposition?status=closed", icon: CheckSquare },
+          { label: "Active Listings", href: "/disposition?status=active", icon: Activity },
+          { label: "Under Contract", href: "/disposition?status=under_contract", icon: Handshake },
+          { label: "Closings", href: "/disposition?status=pending_closing", icon: Gavel },
+        ],
+      },
+      {
+        title: "REPORTS",
+        links: [
+          { label: "Community Reports", href: "/disposition?view=community", icon: Building2 },
+          { label: "Bulk Sales", href: "/disposition?view=bulk_sales", icon: Layers },
+          { label: "Price Changes", href: "/disposition?view=price_changes", icon: TrendingUp },
+          { label: "Reports", href: "/disposition?view=reports", icon: BarChart3 },
         ],
       },
     ],
