@@ -11,6 +11,7 @@ const InstantiateWorkflowSchema = z.object({
   record_id: z.string().uuid(),
   name: z.string().optional(),
   start_date: z.string().optional().nullable(),
+  role_user_mapping: z.record(z.string()).optional(),
 })
 
 const UpdateTaskSchema = z.object({
@@ -21,6 +22,7 @@ const UpdateTaskSchema = z.object({
   assigned_to: z.string().uuid().optional().nullable(),
   notes: z.string().optional().nullable(),
   due_date: z.string().optional().nullable(),
+  skip_reason: z.string().optional().nullable(),
 })
 
 const AdvanceMilestoneSchema = z.object({
@@ -200,6 +202,17 @@ export async function POST(request: Request) {
                 dueDate = d.toISOString().slice(0, 10)
               }
 
+              // Resolve assignee from role mapping
+              let assignedTo: string | null = null
+              if (
+                input.role_user_mapping &&
+                tt.default_assignee_role &&
+                input.role_user_mapping[tt.default_assignee_role]
+              ) {
+                assignedTo =
+                  input.role_user_mapping[tt.default_assignee_role]
+              }
+
               allTaskPayloads.push({
                 milestone_instance_id: mi.id,
                 task_template_id: tt.id,
@@ -209,6 +222,7 @@ export async function POST(request: Request) {
                 sequence: tt.sequence,
                 status: "not_started",
                 due_date: dueDate,
+                assigned_to: assignedTo,
               })
             }
           }
@@ -307,6 +321,11 @@ export async function PATCH(request: Request) {
       }
       if (input.due_date !== undefined) {
         updates.due_date = input.due_date
+      }
+      if (input.skip_reason !== undefined) {
+        updates.notes = input.skip_reason
+          ? `Skip reason: ${input.skip_reason}${input.notes ? `\n${input.notes}` : ''}`
+          : updates.notes
       }
 
       const { data: task, error: updateError } = await supabase

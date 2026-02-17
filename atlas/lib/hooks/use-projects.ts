@@ -2,6 +2,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { createClient } from "@/lib/supabase/client"
+import { autoInstantiateWorkflow } from '@/lib/hooks/use-workflow'
 
 // ---------------------------------------------------------------------------
 // Types — aligned to DB schema (migrations 001-008)
@@ -470,8 +471,12 @@ export function useCreateProject() {
       if (error) throw error
       return data as unknown as Project
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: keys.lists() })
+      // Auto-instantiate the matching workflow template
+      if (data.type) {
+        autoInstantiateWorkflow('project', data.id, data.type)
+      }
     },
     onError: (error) => {
       console.error('Failed to create project:', error)
@@ -607,9 +612,13 @@ export function useConvertOpportunityToProject() {
 
       return projectResult as Project
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: keys.lists() })
       queryClient.invalidateQueries({ queryKey: ['opportunities'] })
+      // Auto-instantiate the matching workflow template for the new project
+      if (data.type) {
+        autoInstantiateWorkflow('project', data.id, data.type)
+      }
     },
     onError: (error) => {
       console.error('Failed to convert opportunity to project:', error)

@@ -23,6 +23,7 @@ import {
 } from "@/components/workflow/milestone-progress"
 import { TaskList } from "@/components/workflow/task-list"
 import type { TaskInstance } from "@/components/workflow/task-card"
+import { useOrgProfiles } from "@/lib/hooks/use-workflow"
 
 // ---------------------------------------------------------------------------
 // Types
@@ -105,6 +106,7 @@ export function WorkflowViewer({
 }: WorkflowViewerProps) {
   const supabase = createClient()
   const { toast } = useToast()
+  const { data: orgProfiles } = useOrgProfiles()
 
   const [workflow, setWorkflow] = useState<WorkflowInstance | null>(null)
   const [loading, setLoading] = useState(true)
@@ -112,6 +114,7 @@ export function WorkflowViewer({
   const [expandedMilestones, setExpandedMilestones] = useState<Set<string>>(
     new Set()
   )
+  const [updatingTaskId, setUpdatingTaskId] = useState<string | null>(null)
 
   // Fetch workflow
   const fetchWorkflow = useCallback(async () => {
@@ -166,7 +169,8 @@ export function WorkflowViewer({
           .order("sequence", { ascending: true })
 
         if (tError) throw tError
-        tasks = taskData || []
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        tasks = (taskData || []) as any
       }
 
       // Group tasks by milestone
@@ -260,40 +264,100 @@ export function WorkflowViewer({
     })
   }
 
-  // Task status change handler
+  // Task status change handler (via API for auto milestone advance)
   async function handleTaskStatusChange(
     taskId: string,
     newStatus: TaskInstance["status"]
   ) {
+    setUpdatingTaskId(taskId)
     try {
-      const updates: Record<string, unknown> = {
-        status: newStatus,
-        updated_at: new Date().toISOString(),
+      const res = await fetch("/api/workflow", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ task_instance_id: taskId, status: newStatus }),
+      })
+
+      if (!res.ok) {
+        const err = await res.json()
+        throw new Error(err.error || "Failed to update task")
       }
-
-      if (newStatus === "completed") {
-        updates.completed_at = new Date().toISOString()
-      } else {
-        updates.completed_at = null
-      }
-
-      const { error } = await supabase
-        .from("task_instances")
-        .update(updates)
-        .eq("id", taskId)
-
-      if (error) throw error
 
       toast({
         title: "Task updated",
         description: `Task marked as ${newStatus.replace("_", " ")}.`,
       })
 
-      // Refresh workflow data
       fetchWorkflow()
     } catch (err: unknown) {
       const message =
         err instanceof Error ? err.message : "Failed to update task"
+      toast({
+        title: "Error",
+        description: message,
+        variant: "destructive",
+      })
+    } finally {
+      setUpdatingTaskId(null)
+    }
+  }
+
+  // Skip task handler
+  async function handleTaskSkip(taskId: string, reason: string) {
+    setUpdatingTaskId(taskId)
+    try {
+      const res = await fetch("/api/workflow", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          task_instance_id: taskId,
+          status: "skipped",
+          skip_reason: reason,
+        }),
+      })
+
+      if (!res.ok) {
+        const err = await res.json()
+        throw new Error(err.error || "Failed to skip task")
+      }
+
+      toast({
+        title: "Task skipped",
+        description: "Task has been marked as skipped.",
+      })
+
+      fetchWorkflow()
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error ? err.message : "Failed to skip task"
+      toast({
+        title: "Error",
+        description: message,
+        variant: "destructive",
+      })
+    } finally {
+      setUpdatingTaskId(null)
+    }
+  }
+
+  // Assign task handler
+  async function handleTaskAssign(taskId: string, userId: string | null) {
+    try {
+      const { error } = await supabase
+        .from("task_instances")
+        .update({ assigned_to: userId })
+        .eq("id", taskId)
+
+      if (error) throw error
+
+      toast({
+        title: "Task assigned",
+        description: userId ? "Task has been reassigned." : "Task unassigned.",
+      })
+
+      fetchWorkflow()
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error ? err.message : "Failed to assign task"
       toast({
         title: "Error",
         description: message,
@@ -359,6 +423,22 @@ export function WorkflowViewer({
     })
   )
 
+  // ---- Overall task progress ----
+  const allTasks = workflow.milestones.flatMap((m) => m.tasks)
+  const totalTasks = allTasks.length
+  const completedTasksAll = allTasks.filter(
+    (t) => t.status === "completed" || t.status === "skipped"
+  ).length
+  const taskProgressPct =
+    totalTasks > 0 ? Math.round((completedTasksAll / totalTasks) * 100) : 0
+  const overdueTasks = allTasks.filter(
+    (t) =>
+      t.due_date &&
+      t.status !== "completed" &&
+      t.status !== "skipped" &&
+      new Date(t.due_date) < new Date()
+  ).length
+
   return (
     <div className={cn("space-y-6", className)}>
       {/* Workflow header */}
@@ -369,19 +449,35 @@ export function WorkflowViewer({
             Status: {workflow.status.replace("_", " ")}
           </p>
         </div>
-        <Badge
-          variant="secondary"
-          className={cn(
-            "text-xs",
-            workflow.status === "completed"
-              ? "bg-green-100 text-green-700"
-              : workflow.status === "in_progress"
-              ? "bg-blue-100 text-blue-700"
-              : "bg-gray-100 text-gray-600"
+        <div className="flex items-center gap-2">
+          {overdueTasks > 0 && (
+            <Badge
+              variant="secondary"
+              className="text-xs bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-200"
+            >
+              {overdueTasks} overdue
+            </Badge>
           )}
-        >
-          {Math.round(workflow.progress_pct)}% complete
-        </Badge>
+          <Badge
+            variant="secondary"
+            className="text-xs bg-muted text-muted-foreground"
+          >
+            {completedTasksAll}/{totalTasks} tasks ({taskProgressPct}%)
+          </Badge>
+          <Badge
+            variant="secondary"
+            className={cn(
+              "text-xs",
+              workflow.status === "completed"
+                ? "bg-green-100 text-green-700"
+                : workflow.status === "in_progress"
+                ? "bg-blue-100 text-blue-700"
+                : "bg-gray-100 text-gray-600"
+            )}
+          >
+            {Math.round(workflow.progress_pct)}% milestones
+          </Badge>
+        </div>
       </div>
 
       {/* Progress bar */}
@@ -493,6 +589,10 @@ export function WorkflowViewer({
                     milestoneInstanceId={milestone.id}
                     tasks={milestone.tasks}
                     onStatusChange={handleTaskStatusChange}
+                    onSkip={handleTaskSkip}
+                    onAssign={handleTaskAssign}
+                    orgProfiles={orgProfiles ?? []}
+                    updatingTaskId={updatingTaskId}
                   />
                 </CardContent>
               )}

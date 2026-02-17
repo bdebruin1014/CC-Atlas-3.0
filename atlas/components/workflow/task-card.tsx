@@ -9,11 +9,28 @@ import {
   ChevronDown,
   ChevronUp,
   User,
+  SkipForward,
+  Loader2,
 } from "lucide-react"
 import { cn, formatDate } from "@/lib/utils/format"
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
+import { Textarea } from "@/components/ui/textarea"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import type { OrgProfile } from "@/lib/hooks/use-workflow"
 
 // ---------------------------------------------------------------------------
 // Types
@@ -112,31 +129,32 @@ function getNextStatus(
 interface TaskCardProps {
   task: TaskInstance
   onStatusChange?: (taskId: string, newStatus: TaskInstance["status"]) => void
-  onAssign?: (taskId: string) => void
+  onSkip?: (taskId: string, reason: string) => void
+  onAssign?: (taskId: string, userId: string | null) => void
+  orgProfiles?: OrgProfile[]
+  isUpdating?: boolean
 }
 
 // ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
-export function TaskCard({ task, onStatusChange, onAssign }: TaskCardProps) {
+export function TaskCard({
+  task,
+  onStatusChange,
+  onSkip,
+  onAssign,
+  orgProfiles,
+  isUpdating,
+}: TaskCardProps) {
   const [expanded, setExpanded] = useState(false)
+  const [showSkipInput, setShowSkipInput] = useState(false)
+  const [skipReason, setSkipReason] = useState("")
 
   const isOverdue =
     task.due_date &&
     task.status !== "completed" &&
     task.status !== "skipped" &&
     new Date(task.due_date) < new Date()
-
-  const statusIcon =
-    task.status === "completed" ? (
-      <CheckCircle2 className="h-5 w-5 text-green-600" />
-    ) : task.status === "in_progress" ? (
-      <Clock className="h-5 w-5 text-blue-600" />
-    ) : task.status === "blocked" ? (
-      <AlertTriangle className="h-5 w-5 text-red-500" />
-    ) : (
-      <Circle className="h-5 w-5 text-gray-400" />
-    )
 
   const assigneeName = task.assigned_user
     ? [task.assigned_user.first_name, task.assigned_user.last_name]
@@ -151,9 +169,23 @@ export function TaskCard({ task, onStatusChange, onAssign }: TaskCardProps) {
     : null
 
   function handleCheckboxChange() {
-    if (onStatusChange) {
+    if (onStatusChange && !isUpdating) {
       const nextStatus = getNextStatus(task.status)
       onStatusChange(task.id, nextStatus)
+    }
+  }
+
+  function handleSkipSubmit() {
+    if (onSkip && skipReason.trim()) {
+      onSkip(task.id, skipReason.trim())
+      setShowSkipInput(false)
+      setSkipReason("")
+    }
+  }
+
+  function handleAssignChange(userId: string) {
+    if (onAssign) {
+      onAssign(task.id, userId === "_unassign" ? null : userId)
     }
   }
 
@@ -162,6 +194,7 @@ export function TaskCard({ task, onStatusChange, onAssign }: TaskCardProps) {
       className={cn(
         "group rounded-lg border border-border p-3 transition-colors hover:bg-muted/30",
         task.status === "completed" && "opacity-60",
+        task.status === "skipped" && "opacity-50",
         isOverdue && "border-red-300 dark:border-red-800"
       )}
     >
@@ -169,12 +202,18 @@ export function TaskCard({ task, onStatusChange, onAssign }: TaskCardProps) {
       <div className="flex items-start gap-3">
         {/* Checkbox */}
         <div className="mt-0.5">
-          <Checkbox
-            checked={task.status === "completed"}
-            onCheckedChange={handleCheckboxChange}
-            disabled={task.status === "blocked" || task.status === "skipped"}
-            className="h-5 w-5"
-          />
+          {isUpdating ? (
+            <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+          ) : (
+            <Checkbox
+              checked={task.status === "completed"}
+              onCheckedChange={handleCheckboxChange}
+              disabled={
+                task.status === "blocked" || task.status === "skipped" || isUpdating
+              }
+              className="h-5 w-5"
+            />
+          )}
         </div>
 
         {/* Content */}
@@ -183,7 +222,8 @@ export function TaskCard({ task, onStatusChange, onAssign }: TaskCardProps) {
             <span
               className={cn(
                 "text-sm font-medium",
-                task.status === "completed" && "line-through text-muted-foreground"
+                task.status === "completed" && "line-through text-muted-foreground",
+                task.status === "skipped" && "line-through text-muted-foreground"
               )}
             >
               {task.name}
@@ -214,32 +254,83 @@ export function TaskCard({ task, onStatusChange, onAssign }: TaskCardProps) {
                 {STATUS_CONFIG[task.status]?.label}
               </Badge>
             )}
+
+            {/* Overdue badge */}
+            {isOverdue && (
+              <Badge
+                variant="secondary"
+                className="text-[10px] px-1.5 py-0 bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-200"
+              >
+                Overdue
+              </Badge>
+            )}
           </div>
 
           {/* Meta row */}
           <div className="mt-1 flex items-center gap-3 text-xs text-muted-foreground">
-            {/* Assignee */}
-            {assigneeName ? (
-              <button
-                onClick={() => onAssign?.(task.id)}
-                className="flex items-center gap-1 hover:text-foreground transition-colors"
-              >
+            {/* Assignee dropdown or display */}
+            {onAssign && orgProfiles && orgProfiles.length > 0 ? (
+              <Popover>
+                <PopoverTrigger asChild>
+                  <button className="flex items-center gap-1 hover:text-foreground transition-colors">
+                    {assigneeName ? (
+                      <>
+                        <Avatar className="h-4 w-4">
+                          <AvatarImage
+                            src={task.assigned_user?.avatar_url || undefined}
+                          />
+                          <AvatarFallback className="text-[8px]">
+                            {assigneeInitials}
+                          </AvatarFallback>
+                        </Avatar>
+                        <span>{assigneeName}</span>
+                      </>
+                    ) : (
+                      <>
+                        <User className="h-3.5 w-3.5" />
+                        <span>Assign</span>
+                      </>
+                    )}
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent className="w-48 p-1" align="start">
+                  <Select
+                    value={task.assigned_to ?? "_unassign"}
+                    onValueChange={handleAssignChange}
+                  >
+                    <SelectTrigger className="h-8 text-xs">
+                      <SelectValue placeholder="Select person" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="_unassign">Unassigned</SelectItem>
+                      {orgProfiles.map((p) => (
+                        <SelectItem key={p.id} value={p.id}>
+                          {[p.first_name, p.last_name].filter(Boolean).join(" ") ||
+                            p.email ||
+                            "Unknown"}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </PopoverContent>
+              </Popover>
+            ) : assigneeName ? (
+              <span className="flex items-center gap-1">
                 <Avatar className="h-4 w-4">
-                  <AvatarImage src={task.assigned_user?.avatar_url || undefined} />
+                  <AvatarImage
+                    src={task.assigned_user?.avatar_url || undefined}
+                  />
                   <AvatarFallback className="text-[8px]">
                     {assigneeInitials}
                   </AvatarFallback>
                 </Avatar>
                 <span>{assigneeName}</span>
-              </button>
+              </span>
             ) : (
-              <button
-                onClick={() => onAssign?.(task.id)}
-                className="flex items-center gap-1 hover:text-foreground transition-colors"
-              >
+              <span className="flex items-center gap-1">
                 <User className="h-3.5 w-3.5" />
                 <span>Unassigned</span>
-              </button>
+              </span>
             )}
 
             {/* Due date */}
@@ -255,6 +346,19 @@ export function TaskCard({ task, onStatusChange, onAssign }: TaskCardProps) {
                 {formatDate(task.due_date, { short: true })}
               </span>
             )}
+
+            {/* Skip button */}
+            {onSkip &&
+              task.status !== "completed" &&
+              task.status !== "skipped" && (
+                <button
+                  onClick={() => setShowSkipInput(true)}
+                  className="flex items-center gap-1 hover:text-foreground transition-colors text-muted-foreground"
+                >
+                  <SkipForward className="h-3 w-3" />
+                  <span>Skip</span>
+                </button>
+              )}
           </div>
         </div>
 
@@ -273,8 +377,45 @@ export function TaskCard({ task, onStatusChange, onAssign }: TaskCardProps) {
         )}
       </div>
 
+      {/* Skip reason input */}
+      {showSkipInput && (
+        <div className="mt-3 ml-8 space-y-2 border-t border-border pt-3">
+          <p className="text-xs font-medium text-muted-foreground">
+            Reason for skipping (required)
+          </p>
+          <Textarea
+            value={skipReason}
+            onChange={(e) => setSkipReason(e.target.value)}
+            placeholder="Why is this task being skipped?"
+            rows={2}
+            className="text-sm"
+          />
+          <div className="flex gap-2">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => {
+                setShowSkipInput(false)
+                setSkipReason("")
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              size="sm"
+              onClick={handleSkipSubmit}
+              disabled={!skipReason.trim()}
+              className="bg-yellow-600 text-white hover:bg-yellow-700"
+            >
+              <SkipForward className="mr-1 h-3.5 w-3.5" />
+              Skip Task
+            </Button>
+          </div>
+        </div>
+      )}
+
       {/* Expanded content */}
-      {expanded && (task.description || task.notes) && (
+      {expanded && !showSkipInput && (task.description || task.notes) && (
         <div className="mt-3 ml-8 space-y-2 border-t border-border pt-3">
           {task.description && (
             <div>
