@@ -35,12 +35,15 @@ import {
   SELECTION_STATUS_CONFIG,
   INSPECTION_RESULT_CONFIG,
 } from "@/lib/construction/types"
+import { RecordTasksPanel, useRecordTaskCount } from "@/components/shared/record-tasks-panel"
 
 export default function UnitDetailPage() {
   const router = useRouter()
   const params = useParams()
   const jobId = params.id as string
   const unitId = params.unitId as string
+
+  const taskCount = useRecordTaskCount("unit", unitId)
 
   const unit = MOCK_UNITS_JOB001.find((u) => u.id === unitId)
 
@@ -246,6 +249,9 @@ export default function UnitDetailPage() {
           <TabsTrigger value="selections">Selections</TabsTrigger>
           <TabsTrigger value="inspections">Inspections</TabsTrigger>
           <TabsTrigger value="issues">Issues</TabsTrigger>
+          <TabsTrigger value="tasks">
+            Tasks{taskCount > 0 ? ` (${taskCount})` : ""}
+          </TabsTrigger>
           <TabsTrigger value="warranty">Warranty</TabsTrigger>
         </TabsList>
 
@@ -551,6 +557,16 @@ export default function UnitDetailPage() {
               </p>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        {/* ---- Tasks Tab ---- */}
+        <TabsContent value="tasks" className="space-y-4">
+          <RecordTasksPanel
+            recordType="unit"
+            recordId={unitId}
+            recordName={`Unit ${unit.unit_number}`}
+            recordUrl={`/construction/jobs/${jobId}/units/${unitId}`}
+          />
         </TabsContent>
 
         {/* ---- Warranty Tab ---- */}

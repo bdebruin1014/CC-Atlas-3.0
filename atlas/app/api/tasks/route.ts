@@ -137,6 +137,12 @@ export async function GET(request: NextRequest) {
         .not("status", "in", '("completed","cancelled")')
     }
 
+    // Linked record filter
+    const linkedRecordId = params.get("linked_record_id")
+    if (linkedRecordId) {
+      query = query.eq("linked_record_id", linkedRecordId)
+    }
+
     // Due today filter
     const dueToday = params.get("due_today")
     if (dueToday === "true") {
