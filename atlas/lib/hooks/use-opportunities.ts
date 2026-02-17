@@ -2,32 +2,40 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
 
 // ---------------------------------------------------------------------------
-// Types
+// Types — aligned to DB schema (migrations 001-008)
 // ---------------------------------------------------------------------------
 
 export interface Opportunity {
   id: string
-  opportunity_number: string
-  name: string
+  organization_id: string | null
+  opportunity_number: string | null
+  name: string | null
   type: string
-  stage: string
+  current_stage: string
   status: string
-  estimated_value: number | null
-  probability: number | null
-  expected_close_date: string | null
   source: string | null
-  description: string | null
-  address_line1: string | null
-  address_line2: string | null
-  city: string | null
-  state: string | null
-  zip: string | null
   assigned_to: string | null
-  assigned_to_name: string | null
-  created_by: string | null
+  owner_entity_id: string | null
+  // Address
+  address_street: string | null
+  address_city: string | null
+  address_county: string | null
+  address_state: string | null
+  address_zip: string | null
+  parcel_tms_number: string | null
+  // Financial
+  projected_purchase_price: number | null
+  projected_sale_price: number | null
+  projected_profit: number | null
+  projected_margin_pct: number | null
+  // Key dates
+  date_identified: string | null
+  date_under_contract: string | null
+  due_diligence_deadline: string | null
+  projected_close_date: string | null
+  // Meta
   created_at: string
   updated_at: string
-  metadata: Record<string, unknown> | null
 }
 
 export interface OpportunityFilters {
@@ -36,8 +44,6 @@ export interface OpportunityFilters {
   status?: string
   assignedTo?: string
   search?: string
-  minValue?: number
-  maxValue?: number
 }
 
 export interface CreateOpportunityData {
@@ -47,7 +53,7 @@ export interface CreateOpportunityData {
   current_stage?: string
   status?: string
   source?: string | null
-  address_line1?: string | null
+  address_street?: string | null
   address_city?: string | null
   address_county?: string | null
   address_state?: string | null
@@ -56,11 +62,10 @@ export interface CreateOpportunityData {
   owner_entity_id?: string | null
   projected_purchase_price?: number | null
   projected_sale_price?: number | null
-  offer_date?: string | null
-  contract_date?: string | null
-  dd_expiration_date?: string | null
-  closing_date?: string | null
-  notes?: string | null
+  date_identified?: string | null
+  date_under_contract?: string | null
+  due_diligence_deadline?: string | null
+  projected_close_date?: string | null
   [key: string]: unknown
 }
 
@@ -105,33 +110,27 @@ export function useOpportunities(filters?: OpportunityFilters) {
         .order('created_at', { ascending: false })
 
       if (filters?.type) {
-        query = query.eq('type', filters.type)
+        query = query.eq('type', filters.type as never)
       }
       if (filters?.stage) {
-        query = query.eq('stage', filters.stage)
+        query = query.eq('current_stage', filters.stage as never)
       }
       if (filters?.status) {
-        query = query.eq('status', filters.status)
+        query = query.eq('status', filters.status as never)
       }
       if (filters?.assignedTo) {
         query = query.eq('assigned_to', filters.assignedTo)
       }
       if (filters?.search) {
         query = query.or(
-          `name.ilike.%${filters.search}%,opportunity_number.ilike.%${filters.search}%,address_line1.ilike.%${filters.search}%`
+          `name.ilike.%${filters.search}%,opportunity_number.ilike.%${filters.search}%,address_street.ilike.%${filters.search}%`
         )
-      }
-      if (filters?.minValue !== undefined) {
-        query = query.gte('estimated_value', filters.minValue)
-      }
-      if (filters?.maxValue !== undefined) {
-        query = query.lte('estimated_value', filters.maxValue)
       }
 
       const { data, error } = await query
 
       if (error) throw error
-      return (data ?? []) as Opportunity[]
+      return (data ?? []) as unknown as Opportunity[]
     },
   })
 }
@@ -149,7 +148,7 @@ export function useOpportunity(id: string) {
         .single()
 
       if (error) throw error
-      return data as Opportunity
+      return data as unknown as Opportunity
     },
     enabled: !!id,
   })

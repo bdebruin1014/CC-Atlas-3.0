@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { createClient } from "@/lib/supabase/client"
 
 // ---------------------------------------------------------------------------
-// Types
+// Types — aligned to DB schema (migrations 001-008)
 // ---------------------------------------------------------------------------
 
 export type ProjectType =
@@ -12,66 +12,72 @@ export type ProjectType =
   | "lot_purchase"
   | "lot_development"
   | "community_development"
-  | "land_banking"
-  | "spec_build"
+  | "other"
 
 export type ProjectStatus =
   | "pre_construction"
   | "active"
-  | "construction"
-  | "punch_co"
-  | "disposition"
+  | "under_contract"
   | "complete"
+  | "warranty"
   | "closed"
-  | "on_hold"
-  | "cancelled"
 
-export type ContractType = "fixed_price" | "cost_plus" | "cost_plus_fee" | "time_and_materials"
+export type ContractType =
+  | "cost_plus"
+  | "fixed_price"
+  | "time_and_materials"
+  | "guaranteed_maximum"
+  | "unit_price"
 
 export type ExpenseStatus = "pending" | "approved" | "paid" | "rejected"
 
 export type DrawStatus = "pending" | "requested" | "approved" | "paid"
 
-export type LotStatus = "raw" | "developing" | "finished" | "contracted" | "sold"
+export type LotStatus = "raw" | "graded" | "improved" | "permitted" | "under_construction" | "complete" | "sold"
 
 export interface Project {
   id: string
-  organization_id: string
-  project_number: string
+  organization_id: string | null
+  project_number: string | null
   name: string
-  address: string | null
-  city: string | null
-  state: string | null
-  zip: string | null
+  address_street: string | null
+  address_city: string | null
+  address_state: string | null
+  address_zip: string | null
+  address_county: string | null
   type: ProjectType
-  status: ProjectStatus
   owner_entity_id: string | null
   owner_entity_name?: string | null
   builder_entity_id: string | null
   builder_entity_name?: string | null
-  total_budget: number
-  current_spend: number
-  committed_amount: number
-  projected_final: number
-  purchase_price: number | null
+  status: ProjectStatus
   acquisition_date: string | null
-  contract_type: ContractType | null
+  budget_land_acquisition: number | null
+  budget_site_work: number | null
+  budget_vertical_construction: number | null
+  budget_soft_costs: number | null
+  budget_contingency: number | null
+  budget_total: number | null
+  actual_total_cost: number | null
+  budget_variance: number | null
   contract_amount: number | null
-  contract_fee: number | null
+  contract_signed_date: string | null
   lot_width: number | null
   lot_depth: number | null
-  acreage: number | null
+  lot_sqft: number | null
+  total_acreage: number | null
   total_lots: number | null
   floor_plan_id: string | null
-  floor_plan_name: string | null
-  permit_date: string | null
+  source_opportunity_id: string | null
+  permit_submitted_date: string | null
+  permit_approved_date: string | null
   construction_start_date: string | null
   projected_completion_date: string | null
+  actual_completion_date: string | null
   co_date: string | null
   sale_date: string | null
-  warranty_expiration_date: string | null
-  source_opportunity_id: string | null
-  notes: string | null
+  warranty_start_date: string | null
+  warranty_end_date: string | null
   created_at: string
   updated_at: string
 }
@@ -182,13 +188,13 @@ export interface FloorPlan {
   square_footage: number | null
   bedrooms: number | null
   bathrooms: number | null
-  base_price: number | null
+  base_cost: number | null
 }
 
 export interface Entity {
   id: string
   name: string
-  type: string
+  use_type: string | null
 }
 
 export interface ProjectFilters {
@@ -217,37 +223,33 @@ export const PROJECT_TYPES: { value: ProjectType; label: string }[] = [
   { value: "lot_purchase", label: "Lot Purchase" },
   { value: "lot_development", label: "Lot Development" },
   { value: "community_development", label: "Community Development" },
-  { value: "land_banking", label: "Land Banking" },
-  { value: "spec_build", label: "Spec Build" },
+  { value: "other", label: "Other" },
 ]
 
 export const PROJECT_STATUSES: { value: ProjectStatus; label: string }[] = [
   { value: "pre_construction", label: "Pre-Construction" },
   { value: "active", label: "Active" },
-  { value: "construction", label: "Construction" },
-  { value: "punch_co", label: "Punch/CO" },
-  { value: "disposition", label: "Disposition" },
+  { value: "under_contract", label: "Under Contract" },
   { value: "complete", label: "Complete" },
+  { value: "warranty", label: "Warranty" },
   { value: "closed", label: "Closed" },
-  { value: "on_hold", label: "On Hold" },
-  { value: "cancelled", label: "Cancelled" },
 ]
 
 export const PROJECT_STATUS_PIPELINE: ProjectStatus[] = [
   "pre_construction",
   "active",
-  "construction",
-  "punch_co",
-  "disposition",
+  "under_contract",
   "complete",
+  "warranty",
   "closed",
 ]
 
 export const CONTRACT_TYPES: { value: ContractType; label: string }[] = [
-  { value: "fixed_price", label: "Fixed Price" },
   { value: "cost_plus", label: "Cost Plus" },
-  { value: "cost_plus_fee", label: "Cost Plus Fee" },
+  { value: "fixed_price", label: "Fixed Price" },
   { value: "time_and_materials", label: "Time & Materials" },
+  { value: "guaranteed_maximum", label: "Guaranteed Maximum" },
+  { value: "unit_price", label: "Unit Price" },
 ]
 
 export const COST_CATEGORIES = [
@@ -287,9 +289,11 @@ export const DEFAULT_DRAWS = [
 
 export const LOT_STATUSES: { value: LotStatus; label: string }[] = [
   { value: "raw", label: "Raw" },
-  { value: "developing", label: "Developing" },
-  { value: "finished", label: "Finished" },
-  { value: "contracted", label: "Contracted" },
+  { value: "graded", label: "Graded" },
+  { value: "improved", label: "Improved" },
+  { value: "permitted", label: "Permitted" },
+  { value: "under_construction", label: "Under Construction" },
+  { value: "complete", label: "Complete" },
   { value: "sold", label: "Sold" },
 ]
 
@@ -309,13 +313,10 @@ export function getStatusColor(status: ProjectStatus): string {
   const colors: Record<ProjectStatus, string> = {
     pre_construction: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
     active: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200",
-    construction: "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200",
-    punch_co: "bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200",
-    disposition: "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200",
+    under_contract: "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200",
     complete: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
+    warranty: "bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200",
     closed: "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400",
-    on_hold: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200",
-    cancelled: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200",
   }
   return colors[status] ?? ""
 }
@@ -326,8 +327,7 @@ export function getTypeColor(type: ProjectType): string {
     lot_purchase: "bg-teal-100 text-teal-800 dark:bg-teal-900 dark:text-teal-200",
     lot_development: "bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200",
     community_development: "bg-violet-100 text-violet-800 dark:bg-violet-900 dark:text-violet-200",
-    land_banking: "bg-lime-100 text-lime-800 dark:bg-lime-900 dark:text-lime-200",
-    spec_build: "bg-rose-100 text-rose-800 dark:bg-rose-900 dark:text-rose-200",
+    other: "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200",
   }
   return colors[type] ?? ""
 }
@@ -343,10 +343,12 @@ export function getBudgetHealthColor(spent: number, budget: number): string {
 export function getLotStatusColor(status: LotStatus): string {
   const colors: Record<LotStatus, string> = {
     raw: "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200",
-    developing: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200",
-    finished: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
-    contracted: "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200",
-    sold: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
+    graded: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200",
+    improved: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
+    permitted: "bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200",
+    under_construction: "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200",
+    complete: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
+    sold: "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200",
   }
   return colors[status] ?? ""
 }
@@ -400,7 +402,7 @@ export function useProjects(filters: ProjectFilters = {}) {
       }
       if (filters.search) {
         query = query.or(
-          `name.ilike.%${filters.search}%,project_number.ilike.%${filters.search}%,address.ilike.%${filters.search}%`
+          `name.ilike.%${filters.search}%,project_number.ilike.%${filters.search}%,address_street.ilike.%${filters.search}%`
         )
       }
 
@@ -408,7 +410,8 @@ export function useProjects(filters: ProjectFilters = {}) {
 
       if (error) throw error
 
-      return ((data ?? []) as Record<string, unknown>[]).map((row) => ({
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      return ((data ?? []) as any[]).map((row: Record<string, unknown>) => ({
         ...row,
         owner_entity_name: (row.owner_entity as { name?: string } | null)?.name ?? null,
         builder_entity_name: (row.builder_entity as { name?: string } | null)?.name ?? null,
@@ -435,10 +438,12 @@ export function useProject(id: string) {
 
       if (error) throw error
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const row = data as any
       const mapped = {
-        ...data,
-        owner_entity_name: (data.owner_entity as { name?: string } | null)?.name ?? null,
-        builder_entity_name: (data.builder_entity as { name?: string } | null)?.name ?? null,
+        ...row,
+        owner_entity_name: (row.owner_entity as { name?: string } | null)?.name ?? null,
+        builder_entity_name: (row.builder_entity as { name?: string } | null)?.name ?? null,
       } as Project
 
       return mapped
@@ -455,18 +460,15 @@ export function useCreateProject() {
     mutationFn: async (
       projectData: Record<string, unknown>
     ) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data, error } = await supabase
         .from("projects")
-        .insert({
-          ...projectData,
-          current_spend: 0,
-          projected_final_cost: Number(projectData.total_budget) || 0,
-        })
+        .insert(projectData as any)
         .select()
         .single()
 
       if (error) throw error
-      return data as Project
+      return data as unknown as Project
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: keys.lists() })
@@ -483,15 +485,16 @@ export function useUpdateProject() {
 
   return useMutation({
     mutationFn: async ({ id, ...updates }: { id: string } & Partial<Project>) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data, error } = await supabase
         .from("projects")
-        .update({ ...updates, updated_at: new Date().toISOString() })
+        .update({ ...updates, updated_at: new Date().toISOString() } as any)
         .eq("id", id)
         .select()
         .single()
 
       if (error) throw error
-      return data as Project
+      return data as unknown as Project
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: keys.lists() })
@@ -510,14 +513,16 @@ export function useConvertOpportunityToProject() {
   return useMutation({
     mutationFn: async (input: ConvertOpportunityData) => {
       // 1. Fetch the opportunity
-      const { data: opportunity, error: fetchError } = await supabase
+      const { data: rawOpp, error: fetchError } = await supabase
         .from('opportunities')
         .select('*')
         .eq('id', input.opportunityId)
         .single()
 
       if (fetchError) throw fetchError
-      if (!opportunity) throw new Error('Opportunity not found')
+      if (!rawOpp) throw new Error('Opportunity not found')
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const opportunity = rawOpp as any
 
       // 2. Generate project number
       const year = new Date().getFullYear().toString().slice(-2)
@@ -539,22 +544,21 @@ export function useConvertOpportunityToProject() {
           name: input.projectName ?? opportunity.name,
           type: input.projectType,
           status: 'pre_construction' as ProjectStatus,
-          address_line1: opportunity.address_line1 ?? null,
+          address_street: opportunity.address_street ?? null,
           address_city: opportunity.address_city ?? null,
           address_state: opportunity.address_state ?? null,
           address_zip: opportunity.address_zip ?? null,
           source_opportunity_id: input.opportunityId,
-          total_budget: input.totalBudget ?? opportunity.projected_purchase_price ?? 0,
-          current_spend: 0,
-          projected_final_cost: input.totalBudget ?? opportunity.projected_purchase_price ?? 0,
+          budget_total: input.totalBudget ?? opportunity.projected_purchase_price ?? 0,
           construction_start_date: input.startDate ?? null,
           projected_completion_date: input.estimatedCompletion ?? null,
-          notes: opportunity.notes ?? null,
         } as any)
         .select()
         .single()
 
       if (createError) throw createError
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const projectResult = project as any
 
       // 4. Update opportunity status to converted
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -579,7 +583,7 @@ export function useConvertOpportunityToProject() {
           contactAssignments.map((ca) => ({
             contact_id: ca.contact_id,
             record_type: 'project' as const,
-            record_id: project.id,
+            record_id: projectResult.id,
             role_on_record: ca.role_on_record,
           }))
         )
@@ -595,13 +599,13 @@ export function useConvertOpportunityToProject() {
         },
         {
           record_type: 'project',
-          record_id: project.id,
+          record_id: projectResult.id,
           action: 'created',
           description: `Created from opportunity ${opportunity.opportunity_number ?? opportunity.name}`,
         },
       ])
 
-      return project as Project
+      return projectResult as Project
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: keys.lists() })
@@ -956,11 +960,11 @@ export function useEntities() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("entities")
-        .select("id, name, type")
+        .select("id, name, use_type")
         .order("name", { ascending: true })
 
       if (error) throw error
-      return (data ?? []) as Entity[]
+      return (data ?? []) as unknown as Entity[]
     },
   })
 
@@ -979,7 +983,7 @@ export function useFloorPlans() {
         .order("name", { ascending: true })
 
       if (error) throw error
-      return (data ?? []) as FloorPlan[]
+      return (data ?? []) as unknown as FloorPlan[]
     },
   })
 

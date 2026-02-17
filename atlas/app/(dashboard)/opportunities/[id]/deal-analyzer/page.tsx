@@ -63,7 +63,7 @@ export default function DealAnalyzerPage() {
           <h1 className="text-2xl font-bold tracking-tight">Deal Analyzer</h1>
         </div>
         <p className="mt-1 text-sm text-muted-foreground">
-          {opportunity?.name || opportunity?.address_line1 || 'Opportunity'} —
+          {opportunity?.name || opportunity?.address_street || 'Opportunity'} —
           Run financial scenarios to evaluate this deal.
         </p>
       </div>
@@ -75,7 +75,6 @@ export default function DealAnalyzerPage() {
           purchasePrice: opportunity?.projected_purchase_price ?? undefined,
           salesPrice:
             opportunity?.projected_sale_price ??
-            opportunity?.projected_arv ??
             undefined,
           floorPlanId: opportunity?.floor_plan_id ?? undefined,
         }}

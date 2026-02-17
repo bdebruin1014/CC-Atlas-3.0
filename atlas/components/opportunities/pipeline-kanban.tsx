@@ -36,7 +36,7 @@ export function PipelineKanban({
     id: stage.id,
     title: stage.label,
     color: stage.color,
-    items: opportunities.filter((opp) => opp.stage === stage.id),
+    items: opportunities.filter((opp) => opp.current_stage === stage.id),
   }))
 
   const handleCardMove = useCallback(
