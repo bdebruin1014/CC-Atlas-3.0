@@ -7,6 +7,8 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { ListingOverviewTab } from "@/components/disposition/listing-overview-tab"
 import { ListingMarketingTab } from "@/components/disposition/listing-marketing-tab"
 import { ListingShowingsTab } from "@/components/disposition/listing-showings-tab"
+import { ListingOffersTab } from "@/components/disposition/listing-offers-tab"
+import { ListingContractTab } from "@/components/disposition/listing-contract-tab"
 
 const Placeholder = ({ label }: { label: string }) => (
   <div className="py-8 text-center text-[#5A6B75]">{label} — coming soon</div>
@@ -58,8 +60,8 @@ export default function ListingDetailPage() {
         <TabsContent value="overview"><ListingOverviewTab listing={listing} /></TabsContent>
         <TabsContent value="marketing"><ListingMarketingTab listing={listing} /></TabsContent>
         <TabsContent value="showings"><ListingShowingsTab listingId={listing.id} /></TabsContent>
-        <TabsContent value="offers"><Placeholder label="Offers" /></TabsContent>
-        {hasContract && <TabsContent value="contract"><Placeholder label="Contract" /></TabsContent>}
+        <TabsContent value="offers"><ListingOffersTab listingId={listing.id} /></TabsContent>
+        {hasContract && <TabsContent value="contract"><ListingContractTab listingId={listing.id} /></TabsContent>}
         {showSettlement && <TabsContent value="settlement"><Placeholder label="Settlement" /></TabsContent>}
         <TabsContent value="costs"><Placeholder label="Costs" /></TabsContent>
         {isLotDev && <TabsContent value="bulk-sales"><Placeholder label="Bulk Sales" /></TabsContent>}
