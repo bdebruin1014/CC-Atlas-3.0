@@ -4,11 +4,9 @@ import { useEffect, useState } from "react"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { cn } from "@/lib/utils/format"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
 import {
   Select,
   SelectContent,
@@ -21,11 +19,8 @@ import { Separator } from "@/components/ui/separator"
 import {
   type Project,
   type ProjectType,
-  type ProjectStatus,
-  type ContractType,
   PROJECT_TYPES,
   PROJECT_STATUSES,
-  CONTRACT_TYPES,
   useEntities,
   useFloorPlans,
   generateProjectNumber,
@@ -38,26 +33,23 @@ import {
 const projectSchema = z.object({
   project_number: z.string().min(1, "Project number is required"),
   name: z.string().min(1, "Project name is required"),
-  address: z.string().nullable().optional(),
-  city: z.string().nullable().optional(),
-  state: z.string().nullable().optional(),
-  zip: z.string().nullable().optional(),
+  address_street: z.string().nullable().optional(),
+  address_city: z.string().nullable().optional(),
+  address_state: z.string().nullable().optional(),
+  address_zip: z.string().nullable().optional(),
   type: z.string().min(1, "Type is required"),
   status: z.string().min(1, "Status is required"),
   owner_entity_id: z.string().nullable().optional(),
   builder_entity_id: z.string().nullable().optional(),
-  purchase_price: z.coerce.number().nullable().optional(),
+  budget_land_acquisition: z.coerce.number().nullable().optional(),
   acquisition_date: z.string().nullable().optional(),
-  total_budget: z.coerce.number().min(0, "Budget must be positive"),
-  contract_type: z.string().nullable().optional(),
+  budget_total: z.coerce.number().min(0, "Budget must be positive"),
   contract_amount: z.coerce.number().nullable().optional(),
-  contract_fee: z.coerce.number().nullable().optional(),
   lot_width: z.coerce.number().nullable().optional(),
   lot_depth: z.coerce.number().nullable().optional(),
-  acreage: z.coerce.number().nullable().optional(),
+  total_acreage: z.coerce.number().nullable().optional(),
   total_lots: z.coerce.number().int().nullable().optional(),
   floor_plan_id: z.string().nullable().optional(),
-  notes: z.string().nullable().optional(),
 })
 
 type ProjectFormValues = z.infer<typeof projectSchema>
@@ -100,28 +92,25 @@ export function ProjectForm({
     defaultValues: {
       project_number: defaultValues?.project_number ?? "",
       name: defaultValues?.name ?? "",
-      address: defaultValues?.address ?? "",
-      city: defaultValues?.city ?? "",
-      state: defaultValues?.state ?? "",
-      zip: defaultValues?.zip ?? "",
+      address_street: (defaultValues as Record<string, unknown>)?.address_street as string ?? "",
+      address_city: (defaultValues as Record<string, unknown>)?.address_city as string ?? "",
+      address_state: (defaultValues as Record<string, unknown>)?.address_state as string ?? "",
+      address_zip: (defaultValues as Record<string, unknown>)?.address_zip as string ?? "",
       type: defaultValues?.type ?? "scattered_lot",
       status: defaultValues?.status ?? "pre_construction",
       owner_entity_id: defaultValues?.owner_entity_id ?? "",
       builder_entity_id: defaultValues?.builder_entity_id ?? "",
-      purchase_price: defaultValues?.purchase_price ?? null,
+      budget_land_acquisition: (defaultValues as Record<string, unknown>)?.budget_land_acquisition as number ?? null,
       acquisition_date: defaultValues?.acquisition_date
-        ? defaultValues.acquisition_date.substring(0, 10)
+        ? (defaultValues.acquisition_date as string).substring(0, 10)
         : "",
-      total_budget: defaultValues?.total_budget ?? 0,
-      contract_type: defaultValues?.contract_type ?? "",
+      budget_total: (defaultValues as Record<string, unknown>)?.budget_total as number ?? 0,
       contract_amount: defaultValues?.contract_amount ?? null,
-      contract_fee: defaultValues?.contract_fee ?? null,
       lot_width: defaultValues?.lot_width ?? null,
       lot_depth: defaultValues?.lot_depth ?? null,
-      acreage: defaultValues?.acreage ?? null,
+      total_acreage: (defaultValues as Record<string, unknown>)?.total_acreage as number ?? null,
       total_lots: defaultValues?.total_lots ?? null,
       floor_plan_id: defaultValues?.floor_plan_id ?? "",
-      notes: defaultValues?.notes ?? "",
     },
   })
 
@@ -138,7 +127,7 @@ export function ProjectForm({
     }
   }, [mode, defaultValues?.project_number, setValue])
 
-  const showLotDimensions = selectedType === "scattered_lot" || selectedType === "spec_build"
+  const showLotDimensions = selectedType === "scattered_lot"
   const showLotDev = selectedType === "lot_development" || selectedType === "community_development"
   const showFloorPlan = selectedType === "scattered_lot" || selectedType === "lot_purchase"
 
@@ -180,20 +169,20 @@ export function ProjectForm({
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="address">Address</Label>
-              <Input id="address" {...register("address")} placeholder="Street address" />
+              <Label htmlFor="address_street">Address</Label>
+              <Input id="address_street" {...register("address_street")} placeholder="Street address" />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="city">City</Label>
-              <Input id="city" {...register("city")} placeholder="City" />
+              <Label htmlFor="address_city">City</Label>
+              <Input id="address_city" {...register("address_city")} placeholder="City" />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="state">State</Label>
-              <Input id="state" {...register("state")} placeholder="OH" maxLength={2} />
+              <Label htmlFor="address_state">State</Label>
+              <Input id="address_state" {...register("address_state")} placeholder="SC" maxLength={2} />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="zip">Zip</Label>
-              <Input id="zip" {...register("zip")} placeholder="43215" />
+              <Label htmlFor="address_zip">Zip</Label>
+              <Input id="address_zip" {...register("address_zip")} placeholder="29401" />
             </div>
           </div>
 
@@ -302,12 +291,12 @@ export function ProjectForm({
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="purchase_price">Purchase Price</Label>
+              <Label htmlFor="budget_land_acquisition">Purchase Price</Label>
               <Input
-                id="purchase_price"
+                id="budget_land_acquisition"
                 type="number"
                 step="0.01"
-                {...register("purchase_price")}
+                {...register("budget_land_acquisition")}
                 placeholder="0.00"
               />
             </div>
@@ -322,16 +311,16 @@ export function ProjectForm({
         </CardHeader>
         <CardContent>
           <div className="space-y-2 max-w-sm">
-            <Label htmlFor="total_budget">Total Budget *</Label>
+            <Label htmlFor="budget_total">Total Budget *</Label>
             <Input
-              id="total_budget"
+              id="budget_total"
               type="number"
               step="0.01"
-              {...register("total_budget")}
+              {...register("budget_total")}
               placeholder="0.00"
             />
-            {errors.total_budget && (
-              <p className="text-xs text-destructive">{errors.total_budget.message}</p>
+            {errors.budget_total && (
+              <p className="text-xs text-destructive">{errors.budget_total.message}</p>
             )}
           </div>
         </CardContent>
@@ -343,46 +332,15 @@ export function ProjectForm({
           <CardTitle className="text-base">Contract</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="space-y-2">
-              <Label>Contract Type</Label>
-              <Select
-                value={watch("contract_type") ?? ""}
-                onValueChange={(val) => setValue("contract_type", val || null)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="">None</SelectItem>
-                  {CONTRACT_TYPES.map((c) => (
-                    <SelectItem key={c.value} value={c.value}>
-                      {c.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="contract_amount">Contract Amount</Label>
-              <Input
-                id="contract_amount"
-                type="number"
-                step="0.01"
-                {...register("contract_amount")}
-                placeholder="0.00"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="contract_fee">Contract Fee</Label>
-              <Input
-                id="contract_fee"
-                type="number"
-                step="0.01"
-                {...register("contract_fee")}
-                placeholder="0.00"
-              />
-            </div>
+          <div className="space-y-2 max-w-sm">
+            <Label htmlFor="contract_amount">Contract Amount</Label>
+            <Input
+              id="contract_amount"
+              type="number"
+              step="0.01"
+              {...register("contract_amount")}
+              placeholder="0.00"
+            />
           </div>
         </CardContent>
       </Card>
@@ -428,12 +386,12 @@ export function ProjectForm({
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="acreage">Acreage</Label>
+                <Label htmlFor="total_acreage">Acreage</Label>
                 <Input
-                  id="acreage"
+                  id="total_acreage"
                   type="number"
                   step="0.01"
-                  {...register("acreage")}
+                  {...register("total_acreage")}
                   placeholder="0"
                 />
               </div>
@@ -482,20 +440,6 @@ export function ProjectForm({
           </CardContent>
         </Card>
       )}
-
-      {/* Notes */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Notes</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Textarea
-            {...register("notes")}
-            placeholder="Additional notes about this project..."
-            rows={4}
-          />
-        </CardContent>
-      </Card>
 
       {/* Actions */}
       <div className="flex items-center justify-end gap-3">

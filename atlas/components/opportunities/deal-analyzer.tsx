@@ -401,7 +401,7 @@ export function DealAnalyzer({ opportunityId, initialData }: DealAnalyzerProps) 
                       <SelectContent>
                         {floorPlans.map((fp) => (
                           <SelectItem key={fp.id} value={fp.id}>
-                            {fp.name} - {fp.sqft.toLocaleString()} SF -{' '}
+                            {fp.name} - {(fp.square_footage ?? 0).toLocaleString()} SF -{' '}
                             {formatCurrency(fp.base_cost)}
                           </SelectItem>
                         ))}
@@ -412,7 +412,7 @@ export function DealAnalyzer({ opportunityId, initialData }: DealAnalyzerProps) 
                 {selectedPlan && (
                   <p className="text-xs text-muted-foreground">
                     S&B Cost: {formatCurrency(selectedPlan.base_cost)} |{' '}
-                    {selectedPlan.sqft.toLocaleString()} SF
+                    {(selectedPlan.square_footage ?? 0).toLocaleString()} SF
                     {selectedPlan.bedrooms
                       ? ` | ${selectedPlan.bedrooms}BR`
                       : ''}

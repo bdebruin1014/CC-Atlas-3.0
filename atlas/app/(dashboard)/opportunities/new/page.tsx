@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { Loader2 } from 'lucide-react'
 import { OpportunityForm } from '@/components/opportunities/opportunity-form'
 import { createClient } from '@/lib/supabase/client'
-import { getStagesForType, type OpportunityType } from '@/lib/types/opportunities'
+import { getStagesForType, OPPORTUNITY_TYPE_LABELS, type OpportunityType } from '@/lib/types/opportunities'
 import { toast } from '@/lib/hooks/use-toast'
 import { useOrganizationId } from '@/lib/hooks/use-organization'
 
@@ -14,7 +14,7 @@ export default function NewOpportunityPage() {
   const { organizationId, loading: orgLoading, error: orgError } = useOrganizationId()
   const [submitError, setSubmitError] = useState<string | null>(null)
 
-  // The form passes OpportunityFormData (from Zod schema); we map to DB columns below.
+  // Form now emits DB column names directly — minimal mapping needed.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleSubmit = async (data: any) => {
     setSubmitError(null)
@@ -33,59 +33,52 @@ export default function NewOpportunityPage() {
       const initialStage = stages[0]?.id ?? 'lead'
 
       // Auto-generate name from address + type
-      const addressParts = [data.address_line1, data.address_city, data.address_state]
+      const addressParts = [data.address_street, data.address_city, data.address_state]
         .filter(Boolean)
         .join(', ')
-      const typeLabel =
-        type === 'scattered_lot'
-          ? 'Scattered Lot'
-          : type === 'lot_development'
-          ? 'Lot Development'
-          : type === 'community_development'
-          ? 'Community Development'
-          : type === 'lot_purchase'
-          ? 'Lot Purchase'
-          : 'Other'
+      const typeLabel = OPPORTUNITY_TYPE_LABELS[type] ?? 'Other'
       const name = `${addressParts} - ${typeLabel}`
 
-      // Build the insert payload mapped to actual DB column names.
-      // DB schema reference: lib/supabase/types.ts -> Opportunity
+      // Build insert payload — form fields already use DB column names.
+      // Only need to add computed fields and strip UI-only fields.
       const payload: Record<string, unknown> = {
         organization_id: organizationId,
         name,
         type,
         current_stage: initialStage,
         status: 'active',
-        address_line1: data.address_line1 || null,
+        // Address
+        address_street: data.address_street || null,
         address_city: data.address_city || null,
         address_county: data.address_county || null,
         address_state: data.address_state || null,
         address_zip: data.address_zip || null,
-        parcel_tms_number: data.parcel_tms || null,
+        parcel_tms_number: data.parcel_tms_number || null,
+        // Assignment
         source: data.source || null,
         assigned_to: data.assigned_to || null,
-        owner_entity_id: data.entity_id || null,
+        owner_entity_id: data.owner_entity_id || null,
       }
 
       // Type-specific fields (scattered lot)
       if (type === 'scattered_lot') {
         Object.assign(payload, {
-          zoning_current: data.zoning || null,
+          zoning_current: data.zoning_current || null,
           build_type: data.build_type || null,
-          road_surrounding: data.road_type || null,
-          // Combine individual setbacks into a single description string
-          construction_buffers_setbacks: formatSetbacks(data),
-          historic_district_overlay: data.historic_overlay ?? false,
-          has_public_water: data.has_water ?? false,
-          has_public_sewer: data.has_sewer ?? false,
-          has_power: data.has_electric ?? false,
+          road_surrounding: data.road_surrounding || null,
+          // Serialize individual setbacks into the buffers text column
+          buffers: formatSetbacks(data),
+          historic_district: data.historic_district ?? false,
+          water_available: data.water_available ?? false,
+          sewer_available: data.sewer_available ?? false,
+          electric_available: data.electric_available ?? false,
           floor_plan_id: data.floor_plan_id || null,
           garage_position: data.garage_position || null,
-          survey_complete: data.survey_status === 'completed',
+          survey_complete: data.survey_complete ?? false,
           lot_width: data.lot_width ?? null,
           lot_depth: data.lot_depth ?? null,
-          lot_sf: data.lot_sqft ?? null,
-          total_acreage: data.lot_acreage ?? null,
+          lot_sqft: data.lot_sqft ?? null,
+          total_acreage: data.total_acreage ?? null,
         })
       }
 
@@ -93,22 +86,22 @@ export default function NewOpportunityPage() {
       if (type === 'lot_development' || type === 'community_development') {
         Object.assign(payload, {
           total_acreage: data.total_acreage ?? null,
-          estimated_total_lots: data.estimated_lots ?? null,
+          estimated_total_lots: data.estimated_total_lots ?? null,
           zoning_required: data.zoning_required ? 'yes' : null,
           preliminary_plat_status: data.preliminary_plat_status || null,
           target_builders: data.target_builders || null,
-          infrastructure_scope_estimate: data.infrastructure_estimate ?? null,
+          infrastructure_scope_estimate: data.infrastructure_scope_estimate ?? null,
         })
       }
 
-      // Financial fields
+      // Financial fields (already use DB column names)
       Object.assign(payload, {
         projected_purchase_price: data.projected_purchase_price ?? null,
         projected_sale_price: data.projected_sale_price ?? null,
-        offer_date: data.date_offer || null,
-        contract_date: data.date_contract || null,
-        dd_expiration_date: data.date_dd_expiration || null,
-        closing_date: data.date_closing || null,
+        date_identified: data.date_identified || null,
+        date_under_contract: data.date_under_contract || null,
+        due_diligence_deadline: data.due_diligence_deadline || null,
+        projected_close_date: data.projected_close_date || null,
       })
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -172,7 +165,7 @@ export default function NewOpportunityPage() {
   )
 }
 
-/** Serialize individual setback values into a single description string for the DB. */
+/** Serialize individual setback values into a single description string for the DB buffers column. */
 function formatSetbacks(data: Record<string, unknown>): string | null {
   const parts: string[] = []
   if (data.setback_front != null) parts.push(`Front: ${data.setback_front}ft`)

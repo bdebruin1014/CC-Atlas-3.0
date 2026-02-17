@@ -1,6 +1,6 @@
 // ===========================================
 // ATLAS Platform — Supabase Database Types
-// Generated from schema migrations 001-007
+// Generated from schema migrations 001-008
 // ===========================================
 
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[]
@@ -16,61 +16,62 @@ export type PolicyType = 'gl' | 'workers_comp' | 'auto' | 'builders_risk' | 'umb
 export type EntityUseType = 'operating_company' | 'holding_company' | 'spe' | 'fund_syndication' | 'other'
 export type EntityLegalType = 'llc' | 's_corp' | 'partnership' | 'c_corp' | 'sole_proprietorship' | 'trust'
 export type OpportunityType = 'scattered_lot' | 'lot_development' | 'community_development' | 'lot_purchase' | 'other'
-export type OpportunitySource = 'mls' | 'wholesaler' | 'direct' | 'broker' | 'off_market' | 'referral' | 'other'
+export type OpportunitySource = 'mls' | 'direct_mail' | 'referral' | 'driving_for_dollars' | 'auction' | 'wholesaler' | 'builder_referral' | 'agent_relationship' | 'online_listing' | 'other'
 export type OpportunityStatus = 'active' | 'archived' | 'converted'
-export type BuildType = 'sfh' | 'townhome' | 'duplex' | 'other'
-export type GaragePosition = 'front' | 'rear' | 'none'
+export type BuildType = 'spec' | 'pre_sale' | 'custom' | 'model'
+export type GaragePosition = 'front_entry' | 'side_entry' | 'rear_entry' | 'detached' | 'none'
 export type UpgradePackage = 'standard' | 'classic' | 'elegance' | 'harmony'
 export type DealVerdict = 'strong_deal' | 'good_deal' | 'marginal' | 'no_go'
-export type ProjectType = 'scattered_lot' | 'lot_development' | 'community_development' | 'lot_purchase'
-export type ProjectStatus = 'pre_construction' | 'active' | 'construction' | 'punch_co' | 'disposition' | 'complete' | 'closed'
-export type ContractType = 'cost_plus_fixed_fee' | 'cost_plus_percentage' | 'stipulated_sum'
-export type FoundationType = 'slab' | 'crawl_space' | 'basement'
-export type LotStatus = 'raw' | 'developing' | 'finished' | 'contracted' | 'sold'
+export type ProjectType = 'scattered_lot' | 'lot_development' | 'community_development' | 'lot_purchase' | 'other'
+export type ProjectStatus = 'pre_construction' | 'active' | 'under_contract' | 'complete' | 'warranty' | 'closed'
+export type ContractType = 'cost_plus' | 'fixed_price' | 'time_and_materials' | 'guaranteed_maximum' | 'unit_price'
+export type FoundationType = 'slab' | 'crawl_space' | 'basement' | 'pier_and_beam' | 'other'
+export type LotStatus = 'raw' | 'graded' | 'improved' | 'permitted' | 'under_construction' | 'complete' | 'sold'
 export type ExpenseStatus = 'pending' | 'approved' | 'paid' | 'rejected'
 export type ClientType = 'internal' | 'third_party'
-export type JobStatus = 'pre_construction' | 'active' | 'punch_co' | 'warranty' | 'complete' | 'closed'
+export type JobStatus = 'pre_construction' | 'active' | 'punch_list' | 'substantial_completion' | 'warranty' | 'closed'
 export type StateCode = 'SC' | 'NC'
 export type MilestoneStatus = 'not_started' | 'in_progress' | 'complete' | 'blocked'
-export type POStatus = 'draft' | 'issued' | 'work_complete' | 'invoiced' | 'approved' | 'scheduled_for_payment' | 'paid'
-export type LienWaiverStatus = 'none' | 'conditional_received' | 'unconditional_received'
-export type COReasonCategory = 'owner_request_upgrade' | 'field_condition' | 'design_error' | 'code_requirement' | 'scope_clarification'
-export type ApprovalStatus = 'submitted' | 'under_review' | 'approved' | 'denied'
+export type POStatus = 'draft' | 'submitted' | 'approved' | 'in_progress' | 'complete' | 'invoiced' | 'paid'
+export type LienWaiverStatus = 'not_required' | 'pending' | 'conditional' | 'unconditional'
+export type COReasonCategory = 'owner_request' | 'field_condition' | 'design_error' | 'code_requirement' | 'other'
+export type ApprovalStatus = 'pending' | 'approved' | 'rejected' | 'revised'
 export type SelectionStatus = 'pending' | 'selected' | 'ordered' | 'received' | 'installed'
 export type InspectionResult = 'pass' | 'fail' | 'conditional'
 export type PermitRecordType = 'unit' | 'job'
-export type PermitType = 'building' | 'electrical' | 'plumbing' | 'mechanical' | 'land_disturbance' | 'driveway' | 'other'
-export type PermitStatus = 'applied' | 'in_review' | 'issued' | 'active' | 'expired' | 'closed'
-export type WarrantyUrgency = 'routine' | 'urgent' | 'emergency'
-export type WarrantyCostResponsibility = 'vendor_chargeback' | 'absorbed'
-export type WarrantyStatus = 'open' | 'scheduled' | 'in_progress' | 'resolved' | 'closed'
-export type IssueSeverity = 'low' | 'medium' | 'high' | 'critical'
-export type IssueCategory = 'safety_hazard' | 'quality_deficiency' | 'schedule_impact' | 'material_defect' | 'sub_performance' | 'weather_delay' | 'code_violation'
-export type IssueStatus = 'open' | 'in_progress' | 'resolved' | 'verified'
-export type PaymentMethod = 'ach' | 'check' | 'wire'
-export type AccountType = 'asset' | 'liability' | 'equity' | 'revenue' | 'cost_of_sales' | 'operating_expense'
+export type PermitType = 'building' | 'grading' | 'mechanical' | 'electrical' | 'plumbing' | 'demolition' | 'other'
+export type PermitStatus = 'not_submitted' | 'submitted' | 'in_review' | 'approved' | 'expired' | 'revoked'
+export type WarrantyUrgency = 'emergency' | 'urgent' | 'standard' | 'low'
+export type WarrantyCostResponsibility = 'builder' | 'vendor' | 'owner' | 'shared' | 'warranty'
+export type WarrantyStatus = 'reported' | 'scheduled' | 'in_progress' | 'resolved' | 'closed'
+export type IssueSeverity = 'critical' | 'high' | 'medium' | 'low'
+export type IssueCategory = 'quality' | 'safety' | 'schedule' | 'budget' | 'design' | 'material' | 'other'
+export type IssueStatus = 'open' | 'in_progress' | 'resolved' | 'closed'
+export type PaymentMethod = 'check' | 'ach' | 'wire' | 'credit_card' | 'other'
+export type AccountType = 'asset' | 'liability' | 'equity' | 'revenue' | 'expense' | 'contra'
 export type NormalBalance = 'debit' | 'credit'
-export type TransactionType = 'journal_entry' | 'bill_payment' | 'deposit' | 'transfer' | 'draw' | 'distribution' | 'capital_contribution'
+export type TransactionType = 'journal_entry' | 'invoice' | 'payment' | 'receipt' | 'transfer' | 'adjustment' | 'closing'
 export type TransactionStatus = 'pending' | 'approved' | 'posted' | 'voided'
 export type FiscalPeriodStatus = 'open' | 'review' | 'closed' | 'locked'
-export type AccreditationStatus = 'verified' | 'pending' | 'not_required'
-export type CapitalCallStatus = 'created' | 'issued' | 'partially_funded' | 'fully_funded' | 'closed'
-export type CapitalCallResponseStatus = 'pending' | 'partial' | 'funded' | 'defaulted'
-export type WaterfallType = 'simple_preferred_promote' | 'straight_split' | 'multi_tier_irr'
-export type DistributionStatus = 'draft' | 'approved' | 'distributed'
-export type LoanType = 'construction' | 'development' | 'acquisition' | 'bridge' | 'permanent' | 'line_of_credit'
-export type RateType = 'fixed' | 'variable'
-export type LoanStatus = 'pending' | 'active' | 'paid_off' | 'defaulted' | 'matured'
-export type LoanDrawStatus = 'requested' | 'approved' | 'funded' | 'denied'
-export type WorkflowModule = 'opportunities' | 'projects' | 'construction'
-export type WorkflowInstanceStatus = 'active' | 'complete' | 'cancelled'
-export type MilestoneInstanceStatus = 'pending' | 'active' | 'complete' | 'skipped'
+export type AccreditationStatus = 'accredited' | 'qualified_purchaser' | 'non_accredited' | 'pending_verification'
+export type CapitalCallStatus = 'draft' | 'issued' | 'partially_funded' | 'fully_funded' | 'cancelled'
+export type CapitalCallResponseStatus = 'pending' | 'partial' | 'received' | 'overdue' | 'waived'
+export type WaterfallType = 'preferred_return' | 'catch_up' | 'residual_split'
+export type DistributionType = 'return_of_capital' | 'preferred_return' | 'profit_distribution' | 'liquidating'
+export type DistributionStatus = 'draft' | 'approved' | 'distributed' | 'cancelled'
+export type LoanType = 'construction' | 'acquisition' | 'bridge' | 'permanent' | 'line_of_credit' | 'mezzanine'
+export type InterestType = 'fixed' | 'variable' | 'prime_plus'
+export type LoanStatus = 'pending' | 'active' | 'drawn_in_full' | 'paid_off' | 'defaulted' | 'refinanced'
+export type LoanDrawStatus = 'requested' | 'approved' | 'funded' | 'rejected'
+export type WorkflowType = 'opportunity' | 'project' | 'construction' | 'onboarding' | 'closing' | 'custom'
+export type WorkflowInstanceStatus = 'not_started' | 'in_progress' | 'completed' | 'cancelled' | 'on_hold'
+export type MilestoneInstanceStatus = 'not_started' | 'in_progress' | 'completed' | 'skipped' | 'blocked'
 export type TaskPriority = 'low' | 'medium' | 'high' | 'urgent'
-export type TaskStatus = 'not_started' | 'in_progress' | 'complete' | 'skipped'
+export type TaskStatus = 'not_started' | 'in_progress' | 'completed' | 'skipped' | 'blocked'
 export type FloorPlanType = 'sfh' | 'townhome'
-export type FloorPlanStatus = 'active' | 'archived'
-export type IntegrationProvider = 'sharepoint' | 'outlook' | 'teams' | 'docuseal' | 'akaunting' | 'plaid'
-export type CalendarEventType = 'milestone_due' | 'inspection' | 'closing' | 'land_committee' | 'handoff_meeting' | 'permit_expiration' | 'insurance_expiration' | 'loan_maturity' | 'task_due' | 'custom'
+export type FloorPlanStatus = 'active' | 'inactive' | 'draft'
+export type IntegrationProvider = 'sharepoint' | 'outlook' | 'akaunting' | 'quickbooks' | 'zapier' | 'sendgrid'
+export type CalendarEventType = 'inspection' | 'closing' | 'meeting' | 'deadline' | 'milestone' | 'permit' | 'walkthrough' | 'open_house' | 'draw_request' | 'other'
 
 // ---- Table Row Types ----
 
@@ -116,6 +117,7 @@ export interface Team {
   name: string
   description: string | null
   created_at: string
+  updated_at: string
 }
 
 export interface Contact {
@@ -129,9 +131,9 @@ export interface Contact {
   secondary_phone: string | null
   mailing_address_line1: string | null
   mailing_address_line2: string | null
-  mailing_city: string | null
-  mailing_state: string | null
-  mailing_zip: string | null
+  mailing_address_city: string | null
+  mailing_address_state: string | null
+  mailing_address_zip: string | null
   notes: string | null
   status: ContactStatus
   tags: string[] | null
@@ -160,45 +162,56 @@ export interface Opportunity {
   id: string
   organization_id: string | null
   name: string | null
-  address_line1: string | null
+  // Address — DB column is address_street, NOT address_line1
+  address_street: string | null
   address_city: string | null
-  address_county: string | null
-  address_state: string
+  address_state: string | null
   address_zip: string | null
+  address_county: string | null
   parcel_tms_number: string | null
+  // Classification
   type: OpportunityType
   current_stage: string
   source: OpportunitySource | null
+  // Assignments
   assigned_to: string | null
   owner_entity_id: string | null
+  // Projected values
   projected_purchase_price: number | null
   projected_sale_price: number | null
-  offer_date: string | null
-  contract_date: string | null
-  dd_expiration_date: string | null
-  closing_date: string | null
+  projected_profit: number | null
+  projected_margin_pct: number | null
+  // Key dates
+  date_identified: string | null
+  date_under_contract: string | null
+  due_diligence_deadline: string | null
+  projected_close_date: string | null
+  // Scattered lot specific
   zoning_current: string | null
   build_type: BuildType | null
   road_surrounding: string | null
-  construction_buffers_setbacks: string | null
-  historic_district_overlay: boolean
-  has_public_water: boolean | null
-  has_public_sewer: boolean | null
-  has_power: boolean | null
+  buffers: string | null
+  historic_district: boolean
+  water_available: boolean | null
+  sewer_available: boolean | null
+  electric_available: boolean | null
+  gas_available: boolean | null
   floor_plan_id: string | null
   best_fit_model: string | null
   garage_position: GaragePosition | null
   survey_complete: boolean
-  buildable_footprint_description: string | null
+  buildable_description: string | null
   lot_width: number | null
   lot_depth: number | null
-  lot_sf: number | null
+  lot_sqft: number | null
+  // Lot development / community
   total_acreage: number | null
   estimated_total_lots: number | null
   zoning_required: string | null
   preliminary_plat_status: string | null
   target_builders: string | null
   infrastructure_scope_estimate: number | null
+  // Status
   status: OpportunityStatus
   converted_to_project_id: string | null
   archived_reason: string | null
@@ -212,6 +225,7 @@ export interface DealAnalysis {
   floor_plan_id: string | null
   upgrade_package: UpgradePackage | null
   municipality_id: string | null
+  // Inputs
   purchase_price: number | null
   site_work_estimate: number | null
   other_site_costs: number | null
@@ -220,29 +234,43 @@ export interface DealAnalysis {
   selling_concessions: number | null
   project_duration_days: number | null
   interest_rate_override: number | null
-  sticks_and_bricks: number | null
-  upgrades: number | null
-  lot_preparation: number | null
-  municipality_soft_costs: number | null
-  builder_fee: number | null
-  contingency: number | null
-  total_contract_cost: number | null
-  warranty_reserve: number | null
-  builders_risk_insurance: number | null
-  closing_costs: number | null
-  utility_charges: number | null
-  total_project_cost: number | null
-  loan_amount: number | null
-  equity_required: number | null
-  interest_on_loan: number | null
-  cost_of_capital_on_equity: number | null
-  total_carry_costs: number | null
-  total_all_in_cost: number | null
-  total_revenue: number | null
-  total_selling_costs: number | null
-  net_sales_proceeds: number | null
-  net_profit: number | null
-  net_profit_margin: number | null
+  // Section 1: Acquisition costs
+  calc_total_acquisition_cost: number | null
+  // Section 2: Site costs
+  calc_total_site_costs: number | null
+  // Section 3: Vertical construction
+  calc_base_construction_cost: number | null
+  calc_upgrade_cost: number | null
+  calc_site_specific_adjustments: number | null
+  calc_total_vertical_cost: number | null
+  // Section 4: Soft costs
+  calc_permit_fees: number | null
+  calc_impact_fees: number | null
+  calc_water_sewer_tap: number | null
+  calc_architecture_engineering: number | null
+  calc_survey_cost: number | null
+  calc_insurance: number | null
+  calc_legal_closing: number | null
+  calc_contingency: number | null
+  calc_total_soft_costs: number | null
+  // Section 5: Total project cost
+  calc_total_project_cost: number | null
+  // Financing
+  calc_loan_amount: number | null
+  calc_equity_required: number | null
+  calc_interest_expense: number | null
+  // Revenue & Results
+  calc_gross_revenue: number | null
+  calc_selling_costs: number | null
+  calc_net_revenue: number | null
+  calc_gross_profit: number | null
+  calc_gross_margin_pct: number | null
+  calc_net_profit: number | null
+  calc_net_margin_pct: number | null
+  calc_roi: number | null
+  calc_annualized_roi: number | null
+  calc_cost_per_sf: number | null
+  // Verdict
   verdict: DealVerdict | null
   created_by: string | null
   is_current: boolean
@@ -254,57 +282,75 @@ export interface Project {
   organization_id: string | null
   project_number: string | null
   name: string
-  address_line1: string | null
+  // Address — DB column is address_street, NOT address_line1
+  address_street: string | null
   address_city: string | null
-  address_county: string | null
   address_state: string | null
   address_zip: string | null
+  address_county: string | null
+  // Classification
   type: ProjectType
   owner_entity_id: string | null
   builder_entity_id: string | null
   status: ProjectStatus
+  // Acquisition
   acquisition_date: string | null
-  purchase_price: number | null
-  total_budget: number | null
-  current_spend: number
-  projected_final_cost: number | null
-  contract_type: ContractType | null
+  // Budget fields
+  budget_land_acquisition: number | null
+  budget_site_work: number | null
+  budget_vertical_construction: number | null
+  budget_soft_costs: number | null
+  budget_contingency: number | null
+  budget_total: number | null
+  actual_total_cost: number | null
+  budget_variance: number | null
+  // Contract
   contract_amount: number | null
-  contract_execution_date: string | null
-  contract_scope_summary: string | null
-  builder_fee_amount: number | null
+  contract_signed_date: string | null
+  contract_document_id: string | null
+  // Scattered lot / lot purchase specifics
   lot_width: number | null
   lot_depth: number | null
-  lot_sf: number | null
+  lot_sqft: number | null
   zoning: string | null
-  setbacks: string | null
-  buildable_area: string | null
+  setback_front: number | null
+  setback_rear: number | null
+  setback_left: number | null
+  setback_right: number | null
   floor_plan_id: string | null
-  upgrade_package: string | null
+  upgrade_package: UpgradePackage | null
   foundation_type: FoundationType | null
-  utility_confirmation_status: string | null
+  water_status: string | null
+  sewer_status: string | null
+  electric_status: string | null
+  gas_status: string | null
+  // Lot development / community specifics
   total_acreage: number | null
   total_lots: number | null
   phase_breakdown: Json | null
   preliminary_plat_status: string | null
   final_plat_status: string | null
-  civil_engineer_contact_id: string | null
   municipality_id: string | null
-  impact_fees: number | null
-  bonds: number | null
-  infrastructure_acceptance_status: string | null
+  impact_fee_total: number | null
+  bond_amount: number | null
+  bond_release_status: string | null
+  // Community development additional
   floor_plan_mix: Json | null
   sales_pricing_matrix: Json | null
   model_home_lot: string | null
   hoa_setup_status: string | null
+  // Source opportunity
   source_opportunity_id: string | null
-  permit_issued_date: string | null
+  // Key dates
+  permit_submitted_date: string | null
+  permit_approved_date: string | null
   construction_start_date: string | null
   projected_completion_date: string | null
   actual_completion_date: string | null
   co_date: string | null
   sale_date: string | null
-  warranty_expiration: string | null
+  warranty_start_date: string | null
+  warranty_end_date: string | null
   created_at: string
   updated_at: string
 }
@@ -351,12 +397,11 @@ export interface Unit {
   total_committed: number
   total_actual: number
   variance: number
-  permit_issued_date: string | null
-  construction_start: string | null
-  projected_completion: string | null
-  actual_completion: string | null
+  permit_date: string | null
+  start_date: string | null
+  projected_completion_date: string | null
+  actual_completion_date: string | null
   co_date: string | null
-  warranty_expiration: string | null
   created_at: string
   updated_at: string
 }
@@ -367,10 +412,10 @@ export interface UnitMilestone {
   phase_number: number
   name: string
   standard_duration_days: number | null
-  planned_start: string | null
-  planned_end: string | null
-  actual_start: string | null
-  actual_end: string | null
+  planned_start_date: string | null
+  planned_end_date: string | null
+  actual_start_date: string | null
+  actual_end_date: string | null
   status: MilestoneStatus
   days_in_milestone: number
   is_overdue: boolean
@@ -388,13 +433,12 @@ export interface PurchaseOrder {
   description: string | null
   amount: number
   status: POStatus
-  issue_date: string | null
-  completion_date: string | null
-  invoice_date: string | null
+  issued_date: string | null
+  due_date: string | null
+  completed_date: string | null
   invoice_number: string | null
-  payment_date: string | null
-  lien_waiver_status: LienWaiverStatus
-  retainage_pct: number
+  lien_waiver_status: LienWaiverStatus | null
+  retainage_pct: number | null
   retainage_amount: number | null
   approved_by: string | null
   approved_at: string | null
@@ -431,18 +475,22 @@ export interface FloorPlan {
   garage: string | null
   unheated_sf: number | null
   stories: number | null
-  min_lot_width: number | null
-  min_lot_depth: number | null
+  lot_width_min: number | null
+  lot_depth_min: number | null
+  lot_sqft_min: number | null
   unit_width: number | null
-  base_sticks_bricks_cost: number | null
-  total_cost_incl_soft: number | null
-  cost_per_heated_sf_sb: number | null
-  cost_per_heated_sf_total: number | null
-  classic_upgrade_cost: number | null
-  elegance_upgrade_cost: number | null
-  harmony_upgrade_cost: number | null
-  architectural_plan_url: string | null
-  reference_image_url: string | null
+  // Costs
+  base_cost: number | null
+  total_cost: number | null
+  cost_per_sf: number | null
+  // Upgrade costs by package
+  upgrade_cost_classic: number | null
+  upgrade_cost_elegance: number | null
+  upgrade_cost_harmony: number | null
+  // URLs
+  plan_url: string | null
+  brochure_url: string | null
+  // Notes & status
   notes: string | null
   status: FloorPlanStatus
   cost_breakdown: Json | null
@@ -454,19 +502,28 @@ export interface Municipality {
   id: string
   organization_id: string | null
   name: string
-  state: StateCode
+  state: StateCode | null
+  // Fee fields
+  building_permit_fee: number | null
+  grading_permit_fee: number | null
+  mechanical_permit_fee: number | null
+  electrical_permit_fee: number | null
+  plumbing_permit_fee: number | null
   water_tap_fee: number | null
   sewer_tap_fee: number | null
-  system_development_fees: number | null
-  total_ws_fees: number | null
-  meter_charges: number | null
-  impact_fees: number | null
+  impact_fee_per_unit: number | null
+  stormwater_fee: number | null
+  tree_mitigation_fee: number | null
+  road_impact_fee: number | null
+  school_impact_fee: number | null
+  park_impact_fee: number | null
+  fire_impact_fee: number | null
+  zoning_application_fee: number | null
+  subdivision_application_fee: number | null
+  plan_review_fee: number | null
+  inspection_fee: number | null
+  certificate_of_occupancy_fee: number | null
   permit_fee_schedule: Json | null
-  gas_tap_fee: number | null
-  architect_fee: number | null
-  engineering_fee: number | null
-  survey_fee: number | null
-  miscellaneous_fees: number | null
   notes: string | null
   created_at: string
   updated_at: string
@@ -499,12 +556,10 @@ export interface Transaction {
   supporting_document_id: string | null
   status: TransactionStatus
   approved_by: string | null
-  approved_at: string | null
   period: string | null
   is_adjusting_entry: boolean
   batch_id: string | null
   akaunting_synced: boolean
-  akaunting_sync_at: string | null
   created_at: string
   updated_at: string
 }
@@ -520,8 +575,8 @@ export interface Investor {
   promote_carry_structure: string | null
   accreditation_status: AccreditationStatus | null
   accreditation_verification_date: string | null
-  subscription_agreement_document_id: string | null
-  w9_document_id: string | null
+  subscription_document_id: string | null
+  operating_agreement_document_id: string | null
   created_at: string
 }
 
@@ -532,12 +587,11 @@ export interface Loan {
   lender_contact_id: string | null
   loan_type: LoanType | null
   original_amount: number | null
-  drawn_amount: number
-  available_amount: number | null
+  amount_drawn: number
+  amount_available: number | null
   interest_rate: number | null
-  rate_type: RateType | null
+  interest_type: InterestType | null
   maturity_date: string | null
-  origination_date: string | null
   ltc_ratio: number | null
   ltv_ratio: number | null
   covenants: string | null
@@ -579,40 +633,42 @@ export interface CalendarEvent {
 export interface WorkflowTemplate {
   id: string
   organization_id: string | null
-  module: WorkflowModule
-  record_type: string
   name: string
-  goal_statement: string | null
+  description: string | null
+  workflow_type: WorkflowType | null
+  trigger_event: string | null
   is_active: boolean
+  version: number
+  created_by: string | null
   created_at: string
+  updated_at: string
 }
 
 export interface TaskInstance {
   id: string
   milestone_instance_id: string
+  task_template_id: string | null
   task_list_name: string | null
-  template_id: string | null
-  title: string
+  name: string
   description: string | null
-  assigned_role: string | null
+  sequence: number
   assigned_to: string | null
-  due_date: string | null
-  priority: TaskPriority
   status: TaskStatus
+  due_date: string | null
   completed_at: string | null
   completed_by: string | null
+  depends_on_task_instance_id: string | null
   notes: string | null
-  linked_record_type: string | null
-  linked_record_id: string | null
   created_at: string
+  updated_at: string
 }
 
 export interface ActivityLog {
   id: string
   organization_id: string | null
   user_id: string | null
-  record_type: string
-  record_id: string
+  record_type: string | null
+  record_id: string | null
   action: string
   description: string | null
   metadata: Json | null
@@ -621,8 +677,8 @@ export interface ActivityLog {
 
 export interface Note {
   id: string
-  record_type: string
-  record_id: string
+  record_type: string | null
+  record_id: string | null
   user_id: string | null
   content: string
   is_pinned: boolean
@@ -632,8 +688,8 @@ export interface Note {
 
 export interface Document {
   id: string
-  record_type: string
-  record_id: string
+  record_type: string | null
+  record_id: string | null
   name: string
   file_type: string | null
   file_size_bytes: number | null
@@ -649,15 +705,16 @@ export interface VendorProfile {
   contact_id: string
   trades_performed: string[] | null
   license_number: string | null
+  license_state: string | null
   license_expiration: string | null
   w9_on_file: boolean
   bank_name: string | null
-  bank_routing: string | null
-  bank_account: string | null
+  bank_routing_number: string | null
+  bank_account_number: string | null
   payment_method: PaymentMethod | null
   performance_score: number | null
-  on_time_completion_rate: number | null
-  average_punch_items: number | null
+  on_time_rate: number | null
+  punch_items_avg: number | null
   pm_rating: number | null
   ytd_payments: number
   is_1099_eligible: boolean
@@ -691,22 +748,22 @@ export interface Inspection {
   actual_date: string | null
   result: InspectionResult | null
   notes: string | null
+  re_inspection_required: boolean
   re_inspection_date: string | null
-  re_inspection_result: string | null
+  re_inspection_result: InspectionResult | null
   created_at: string
 }
 
 export interface Permit {
   id: string
   record_type: PermitRecordType | null
-  record_id: string
+  record_id: string | null
   permit_type: PermitType | null
   jurisdiction: string | null
   application_date: string | null
-  permit_number: string | null
-  issued_date: string | null
+  approval_date: string | null
   expiration_date: string | null
-  inspection_requirements: string | null
+  permit_number: string | null
   fee: number | null
   status: PermitStatus
   created_at: string
@@ -721,9 +778,8 @@ export interface WarrantyClaim {
   photos: string[] | null
   urgency: WarrantyUrgency | null
   responsible_vendor_id: string | null
-  notification_date: string | null
   scheduled_repair_date: string | null
-  completion_date: string | null
+  completed_date: string | null
   resolution_notes: string | null
   owner_signoff: boolean
   cost: number | null
@@ -739,8 +795,8 @@ export interface TradeCategory {
   name: string
   description: string | null
   default_vendor_id: string | null
-  typical_cost_low: number | null
-  typical_cost_high: number | null
+  cost_range_low: number | null
+  cost_range_high: number | null
   is_active: boolean
 }
 
@@ -748,6 +804,7 @@ export interface TradeCategory {
 // Note: When connecting to a real Supabase instance, regenerate types with:
 //   npx supabase gen types typescript --project-id <project-id> > lib/supabase/types.ts
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type AnyTable = { Row: Record<string, any>; Insert: Record<string, any>; Update: Record<string, any>; Relationships: [] }
 
 export interface Database {
@@ -766,13 +823,10 @@ export interface Database {
       opportunity_stages: AnyTable
       deal_analyses: { Row: DealAnalysis; Insert: Partial<DealAnalysis> & { opportunity_id: string }; Update: Partial<DealAnalysis>; Relationships: [] }
       comparable_sales: AnyTable
-      projects: { Row: Project; Insert: Partial<Project> & { name: string; type: ProjectType }; Update: Partial<Project>; Relationships: [] }
+      projects: { Row: Project; Insert: Partial<Project> & { name: string }; Update: Partial<Project>; Relationships: [] }
       project_lots: AnyTable
       project_expenses: AnyTable
-      project_draws: AnyTable
-      project_milestones: AnyTable
-      project_tasks: AnyTable
-      project_budget_categories: AnyTable
+      clients: AnyTable
       jobs: { Row: Job; Insert: Partial<Job> & { name: string; client_type: ClientType }; Update: Partial<Job>; Relationships: [] }
       units: { Row: Unit; Insert: Partial<Unit> & { job_id: string }; Update: Partial<Unit>; Relationships: [] }
       unit_milestones: { Row: UnitMilestone; Insert: Partial<UnitMilestone> & { unit_id: string; phase_number: number; name: string }; Update: Partial<UnitMilestone>; Relationships: [] }
@@ -780,19 +834,15 @@ export interface Database {
       change_orders: { Row: ChangeOrder; Insert: Partial<ChangeOrder> & { unit_id: string; description: string }; Update: Partial<ChangeOrder>; Relationships: [] }
       selections: { Row: Selection; Insert: Partial<Selection> & { unit_id: string; category: string }; Update: Partial<Selection>; Relationships: [] }
       inspections: { Row: Inspection; Insert: Partial<Inspection> & { unit_id: string; type: string }; Update: Partial<Inspection>; Relationships: [] }
-      permits: { Row: Permit; Insert: Partial<Permit> & { record_id: string }; Update: Partial<Permit>; Relationships: [] }
+      permits: { Row: Permit; Insert: Partial<Permit>; Update: Partial<Permit>; Relationships: [] }
       warranty_claims: { Row: WarrantyClaim; Insert: Partial<WarrantyClaim> & { unit_id: string; claim_date: string; description: string }; Update: Partial<WarrantyClaim>; Relationships: [] }
       floor_plans: { Row: FloorPlan; Insert: Partial<FloorPlan> & { name: string }; Update: Partial<FloorPlan>; Relationships: [] }
-      municipalities: { Row: Municipality; Insert: Partial<Municipality> & { name: string; state: StateCode }; Update: Partial<Municipality>; Relationships: [] }
+      municipalities: { Row: Municipality; Insert: Partial<Municipality> & { name: string }; Update: Partial<Municipality>; Relationships: [] }
       trade_categories: { Row: TradeCategory; Insert: Partial<TradeCategory> & { code: string; name: string }; Update: Partial<TradeCategory>; Relationships: [] }
       schedule_templates: AnyTable
       chart_of_accounts: { Row: ChartOfAccounts; Insert: Partial<ChartOfAccounts> & { entity_id: string; account_number: string; account_name: string }; Update: Partial<ChartOfAccounts>; Relationships: [] }
-      accounts: AnyTable
       transactions: { Row: Transaction; Insert: Partial<Transaction> & { entity_id: string; date: string; account_id: string }; Update: Partial<Transaction>; Relationships: [] }
-      transaction_line_items: AnyTable
-      transaction_reconciliations: AnyTable
       fiscal_periods: AnyTable
-      accounting_periods: AnyTable
       investors: { Row: Investor; Insert: Partial<Investor> & { entity_id: string }; Update: Partial<Investor>; Relationships: [] }
       capital_calls: AnyTable
       capital_call_responses: AnyTable
@@ -803,32 +853,32 @@ export interface Database {
       waterfall_structures: { Row: WaterfallStructure; Insert: Partial<WaterfallStructure> & { name: string; tiers: Json }; Update: Partial<WaterfallStructure>; Relationships: [] }
       calendar_events: { Row: CalendarEvent; Insert: Partial<CalendarEvent> & { title: string; start_date: string }; Update: Partial<CalendarEvent>; Relationships: [] }
       vendor_profiles: { Row: VendorProfile; Insert: Partial<VendorProfile> & { contact_id: string }; Update: Partial<VendorProfile>; Relationships: [] }
-      activity_log: { Row: ActivityLog; Insert: Partial<ActivityLog> & { record_type: string; record_id: string; action: string }; Update: Partial<ActivityLog>; Relationships: [] }
-      notes: { Row: Note; Insert: Partial<Note> & { record_type: string; record_id: string; content: string }; Update: Partial<Note>; Relationships: [] }
-      documents: { Row: Document; Insert: Partial<Document> & { record_type: string; record_id: string; name: string }; Update: Partial<Document>; Relationships: [] }
-      document_signatures: AnyTable
+      activity_log: { Row: ActivityLog; Insert: Partial<ActivityLog> & { action: string }; Update: Partial<ActivityLog>; Relationships: [] }
+      notes: { Row: Note; Insert: Partial<Note> & { content: string }; Update: Partial<Note>; Relationships: [] }
+      documents: { Row: Document; Insert: Partial<Document> & { name: string }; Update: Partial<Document>; Relationships: [] }
       insurance_certificates: AnyTable
       construction_issues: AnyTable
-      workflow_templates: { Row: WorkflowTemplate; Insert: Partial<WorkflowTemplate> & { module: WorkflowModule; record_type: string; name: string }; Update: Partial<WorkflowTemplate>; Relationships: [] }
+      workflow_templates: { Row: WorkflowTemplate; Insert: Partial<WorkflowTemplate> & { name: string }; Update: Partial<WorkflowTemplate>; Relationships: [] }
       milestone_templates: AnyTable
       task_list_templates: AnyTable
       task_templates: AnyTable
       workflow_instances: AnyTable
       milestone_instances: AnyTable
-      task_instances: { Row: TaskInstance; Insert: Partial<TaskInstance> & { milestone_instance_id: string; title: string }; Update: Partial<TaskInstance>; Relationships: [] }
+      task_instances: { Row: TaskInstance; Insert: Partial<TaskInstance> & { milestone_instance_id: string; name: string }; Update: Partial<TaskInstance>; Relationships: [] }
       integration_settings: AnyTable
-      integration_sync_log: AnyTable
       contract_templates: AnyTable
-      plaid_items: AnyTable
+      sharepoint_folder_templates: AnyTable
       [key: string]: AnyTable | { Row: any; Insert: any; Update: any; Relationships: any }
     }
     Views: {
       [key: string]: { Row: Record<string, any>; Relationships: [] }
     }
     Functions: {
-      calculate_deal_analysis: { Args: Record<string, unknown>; Returns: string }
-      convert_opportunity_to_project: { Args: { p_opportunity_id: string }; Returns: string }
-      generate_project_number: { Args: Record<string, never>; Returns: string }
+      get_user_organization_id: { Args: Record<string, never>; Returns: string }
+      is_global_admin: { Args: Record<string, never>; Returns: boolean }
+      is_module_admin: { Args: Record<string, never>; Returns: boolean }
+      user_has_module_access: { Args: { module_name: string }; Returns: boolean }
+      has_module_permission: { Args: { module_name: string; permission_name: string }; Returns: boolean }
       [key: string]: { Args: Record<string, any>; Returns: any }
     }
     Enums: {

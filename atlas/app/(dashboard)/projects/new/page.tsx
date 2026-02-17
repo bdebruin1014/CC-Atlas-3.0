@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import { ArrowLeft, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { ProjectForm } from "@/components/projects/project-form"
-import { useCreateProject, type Project } from "@/lib/hooks/use-projects"
+import { useCreateProject } from "@/lib/hooks/use-projects"
 import { useOrganizationId } from "@/lib/hooks/use-organization"
 
 export default function NewProjectPage() {
@@ -22,38 +22,29 @@ export default function NewProjectPage() {
       return
     }
 
-    // Map form field names to actual DB column names
+    // Form fields already use DB column names — just add org context and defaults.
     const payload = {
       organization_id: organizationId,
       project_number: data.project_number as string,
       name: data.name as string,
-      address_line1: (data.address as string) || null,
-      address_city: (data.city as string) || null,
-      address_state: (data.state as string) || null,
-      address_zip: (data.zip as string) || null,
+      address_street: (data.address_street as string) || null,
+      address_city: (data.address_city as string) || null,
+      address_state: (data.address_state as string) || null,
+      address_zip: (data.address_zip as string) || null,
       type: data.type as string,
       status: (data.status as string) || "pre_construction",
       owner_entity_id: (data.owner_entity_id as string) || null,
       builder_entity_id: (data.builder_entity_id as string) || null,
-      total_budget: Number(data.total_budget) || 0,
-      purchase_price: data.purchase_price ? Number(data.purchase_price) : null,
+      budget_total: Number(data.budget_total) || 0,
+      budget_land_acquisition: data.budget_land_acquisition ? Number(data.budget_land_acquisition) : null,
       acquisition_date: (data.acquisition_date as string) || null,
-      contract_type: (data.contract_type as string) || null,
       contract_amount: data.contract_amount ? Number(data.contract_amount) : null,
-      builder_fee_amount: data.contract_fee ? Number(data.contract_fee) : null,
       lot_width: data.lot_width ? Number(data.lot_width) : null,
       lot_depth: data.lot_depth ? Number(data.lot_depth) : null,
-      total_acreage: data.acreage ? Number(data.acreage) : null,
+      total_acreage: data.total_acreage ? Number(data.total_acreage) : null,
       total_lots: data.total_lots ? Number(data.total_lots) : null,
       floor_plan_id: (data.floor_plan_id as string) || null,
-      permit_issued_date: null,
-      construction_start_date: null,
-      projected_completion_date: null,
-      co_date: null,
-      sale_date: null,
-      warranty_expiration: null,
       source_opportunity_id: null,
-      notes: (data.notes as string) || null,
     }
 
     try {
