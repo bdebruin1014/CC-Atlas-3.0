@@ -9,10 +9,10 @@ import { ListingMarketingTab } from "@/components/disposition/listing-marketing-
 import { ListingShowingsTab } from "@/components/disposition/listing-showings-tab"
 import { ListingOffersTab } from "@/components/disposition/listing-offers-tab"
 import { ListingContractTab } from "@/components/disposition/listing-contract-tab"
-
-const Placeholder = ({ label }: { label: string }) => (
-  <div className="py-8 text-center text-[#5A6B75]">{label} — coming soon</div>
-)
+import { ListingSettlementTab } from "@/components/disposition/listing-settlement-tab"
+import { ListingCostsTab } from "@/components/disposition/listing-costs-tab"
+import { ListingBulkSalesTab } from "@/components/disposition/listing-bulk-sales-tab"
+import { ListingDocumentsTab, ListingTasksTab, ListingNotesTab, ListingActivityTab } from "@/components/disposition/listing-utility-tabs"
 
 export default function ListingDetailPage() {
   const { id } = useParams<{ id: string }>()
@@ -36,12 +36,11 @@ export default function ListingDetailPage() {
   const hasContract = contract != null || listing.active_contracts_count > 0
   const showSettlement = contract?.status === "clear_to_close" || contract?.status === "closed"
   const isLotDev = listing.project?.type === "lot_development"
+  const listingName = listing.property_address || "Untitled Listing"
 
   return (
     <div className="space-y-4 p-6">
-      <h1 className="text-xl font-semibold text-[#1F2937]">
-        {listing.property_address || "Untitled Listing"}
-      </h1>
+      <h1 className="text-xl font-semibold text-[#1F2937]">{listingName}</h1>
       <Tabs defaultValue="overview">
         <TabsList className="flex-wrap">
           <TabsTrigger value="overview">Overview</TabsTrigger>
@@ -62,13 +61,15 @@ export default function ListingDetailPage() {
         <TabsContent value="showings"><ListingShowingsTab listingId={listing.id} /></TabsContent>
         <TabsContent value="offers"><ListingOffersTab listingId={listing.id} /></TabsContent>
         {hasContract && <TabsContent value="contract"><ListingContractTab listingId={listing.id} /></TabsContent>}
-        {showSettlement && <TabsContent value="settlement"><Placeholder label="Settlement" /></TabsContent>}
-        <TabsContent value="costs"><Placeholder label="Costs" /></TabsContent>
-        {isLotDev && <TabsContent value="bulk-sales"><Placeholder label="Bulk Sales" /></TabsContent>}
-        <TabsContent value="documents"><Placeholder label="Documents" /></TabsContent>
-        <TabsContent value="tasks"><Placeholder label="Tasks" /></TabsContent>
-        <TabsContent value="notes"><Placeholder label="Notes" /></TabsContent>
-        <TabsContent value="activity"><Placeholder label="Activity" /></TabsContent>
+        {showSettlement && <TabsContent value="settlement"><ListingSettlementTab listingId={listing.id} /></TabsContent>}
+        <TabsContent value="costs"><ListingCostsTab listingId={listing.id} /></TabsContent>
+        {isLotDev && listing.project && (
+          <TabsContent value="bulk-sales"><ListingBulkSalesTab listingId={listing.id} projectId={listing.project.id} /></TabsContent>
+        )}
+        <TabsContent value="documents"><ListingDocumentsTab listingId={listing.id} /></TabsContent>
+        <TabsContent value="tasks"><ListingTasksTab listingId={listing.id} listingName={listingName} /></TabsContent>
+        <TabsContent value="notes"><ListingNotesTab listingId={listing.id} /></TabsContent>
+        <TabsContent value="activity"><ListingActivityTab listingId={listing.id} /></TabsContent>
       </Tabs>
     </div>
   )
