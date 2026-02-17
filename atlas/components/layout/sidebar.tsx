@@ -15,6 +15,17 @@ import {
   PanelLeftOpen,
   LogOut,
   Mountain,
+  FileText,
+  CreditCard,
+  Receipt,
+  BarChart3,
+  Shield,
+  Building2,
+  BookOpen,
+  Landmark,
+  PieChart,
+  ChevronDown,
+  ChevronRight,
 } from "lucide-react"
 
 import { cn } from "@/lib/utils/format"
@@ -31,7 +42,14 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip"
 
-const NAV_ITEMS = [
+interface NavItem {
+  label: string
+  href: string
+  icon: React.ComponentType<{ className?: string }>
+  children?: { label: string; href: string; icon: React.ComponentType<{ className?: string }> }[]
+}
+
+const NAV_ITEMS: NavItem[] = [
   {
     label: "Opportunities",
     href: "/opportunities",
@@ -46,11 +64,25 @@ const NAV_ITEMS = [
     label: "Construction",
     href: "/construction",
     icon: HardHat,
+    children: [
+      { label: "Invoices", href: "/construction/invoices", icon: FileText },
+      { label: "Payments", href: "/construction/payments", icon: CreditCard },
+      { label: "AR / Draws", href: "/construction/ar", icon: Receipt },
+      { label: "Job Cost", href: "/construction/job-cost", icon: BarChart3 },
+      { label: "Vendors", href: "/construction/vendors", icon: Users },
+      { label: "Warranty", href: "/construction/warranty", icon: Shield },
+    ],
   },
   {
     label: "Accounting",
     href: "/accounting",
     icon: Calculator,
+    children: [
+      { label: "Entities", href: "/accounting/entities", icon: Building2 },
+      { label: "Loans", href: "/accounting/loans", icon: Landmark },
+      { label: "Period Close", href: "/accounting/period-close", icon: BookOpen },
+      { label: "Reports", href: "/accounting/reports/consolidated", icon: PieChart },
+    ],
   },
   {
     label: "Contacts",
@@ -67,7 +99,7 @@ const NAV_ITEMS = [
     href: "/admin",
     icon: Settings,
   },
-] as const
+]
 
 interface SidebarProps {
   user?: {
@@ -85,6 +117,29 @@ export function Sidebar({ user }: SidebarProps) {
   const router = useRouter()
   const { sidebarCollapsed, toggleSidebar } = useUIStore()
   const supabase = createClient()
+  const [expandedItems, setExpandedItems] = React.useState<Set<string>>(new Set())
+
+  // Auto-expand parent when child is active
+  React.useEffect(() => {
+    const newExpanded = new Set(expandedItems)
+    for (const item of NAV_ITEMS) {
+      if (item.children && pathname.startsWith(item.href + "/")) {
+        newExpanded.add(item.href)
+      }
+    }
+    if (newExpanded.size !== expandedItems.size) {
+      setExpandedItems(newExpanded)
+    }
+  }, [pathname]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const toggleExpanded = (href: string) => {
+    setExpandedItems(prev => {
+      const next = new Set(prev)
+      if (next.has(href)) next.delete(href)
+      else next.add(href)
+      return next
+    })
+  }
 
   const handleLogout = async () => {
     await supabase.auth.signOut()
@@ -141,8 +196,29 @@ export function Sidebar({ user }: SidebarProps) {
               const isActive =
                 pathname === item.href ||
                 pathname.startsWith(`${item.href}/`)
+              const hasChildren = !!item.children?.length
+              const isExpanded = expandedItems.has(item.href)
 
-              const linkContent = (
+              const linkContent = hasChildren && !sidebarCollapsed ? (
+                <button
+                  onClick={() => toggleExpanded(item.href)}
+                  className={cn(
+                    "flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
+                    "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+                    isActive
+                      ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                      : "text-sidebar-foreground/70"
+                  )}
+                >
+                  <item.icon className={cn("h-5 w-5 shrink-0", isActive && "text-primary")} />
+                  <span className="flex-1 text-left">{item.label}</span>
+                  {isExpanded ? (
+                    <ChevronDown className="h-4 w-4 shrink-0 opacity-50" />
+                  ) : (
+                    <ChevronRight className="h-4 w-4 shrink-0 opacity-50" />
+                  )}
+                </button>
+              ) : (
                 <Link
                   href={item.href}
                   className={cn(
@@ -167,7 +243,20 @@ export function Sidebar({ user }: SidebarProps) {
               if (sidebarCollapsed) {
                 return (
                   <Tooltip key={item.href}>
-                    <TooltipTrigger asChild>{linkContent}</TooltipTrigger>
+                    <TooltipTrigger asChild>
+                      <Link
+                        href={item.href}
+                        className={cn(
+                          "flex items-center justify-center rounded-lg px-0 py-2.5 text-sm font-medium transition-colors",
+                          "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+                          isActive
+                            ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                            : "text-sidebar-foreground/70"
+                        )}
+                      >
+                        <item.icon className={cn("h-5 w-5 shrink-0", isActive && "text-primary")} />
+                      </Link>
+                    </TooltipTrigger>
                     <TooltipContent side="right" sideOffset={8}>
                       {item.label}
                     </TooltipContent>
@@ -175,7 +264,36 @@ export function Sidebar({ user }: SidebarProps) {
                 )
               }
 
-              return <React.Fragment key={item.href}>{linkContent}</React.Fragment>
+              return (
+                <React.Fragment key={item.href}>
+                  {linkContent}
+                  {hasChildren && isExpanded && !sidebarCollapsed && (
+                    <div className="ml-4 flex flex-col gap-0.5 border-l border-sidebar-border pl-3">
+                      {item.children!.map((child) => {
+                        const childActive =
+                          pathname === child.href ||
+                          pathname.startsWith(`${child.href}/`)
+                        return (
+                          <Link
+                            key={child.href}
+                            href={child.href}
+                            className={cn(
+                              "flex items-center gap-2.5 rounded-md px-2.5 py-2 text-[13px] font-medium transition-colors",
+                              "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+                              childActive
+                                ? "bg-sidebar-accent/60 text-sidebar-accent-foreground"
+                                : "text-sidebar-foreground/60"
+                            )}
+                          >
+                            <child.icon className={cn("h-4 w-4 shrink-0", childActive && "text-primary")} />
+                            <span>{child.label}</span>
+                          </Link>
+                        )
+                      })}
+                    </div>
+                  )}
+                </React.Fragment>
+              )
             })}
           </nav>
         </ScrollArea>

@@ -8,6 +8,8 @@ import {
   AlertCircle,
   TrendingUp,
   TrendingDown,
+  Receipt,
+  CreditCard,
 } from "lucide-react"
 import { cn, formatCurrency } from "@/lib/utils/format"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -168,6 +170,8 @@ interface DashboardSummaryProps {
   openPOs: { count: number; value: number }
   pendingInspections: number
   openChangeOrders: number
+  apOutstanding?: number
+  arOutstanding?: number
 }
 
 export function DashboardSummary({
@@ -176,35 +180,55 @@ export function DashboardSummary({
   openPOs,
   pendingInspections,
   openChangeOrders,
+  apOutstanding = 0,
+  arOutstanding = 0,
 }: DashboardSummaryProps) {
   return (
-    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-      <StatCard
-        title="Active Jobs"
-        value={activeJobs}
-        icon={<Briefcase className="h-4 w-4" />}
-      />
-      <StatCard
-        title="Units Under Construction"
-        value={unitsUnderConstruction}
-        icon={<Building2 className="h-4 w-4" />}
-      />
-      <StatCard
-        title="Open POs"
-        value={openPOs.count}
-        subtitle={formatCurrency(openPOs.value, { compact: true })}
-        icon={<FileText className="h-4 w-4" />}
-      />
-      <StatCard
-        title="Pending Inspections"
-        value={pendingInspections}
-        icon={<ClipboardCheck className="h-4 w-4" />}
-      />
-      <StatCard
-        title="Open Change Orders"
-        value={openChangeOrders}
-        icon={<AlertCircle className="h-4 w-4" />}
-      />
+    <div className="space-y-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+        <StatCard
+          title="Active Jobs"
+          value={activeJobs}
+          icon={<Briefcase className="h-4 w-4" />}
+        />
+        <StatCard
+          title="Units Under Construction"
+          value={unitsUnderConstruction}
+          icon={<Building2 className="h-4 w-4" />}
+        />
+        <StatCard
+          title="Open POs"
+          value={openPOs.count}
+          subtitle={formatCurrency(openPOs.value, { compact: true })}
+          icon={<FileText className="h-4 w-4" />}
+        />
+        <StatCard
+          title="Pending Inspections"
+          value={pendingInspections}
+          icon={<ClipboardCheck className="h-4 w-4" />}
+        />
+        <StatCard
+          title="Open Change Orders"
+          value={openChangeOrders}
+          icon={<AlertCircle className="h-4 w-4" />}
+        />
+      </div>
+      {(apOutstanding > 0 || arOutstanding > 0) && (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <StatCard
+            title="AP Outstanding"
+            value={formatCurrency(apOutstanding, { compact: true })}
+            subtitle="Unpaid invoices"
+            icon={<CreditCard className="h-4 w-4" />}
+          />
+          <StatCard
+            title="AR Outstanding"
+            value={formatCurrency(arOutstanding, { compact: true })}
+            subtitle="Pending draw payments"
+            icon={<Receipt className="h-4 w-4" />}
+          />
+        </div>
+      )}
     </div>
   )
 }

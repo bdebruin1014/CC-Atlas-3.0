@@ -1,7 +1,7 @@
 "use client"
 
-import { useState, useEffect, useMemo } from "react"
-import { useParams, useRouter } from "next/navigation"
+import { use, useState, useEffect, useMemo } from "react"
+import { useRouter } from "next/navigation"
 import {
   ArrowLeft,
   Plus,
@@ -9,6 +9,7 @@ import {
   DollarSign,
   ChevronDown,
   ChevronUp,
+  ChevronRight,
   Search,
   Phone,
   FileText,
@@ -88,11 +89,10 @@ function getCallStatusBadge(status: CapitalCallStatus) {
 // Page Component
 // ---------------------------------------------------------------------------
 
-export default function InvestorsPage() {
-  const params = useParams()
+export default function InvestorsPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id: entityId } = use(params)
   const router = useRouter()
   const { toast } = useToast()
-  const entityId = params.id as string
 
   const [investors, setInvestors] = useState<Investor[]>([])
   const [capitalCalls, setCapitalCalls] = useState<CapitalCall[]>([])
@@ -149,25 +149,40 @@ export default function InvestorsPage() {
 
   return (
     <div className="space-y-6 p-6">
-      {/* Header */}
-      <div>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="mb-2"
+      {/* Breadcrumb */}
+      <nav className="flex items-center gap-1 text-sm text-muted-foreground">
+        <button
+          className="hover:text-foreground transition-colors"
+          onClick={() => router.push("/accounting")}
+        >
+          Accounting
+        </button>
+        <ChevronRight className="h-3 w-3" />
+        <button
+          className="hover:text-foreground transition-colors"
+          onClick={() => router.push("/accounting/entities")}
+        >
+          Entities
+        </button>
+        <ChevronRight className="h-3 w-3" />
+        <button
+          className="hover:text-foreground transition-colors"
           onClick={() => router.push(`/accounting/entities/${entityId}`)}
         >
-          <ArrowLeft className="h-4 w-4" />
-          Back to {entityName || "Entity"}
-        </Button>
+          {entityName || "Entity"}
+        </button>
+        <ChevronRight className="h-3 w-3" />
+        <span className="text-foreground font-medium">Investors</span>
+      </nav>
 
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight">Investor Management</h1>
-            <p className="text-sm text-muted-foreground">
-              {entityName} - {investors.length} investor{investors.length !== 1 ? "s" : ""}
-            </p>
-          </div>
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Investor Management</h1>
+          <p className="text-sm text-muted-foreground">
+            {entityName} - {investors.length} investor{investors.length !== 1 ? "s" : ""}
+          </p>
+        </div>
           <div className="flex items-center gap-2">
             <Button variant="outline" onClick={() => setShowCapitalCall(true)}>
               <Phone className="h-4 w-4" />

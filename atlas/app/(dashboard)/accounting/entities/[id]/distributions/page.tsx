@@ -1,12 +1,14 @@
 "use client"
 
-import { useState, useEffect, useMemo } from "react"
-import { useParams, useRouter } from "next/navigation"
+import { use, useState, useEffect, useMemo } from "react"
+import { useRouter } from "next/navigation"
 import {
   ArrowLeft,
   DollarSign,
   History,
   Calculator,
+  ChevronRight,
+  Plus,
 } from "lucide-react"
 import { cn, formatCurrency, formatDate } from "@/lib/utils/format"
 import { Button } from "@/components/ui/button"
@@ -107,11 +109,10 @@ const DEFAULT_STRUCTURES: WaterfallStructure[] = [
 // Page Component
 // ---------------------------------------------------------------------------
 
-export default function DistributionsPage() {
-  const params = useParams()
+export default function DistributionsPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id: entityId } = use(params)
   const router = useRouter()
   const { toast } = useToast()
-  const entityId = params.id as string
 
   const [investors, setInvestors] = useState<Investor[]>([])
   const [waterfallStructures, setWaterfallStructures] = useState<WaterfallStructure[]>(DEFAULT_STRUCTURES)
@@ -223,24 +224,46 @@ export default function DistributionsPage() {
 
   return (
     <div className="space-y-6 p-6">
-      {/* Header */}
-      <div>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="mb-2"
+      {/* Breadcrumb */}
+      <nav className="flex items-center gap-1 text-sm text-muted-foreground">
+        <button
+          className="hover:text-foreground transition-colors"
+          onClick={() => router.push("/accounting")}
+        >
+          Accounting
+        </button>
+        <ChevronRight className="h-3 w-3" />
+        <button
+          className="hover:text-foreground transition-colors"
+          onClick={() => router.push("/accounting/entities")}
+        >
+          Entities
+        </button>
+        <ChevronRight className="h-3 w-3" />
+        <button
+          className="hover:text-foreground transition-colors"
           onClick={() => router.push(`/accounting/entities/${entityId}`)}
         >
-          <ArrowLeft className="h-4 w-4" />
-          Back to {entityName || "Entity"}
-        </Button>
+          {entityName || "Entity"}
+        </button>
+        <ChevronRight className="h-3 w-3" />
+        <span className="text-foreground font-medium">Distributions</span>
+      </nav>
 
+      {/* Header */}
+      <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Distributions</h1>
           <p className="text-sm text-muted-foreground">
             {entityName} - Calculate and manage distribution waterfalls
           </p>
         </div>
+        {investors.length > 0 && (
+          <Button onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}>
+            <Plus className="h-4 w-4" />
+            New Distribution
+          </Button>
+        )}
       </div>
 
       {/* Waterfall Calculator */}
