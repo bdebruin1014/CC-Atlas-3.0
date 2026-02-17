@@ -1,7 +1,7 @@
 "use client"
 
-import { useState, useEffect, useMemo, useCallback } from "react"
-import { useParams, useRouter } from "next/navigation"
+import { use, useState, useEffect, useMemo, useCallback } from "react"
+import { useRouter } from "next/navigation"
 import {
   ArrowLeft,
   Plus,
@@ -128,11 +128,10 @@ const ACCOUNT_GROUP_TITLES: Record<AccountType, { label: string; range: string }
 // Page Component
 // ---------------------------------------------------------------------------
 
-export default function ChartOfAccountsPage() {
-  const params = useParams()
+export default function ChartOfAccountsPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id: entityId } = use(params)
   const router = useRouter()
   const { toast } = useToast()
-  const entityId = params.id as string
 
   const [accounts, setAccounts] = useState<Account[]>([])
   const [entityName, setEntityName] = useState("")
@@ -243,43 +242,129 @@ export default function ChartOfAccountsPage() {
     })
   }
 
+  // Compute balance summaries by account type
+  const balanceSummary = useMemo(() => {
+    const summary: Record<string, number> = {
+      asset: 0,
+      liability: 0,
+      equity: 0,
+      revenue: 0,
+      cost_of_sales: 0,
+      operating_expense: 0,
+    }
+    accounts.forEach((acc) => {
+      if (summary[acc.account_type] !== undefined) {
+        summary[acc.account_type] += acc.current_balance
+      }
+    })
+    return summary
+  }, [accounts])
+
   return (
     <div className="space-y-6 p-6">
-      {/* Header */}
-      <div>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="mb-2"
+      {/* Breadcrumb */}
+      <nav className="flex items-center gap-1 text-sm text-muted-foreground">
+        <button
+          className="hover:text-foreground transition-colors"
+          onClick={() => router.push("/accounting")}
+        >
+          Accounting
+        </button>
+        <ChevronRight className="h-3 w-3" />
+        <button
+          className="hover:text-foreground transition-colors"
+          onClick={() => router.push("/accounting/entities")}
+        >
+          Entities
+        </button>
+        <ChevronRight className="h-3 w-3" />
+        <button
+          className="hover:text-foreground transition-colors"
           onClick={() => router.push(`/accounting/entities/${entityId}`)}
         >
-          <ArrowLeft className="h-4 w-4" />
-          Back to {entityName || "Entity"}
-        </Button>
+          {entityName || "Entity"}
+        </button>
+        <ChevronRight className="h-3 w-3" />
+        <span className="text-foreground font-medium">Chart of Accounts</span>
+      </nav>
 
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight">Chart of Accounts</h1>
-            <p className="text-sm text-muted-foreground">
-              {entityName} - {accounts.length} accounts
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              onClick={handleImportTemplate}
-              disabled={accounts.length > 0}
-            >
-              <Upload className="h-4 w-4" />
-              Import Template
-            </Button>
-            <Button onClick={() => setShowAddDialog(true)}>
-              <Plus className="h-4 w-4" />
-              Add Account
-            </Button>
-          </div>
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Chart of Accounts</h1>
+          <p className="text-sm text-muted-foreground">
+            {entityName} - {accounts.length} accounts
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            onClick={handleImportTemplate}
+            disabled={accounts.length > 0}
+          >
+            <Upload className="h-4 w-4" />
+            Import Template
+          </Button>
+          <Button onClick={() => setShowAddDialog(true)}>
+            <Plus className="h-4 w-4" />
+            Add Account
+          </Button>
         </div>
       </div>
+
+      {/* Account Balance Summary Cards */}
+      {accounts.length > 0 && (
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+          <Card>
+            <CardContent className="pt-4 pb-4">
+              <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Assets</p>
+              <p className="text-lg font-bold font-mono tabular-nums text-blue-600">
+                {formatCurrency(balanceSummary.asset, { decimals: 0 })}
+              </p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="pt-4 pb-4">
+              <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Liabilities</p>
+              <p className="text-lg font-bold font-mono tabular-nums text-red-600">
+                {formatCurrency(balanceSummary.liability, { decimals: 0 })}
+              </p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="pt-4 pb-4">
+              <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Equity</p>
+              <p className="text-lg font-bold font-mono tabular-nums text-purple-600">
+                {formatCurrency(balanceSummary.equity, { decimals: 0 })}
+              </p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="pt-4 pb-4">
+              <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Revenue</p>
+              <p className="text-lg font-bold font-mono tabular-nums text-green-600">
+                {formatCurrency(balanceSummary.revenue, { decimals: 0 })}
+              </p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="pt-4 pb-4">
+              <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Cost of Sales</p>
+              <p className="text-lg font-bold font-mono tabular-nums text-orange-600">
+                {formatCurrency(balanceSummary.cost_of_sales, { decimals: 0 })}
+              </p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="pt-4 pb-4">
+              <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Op. Expenses</p>
+              <p className="text-lg font-bold font-mono tabular-nums text-amber-600">
+                {formatCurrency(balanceSummary.operating_expense, { decimals: 0 })}
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       {/* Account Groups */}
       {loading ? (

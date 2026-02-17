@@ -1,7 +1,7 @@
 "use client"
 
-import { useState, useEffect, useMemo } from "react"
-import { useParams, useRouter } from "next/navigation"
+import { use, useState, useEffect, useMemo } from "react"
+import { useRouter } from "next/navigation"
 import {
   ArrowLeft,
   BarChart3,
@@ -9,6 +9,9 @@ import {
   Receipt,
   Wallet,
   Scale,
+  ChevronRight,
+  Download,
+  Printer,
 } from "lucide-react"
 import { cn } from "@/lib/utils/format"
 import { Button } from "@/components/ui/button"
@@ -87,10 +90,9 @@ const REPORT_TYPES: Array<{ value: ReportType; label: string; icon: React.ReactN
 // Page Component
 // ---------------------------------------------------------------------------
 
-export default function ReportsPage() {
-  const params = useParams()
+export default function ReportsPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id: entityId } = use(params)
   const router = useRouter()
-  const entityId = params.id as string
 
   const [entityName, setEntityName] = useState("")
   const [selectedReport, setSelectedReport] = useState<ReportType | null>(null)
@@ -147,24 +149,56 @@ export default function ReportsPage() {
 
   return (
     <div className="space-y-6 p-6">
-      {/* Header */}
-      <div>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="mb-2"
+      {/* Breadcrumb */}
+      <nav className="flex items-center gap-1 text-sm text-muted-foreground">
+        <button
+          className="hover:text-foreground transition-colors"
+          onClick={() => router.push("/accounting")}
+        >
+          Accounting
+        </button>
+        <ChevronRight className="h-3 w-3" />
+        <button
+          className="hover:text-foreground transition-colors"
+          onClick={() => router.push("/accounting/entities")}
+        >
+          Entities
+        </button>
+        <ChevronRight className="h-3 w-3" />
+        <button
+          className="hover:text-foreground transition-colors"
           onClick={() => router.push(`/accounting/entities/${entityId}`)}
         >
-          <ArrowLeft className="h-4 w-4" />
-          Back to {entityName || "Entity"}
-        </Button>
+          {entityName || "Entity"}
+        </button>
+        <ChevronRight className="h-3 w-3" />
+        <span className="text-foreground font-medium">Reports</span>
+      </nav>
 
+      {/* Header */}
+      <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Financial Reports</h1>
           <p className="text-sm text-muted-foreground">
             {entityName} - Generate financial statements
           </p>
         </div>
+        {selectedReport && (
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={() => window.print()}>
+              <Printer className="h-4 w-4" />
+              Print
+            </Button>
+            <Button variant="outline" size="sm">
+              <Download className="h-4 w-4" />
+              Export CSV
+            </Button>
+            <Button variant="outline" size="sm">
+              <Download className="h-4 w-4" />
+              Export PDF
+            </Button>
+          </div>
+        )}
       </div>
 
       {/* Report Type Selector */}

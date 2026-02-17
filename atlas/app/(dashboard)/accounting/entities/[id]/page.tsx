@@ -1,7 +1,7 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { useParams, useRouter } from "next/navigation"
+import { use, useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import {
   Building2,
   ArrowLeft,
@@ -12,6 +12,10 @@ import {
   BarChart3,
   ExternalLink,
   Edit,
+  Plus,
+  Play,
+  Lock,
+  ChevronRight,
 } from "lucide-react"
 import { cn, formatCurrency, formatDate } from "@/lib/utils/format"
 import { Button } from "@/components/ui/button"
@@ -92,10 +96,9 @@ function getUseTypeBadgeClass(useType: EntityUseType): string {
 // Page Component
 // ---------------------------------------------------------------------------
 
-export default function EntityDetailPage() {
-  const params = useParams()
+export default function EntityDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id: entityId } = use(params)
   const router = useRouter()
-  const entityId = params.id as string
 
   const [entity, setEntity] = useState<Entity | null>(null)
   const [parentEntity, setParentEntity] = useState<Entity | null>(null)
@@ -126,6 +129,10 @@ export default function EntityDetailPage() {
             .single()
           if (parentData) setParentEntity(mapDbEntity(parentData as unknown as Record<string, unknown>))
         }
+      } else {
+        // Use mock data for demo
+        setEntity(MOCK_ENTITY)
+        setParentEntity(MOCK_PARENT)
       }
       setLoading(false)
     }
@@ -164,44 +171,58 @@ export default function EntityDetailPage() {
 
   return (
     <div className="space-y-6 p-6">
-      {/* Back button + Header */}
-      <div>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="mb-2"
+      {/* Breadcrumb */}
+      <nav className="flex items-center gap-1 text-sm text-muted-foreground">
+        <button
+          className="hover:text-foreground transition-colors"
+          onClick={() => router.push("/accounting")}
+        >
+          Accounting
+        </button>
+        <ChevronRight className="h-3 w-3" />
+        <button
+          className="hover:text-foreground transition-colors"
           onClick={() => router.push("/accounting/entities")}
         >
-          <ArrowLeft className="h-4 w-4" />
-          Back to Entities
-        </Button>
+          Entities
+        </button>
+        <ChevronRight className="h-3 w-3" />
+        <span className="text-foreground font-medium">{entity.name}</span>
+      </nav>
 
-        <div className="flex items-start justify-between">
-          <div className="space-y-1">
-            <div className="flex items-center gap-3">
-              <h1 className="text-2xl font-bold tracking-tight">{entity.name}</h1>
-              <Badge
-                variant="secondary"
-                className={cn("text-xs", getUseTypeBadgeClass(entity.use_type))}
-              >
-                {ENTITY_USE_TYPE_LABELS[entity.use_type]}
-              </Badge>
-              <Badge variant="outline" className="text-xs">
-                {ENTITY_LEGAL_TYPE_LABELS[entity.legal_type]}
-              </Badge>
-            </div>
-            {parentEntity && (
-              <p className="text-sm text-muted-foreground">
-                Parent:{" "}
-                <button
-                  className="text-primary hover:underline"
-                  onClick={() => router.push(`/accounting/entities/${parentEntity.id}`)}
-                >
-                  {parentEntity.name}
-                </button>
-              </p>
-            )}
+      {/* Header */}
+      <div className="flex items-start justify-between">
+        <div className="space-y-1">
+          <div className="flex items-center gap-3">
+            <h1 className="text-2xl font-bold tracking-tight">{entity.name}</h1>
+            <Badge
+              variant="secondary"
+              className={cn("text-xs", getUseTypeBadgeClass(entity.use_type))}
+            >
+              {ENTITY_USE_TYPE_LABELS[entity.use_type]}
+            </Badge>
+            <Badge variant="outline" className="text-xs">
+              {ENTITY_LEGAL_TYPE_LABELS[entity.legal_type]}
+            </Badge>
           </div>
+          {entity.legal_name && entity.legal_name !== entity.name && (
+            <p className="text-sm text-muted-foreground">
+              Legal Name: {entity.legal_name}
+            </p>
+          )}
+          {parentEntity && (
+            <p className="text-sm text-muted-foreground">
+              Parent:{" "}
+              <button
+                className="text-primary hover:underline"
+                onClick={() => router.push(`/accounting/entities/${parentEntity.id}`)}
+              >
+                {parentEntity.name}
+              </button>
+            </p>
+          )}
+        </div>
+        <div className="flex items-center gap-2">
           <Badge
             variant="secondary"
             className={cn(
@@ -216,6 +237,22 @@ export default function EntityDetailPage() {
             {entity.status}
           </Badge>
         </div>
+      </div>
+
+      {/* Quick Actions */}
+      <div className="flex items-center gap-2">
+        <Button onClick={() => router.push(`/accounting/entities/${entityId}/transactions`)}>
+          <Plus className="h-4 w-4" />
+          New Transaction
+        </Button>
+        <Button variant="outline" onClick={() => router.push(`/accounting/entities/${entityId}/reports`)}>
+          <Play className="h-4 w-4" />
+          Run Report
+        </Button>
+        <Button variant="outline" onClick={() => router.push("/accounting/period-close")}>
+          <Lock className="h-4 w-4" />
+          Close Period
+        </Button>
       </div>
 
       {/* Key Info */}
@@ -261,19 +298,40 @@ export default function EntityDetailPage() {
             <Card>
               <CardContent className="pt-6">
                 <p className="text-xs text-muted-foreground mb-1">Total Assets</p>
-                <p className="text-2xl font-bold">{formatCurrency(0, { decimals: 2 })}</p>
+                <p className="text-2xl font-bold">{formatCurrency(MOCK_FINANCIALS.totalAssets, { decimals: 2 })}</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Cash: {formatCurrency(MOCK_FINANCIALS.cashBalance, { decimals: 2 })}
+                </p>
               </CardContent>
             </Card>
             <Card>
               <CardContent className="pt-6">
                 <p className="text-xs text-muted-foreground mb-1">Total Liabilities</p>
-                <p className="text-2xl font-bold">{formatCurrency(0, { decimals: 2 })}</p>
+                <p className="text-2xl font-bold">{formatCurrency(MOCK_FINANCIALS.totalLiabilities, { decimals: 2 })}</p>
               </CardContent>
             </Card>
             <Card>
               <CardContent className="pt-6">
                 <p className="text-xs text-muted-foreground mb-1">Net Equity</p>
-                <p className="text-2xl font-bold">{formatCurrency(0, { decimals: 2 })}</p>
+                <p className="text-2xl font-bold text-green-600">{formatCurrency(MOCK_FINANCIALS.netEquity, { decimals: 2 })}</p>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Activity Summary */}
+          <div className="grid grid-cols-2 gap-4">
+            <Card>
+              <CardContent className="pt-6">
+                <p className="text-xs text-muted-foreground mb-1">Pending Transactions</p>
+                <p className="text-2xl font-bold text-amber-600">{MOCK_FINANCIALS.pendingTransactions}</p>
+                <p className="text-xs text-muted-foreground mt-1">Awaiting approval</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="pt-6">
+                <p className="text-xs text-muted-foreground mb-1">Investors</p>
+                <p className="text-2xl font-bold">{MOCK_FINANCIALS.investorCount}</p>
+                <p className="text-xs text-muted-foreground mt-1">Active investors</p>
               </CardContent>
             </Card>
           </div>

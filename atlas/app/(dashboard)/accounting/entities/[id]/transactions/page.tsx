@@ -1,7 +1,7 @@
 "use client"
 
-import { useState, useEffect, useMemo, useCallback } from "react"
-import { useParams, useRouter } from "next/navigation"
+import { use, useState, useEffect, useMemo, useCallback } from "react"
+import { useRouter } from "next/navigation"
 import {
   ArrowLeft,
   Plus,
@@ -11,6 +11,8 @@ import {
   Clock,
   FileCheck,
   Filter,
+  ChevronRight,
+  AlertCircle,
 } from "lucide-react"
 import { cn, formatCurrency, formatDate } from "@/lib/utils/format"
 import { Button } from "@/components/ui/button"
@@ -71,11 +73,10 @@ function getStatusBadge(status: TransactionStatus) {
 // Page Component
 // ---------------------------------------------------------------------------
 
-export default function TransactionsPage() {
-  const params = useParams()
+export default function TransactionsPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id: entityId } = use(params)
   const router = useRouter()
   const { toast } = useToast()
-  const entityId = params.id as string
 
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [accounts, setAccounts] = useState<Account[]>([])
@@ -146,6 +147,12 @@ export default function TransactionsPage() {
     }
     loadData()
   }, [entityId])
+
+  // Pending approval queue
+  const pendingTransactions = useMemo(
+    () => transactions.filter((t) => t.status === "pending"),
+    [transactions]
+  )
 
   // Apply filters
   const filteredTransactions = useMemo(() => {
@@ -398,39 +405,114 @@ export default function TransactionsPage() {
 
   return (
     <div className="space-y-6 p-6">
-      {/* Header */}
-      <div>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="mb-2"
+      {/* Breadcrumb */}
+      <nav className="flex items-center gap-1 text-sm text-muted-foreground">
+        <button
+          className="hover:text-foreground transition-colors"
+          onClick={() => router.push("/accounting")}
+        >
+          Accounting
+        </button>
+        <ChevronRight className="h-3 w-3" />
+        <button
+          className="hover:text-foreground transition-colors"
+          onClick={() => router.push("/accounting/entities")}
+        >
+          Entities
+        </button>
+        <ChevronRight className="h-3 w-3" />
+        <button
+          className="hover:text-foreground transition-colors"
           onClick={() => router.push(`/accounting/entities/${entityId}`)}
         >
-          <ArrowLeft className="h-4 w-4" />
-          Back to {entityName || "Entity"}
-        </Button>
+          {entityName || "Entity"}
+        </button>
+        <ChevronRight className="h-3 w-3" />
+        <span className="text-foreground font-medium">Transactions</span>
+      </nav>
 
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight">Transaction Ledger</h1>
-            <p className="text-sm text-muted-foreground">
-              {entityName} - {filteredTransactions.length} transaction{filteredTransactions.length !== 1 ? "s" : ""}
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            {selectedTransactions.length > 0 && (
-              <Button variant="outline" onClick={handleBatchApprove}>
-                <CheckCircle className="h-4 w-4" />
-                Approve Selected ({selectedTransactions.filter((t) => t.status === "pending").length})
-              </Button>
-            )}
-            <Button onClick={() => setShowCreateDialog(true)}>
-              <Plus className="h-4 w-4" />
-              Create Transaction
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Transaction Ledger</h1>
+          <p className="text-sm text-muted-foreground">
+            {entityName} - {filteredTransactions.length} transaction{filteredTransactions.length !== 1 ? "s" : ""}
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          {selectedTransactions.length > 0 && (
+            <Button variant="outline" onClick={handleBatchApprove}>
+              <CheckCircle className="h-4 w-4" />
+              Approve Selected ({selectedTransactions.filter((t) => t.status === "pending").length})
             </Button>
-          </div>
+          )}
+          <Button onClick={() => setShowCreateDialog(true)}>
+            <Plus className="h-4 w-4" />
+            New Transaction
+          </Button>
         </div>
       </div>
+
+      {/* Pending Approval Queue */}
+      {pendingTransactions.length > 0 && (
+        <Card className="border-amber-200 bg-amber-50/50">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <AlertCircle className="h-4 w-4 text-amber-600" />
+              <span className="text-amber-800">
+                Pending Approval ({pendingTransactions.length})
+              </span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              {pendingTransactions.slice(0, 5).map((txn) => (
+                <div
+                  key={txn.id}
+                  className="flex items-center justify-between rounded-md border border-amber-200 bg-white px-4 py-2"
+                >
+                  <div className="flex items-center gap-4">
+                    <span className="text-xs text-muted-foreground font-mono">
+                      {formatDate(txn.date, { short: true })}
+                    </span>
+                    <span className="text-sm font-medium">{txn.description}</span>
+                    <Badge variant="outline" className="text-[10px]">
+                      {TRANSACTION_TYPE_LABELS[txn.transaction_type]}
+                    </Badge>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className="text-sm font-mono tabular-nums">
+                      {formatCurrency(txn.total_debits, { decimals: 2 })}
+                    </span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-7 text-xs border-green-300 text-green-700 hover:bg-green-50"
+                      onClick={() => updateTransactionStatus(txn.id, "approved")}
+                    >
+                      <CheckCircle className="h-3 w-3 mr-1" />
+                      Approve
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 text-xs text-destructive"
+                      onClick={() => updateTransactionStatus(txn.id, "voided")}
+                    >
+                      <XCircle className="h-3 w-3" />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+              {pendingTransactions.length > 5 && (
+                <p className="text-xs text-muted-foreground text-center pt-1">
+                  +{pendingTransactions.length - 5} more pending transactions
+                </p>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Filter Bar */}
       <Card>
