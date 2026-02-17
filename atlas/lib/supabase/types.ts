@@ -73,6 +73,21 @@ export type FloorPlanStatus = 'active' | 'inactive' | 'draft'
 export type IntegrationProvider = 'sharepoint' | 'outlook' | 'akaunting' | 'quickbooks' | 'zapier' | 'sendgrid'
 export type CalendarEventType = 'inspection' | 'closing' | 'meeting' | 'deadline' | 'milestone' | 'permit' | 'walkthrough' | 'open_house' | 'draw_request' | 'other'
 
+// Disposition module enums
+export type DispositionPropertyType = 'single_family' | 'townhome' | 'lot' | 'condo' | 'duplex' | 'land'
+export type DispositionListingStatus = 'draft' | 'pre_listing' | 'active' | 'under_contract' | 'pending_closing' | 'closed' | 'withdrawn' | 'expired'
+export type ShowingInterestLevel = 'not_interested' | 'somewhat' | 'very_interested' | 'making_offer'
+export type OfferFinancingType = 'cash' | 'conventional' | 'fha' | 'va' | 'usda' | 'other'
+export type OfferStatus = 'received' | 'reviewing' | 'countered' | 'accepted' | 'rejected' | 'expired' | 'withdrawn'
+export type DispositionContractStatus = 'pending' | 'active' | 'contingent' | 'clear_to_close' | 'closed' | 'terminated' | 'cancelled'
+export type ContractInspectionStatus = 'pending' | 'scheduled' | 'passed' | 'failed' | 'waived'
+export type ContractAppraisalStatus = 'pending' | 'ordered' | 'received' | 'approved' | 'disputed' | 'waived'
+export type ContractFinancingStatus = 'pending' | 'pre_approved' | 'underwriting' | 'clear_to_close' | 'denied'
+export type SettlementStatus = 'pending' | 'scheduled' | 'closed'
+export type DispositionCostCategory = 'commission' | 'staging' | 'photography' | 'marketing' | 'closing_costs' | 'title_insurance' | 'recording' | 'transfer_tax' | 'hoa' | 'loan_payoff' | 'taxes' | 'repairs' | 'other'
+export type BulkSaleStatus = 'negotiating' | 'active' | 'complete' | 'terminated'
+export type TakedownStatus = 'scheduled' | 'upcoming' | 'completed' | 'delayed'
+
 // ---- Table Row Types ----
 
 export interface Organization {
@@ -800,6 +815,228 @@ export interface TradeCategory {
   is_active: boolean
 }
 
+// ---- Disposition Module ----
+
+export interface DispositionListing {
+  id: string
+  organization_id: string
+  project_id: string | null
+  job_id: string | null
+  unit_id: string | null
+  entity_id: string | null
+  listing_number: string | null
+  property_address: string | null
+  property_city: string | null
+  property_state: string | null
+  property_zip: string | null
+  property_county: string | null
+  property_type: DispositionPropertyType | null
+  status: DispositionListingStatus
+  list_price: number | null
+  original_list_price: number | null
+  listing_date: string | null
+  expiration_date: string | null
+  dom: number | null
+  listing_agent_contact_id: string | null
+  listing_agent_commission: number | null
+  buyer_agent_commission: number | null
+  mls_number: string | null
+  mls_status: string | null
+  lockbox_code: string | null
+  showing_instructions: string | null
+  marketing_description: string | null
+  virtual_tour_url: string | null
+  bedrooms: number | null
+  bathrooms: number | null
+  sqft: number | null
+  lot_sqft: number | null
+  year_built: number | null
+  garage_spaces: number | null
+  created_at: string
+  updated_at: string
+}
+
+export interface DispositionShowing {
+  id: string
+  listing_id: string
+  showing_date: string | null
+  showing_agent_name: string | null
+  showing_agent_company: string | null
+  showing_agent_phone: string | null
+  showing_agent_email: string | null
+  feedback: string | null
+  interest_level: ShowingInterestLevel | null
+  follow_up_needed: boolean
+  follow_up_notes: string | null
+  follow_up_date: string | null
+  created_at: string
+}
+
+export interface DispositionOffer {
+  id: string
+  listing_id: string
+  offer_number: string | null
+  buyer_name: string | null
+  buyer_agent_name: string | null
+  buyer_agent_company: string | null
+  buyer_agent_email: string | null
+  buyer_agent_phone: string | null
+  offer_price: number | null
+  earnest_money: number | null
+  em_due_date: string | null
+  em_received: boolean
+  financing_type: OfferFinancingType | null
+  loan_amount: number | null
+  down_payment: number | null
+  closing_cost_assistance: number | null
+  other_concessions: number | null
+  concession_notes: string | null
+  contingency_financing: boolean
+  contingency_inspection: boolean
+  contingency_appraisal: boolean
+  contingency_sale: boolean
+  proposed_closing_date: string | null
+  proposed_possession_date: string | null
+  expiration_date: string | null
+  status: OfferStatus
+  net_to_seller: number | null
+  projected_profit: number | null
+  counter_price: number | null
+  counter_notes: string | null
+  notes: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface DispositionContract {
+  id: string
+  listing_id: string
+  offer_id: string | null
+  contract_number: string | null
+  status: DispositionContractStatus
+  effective_date: string | null
+  dd_deadline: string | null
+  financing_deadline: string | null
+  appraisal_deadline: string | null
+  closing_date: string | null
+  possession_date: string | null
+  purchase_price: number | null
+  earnest_money: number | null
+  seller_entity: string | null
+  seller_contact_id: string | null
+  buyer_entity: string | null
+  buyer_contact_id: string | null
+  title_company: string | null
+  escrow_officer: string | null
+  escrow_number: string | null
+  closing_attorney: string | null
+  inspection_status: ContractInspectionStatus | null
+  inspection_date: string | null
+  inspection_notes: string | null
+  appraisal_status: ContractAppraisalStatus | null
+  appraisal_value: number | null
+  appraisal_date: string | null
+  financing_status: ContractFinancingStatus | null
+  loan_commitment_date: string | null
+  notes: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface DispositionSettlement {
+  id: string
+  contract_id: string
+  listing_id: string
+  settlement_number: string | null
+  status: SettlementStatus
+  closing_date: string | null
+  title_company: string | null
+  closing_attorney: string | null
+  escrow_officer: string | null
+  escrow_number: string | null
+  units_conveyed: number | null
+  lot_numbers: string | null
+  gross_sale_price: number | null
+  credit_contract_price: number | null
+  credit_earnest_money: number | null
+  credit_other: number | null
+  charge_commission: number | null
+  charge_title_insurance: number | null
+  charge_settlement_fee: number | null
+  charge_recording_fees: number | null
+  charge_transfer_tax: number | null
+  charge_hoa_transfer: number | null
+  charge_loan_payoff: number | null
+  charge_prorated_taxes: number | null
+  charge_other: number | null
+  total_credits: number | null
+  total_charges: number | null
+  net_to_seller: number | null
+  funds_received: boolean
+  date_received: string | null
+  amount_received: number | null
+  wire_confirmation: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface DispositionCost {
+  id: string
+  listing_id: string
+  category: DispositionCostCategory | null
+  description: string | null
+  amount: number | null
+  paid_date: string | null
+  vendor_contact_id: string | null
+  created_at: string
+}
+
+export interface DispositionPriceChange {
+  id: string
+  listing_id: string
+  change_date: string | null
+  old_price: number | null
+  new_price: number | null
+  reason: string | null
+  created_by: string | null
+  created_at: string
+}
+
+export interface DispositionBulkSaleAgreement {
+  id: string
+  project_id: string
+  organization_id: string
+  buyer_entity_name: string | null
+  buyer_contact_id: string | null
+  total_lots: number | null
+  price_per_lot: number | null
+  total_price: number | null
+  contract_date: string | null
+  status: BulkSaleStatus
+  escalation_rate: number | null
+  escalation_period: string | null
+  notes: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface DispositionTakedownSchedule {
+  id: string
+  bulk_sale_agreement_id: string
+  takedown_number: number | null
+  scheduled_date: string | null
+  lots_count: number | null
+  lot_numbers: string[] | null
+  scheduled_amount: number | null
+  status: TakedownStatus
+  actual_date: string | null
+  actual_amount: number | null
+  variance: number | null
+  notes: string | null
+  created_at: string
+  updated_at: string
+}
+
 // ---- Database Interface (Supabase compatible) ----
 // Note: When connecting to a real Supabase instance, regenerate types with:
 //   npx supabase gen types typescript --project-id <project-id> > lib/supabase/types.ts
@@ -868,6 +1105,16 @@ export interface Database {
       integration_settings: AnyTable
       contract_templates: AnyTable
       sharepoint_folder_templates: AnyTable
+      // Disposition module
+      disposition_listings: { Row: DispositionListing; Insert: Partial<DispositionListing> & { organization_id: string }; Update: Partial<DispositionListing>; Relationships: [] }
+      disposition_showings: { Row: DispositionShowing; Insert: Partial<DispositionShowing> & { listing_id: string }; Update: Partial<DispositionShowing>; Relationships: [] }
+      disposition_offers: { Row: DispositionOffer; Insert: Partial<DispositionOffer> & { listing_id: string }; Update: Partial<DispositionOffer>; Relationships: [] }
+      disposition_contracts: { Row: DispositionContract; Insert: Partial<DispositionContract> & { listing_id: string }; Update: Partial<DispositionContract>; Relationships: [] }
+      disposition_settlements: { Row: DispositionSettlement; Insert: Partial<DispositionSettlement> & { contract_id: string; listing_id: string }; Update: Partial<DispositionSettlement>; Relationships: [] }
+      disposition_costs: { Row: DispositionCost; Insert: Partial<DispositionCost> & { listing_id: string }; Update: Partial<DispositionCost>; Relationships: [] }
+      disposition_price_changes: { Row: DispositionPriceChange; Insert: Partial<DispositionPriceChange> & { listing_id: string }; Update: Partial<DispositionPriceChange>; Relationships: [] }
+      disposition_bulk_sale_agreements: { Row: DispositionBulkSaleAgreement; Insert: Partial<DispositionBulkSaleAgreement> & { project_id: string; organization_id: string }; Update: Partial<DispositionBulkSaleAgreement>; Relationships: [] }
+      disposition_takedown_schedule: { Row: DispositionTakedownSchedule; Insert: Partial<DispositionTakedownSchedule> & { bulk_sale_agreement_id: string }; Update: Partial<DispositionTakedownSchedule>; Relationships: [] }
       [key: string]: AnyTable | { Row: any; Insert: any; Update: any; Relationships: any }
     }
     Views: {
