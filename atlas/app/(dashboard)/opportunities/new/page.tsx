@@ -1,15 +1,31 @@
 'use client'
 
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { Loader2 } from 'lucide-react'
 import { OpportunityForm } from '@/components/opportunities/opportunity-form'
 import { createClient } from '@/lib/supabase/client'
 import { getStagesForType, type OpportunityType } from '@/lib/types/opportunities'
 import { toast } from '@/lib/hooks/use-toast'
+import { useOrganizationId } from '@/lib/hooks/use-organization'
 
 export default function NewOpportunityPage() {
   const router = useRouter()
+  const { organizationId, loading: orgLoading, error: orgError } = useOrganizationId()
+  const [submitError, setSubmitError] = useState<string | null>(null)
 
-  const handleSubmit = async (data: Record<string, unknown>) => {
+  // The form passes OpportunityFormData (from Zod schema); we map to DB columns below.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const handleSubmit = async (data: any) => {
+    setSubmitError(null)
+
+    if (!organizationId) {
+      const msg = 'No organization context available. Please contact your administrator.'
+      setSubmitError(msg)
+      toast({ title: 'Error', description: msg, variant: 'destructive' })
+      return
+    }
+
     try {
       const supabase = createClient()
       const type = data.type as OpportunityType
@@ -32,56 +48,56 @@ export default function NewOpportunityPage() {
           : 'Other'
       const name = `${addressParts} - ${typeLabel}`
 
-      // Build the insert payload, only including fields with actual values
+      // Build the insert payload mapped to actual DB column names.
+      // DB schema reference: lib/supabase/types.ts -> Opportunity
       const payload: Record<string, unknown> = {
+        organization_id: organizationId,
         name,
         type,
-        stage: initialStage,
+        current_stage: initialStage,
+        status: 'active',
         address_line1: data.address_line1 || null,
         address_city: data.address_city || null,
         address_county: data.address_county || null,
         address_state: data.address_state || null,
         address_zip: data.address_zip || null,
-        parcel_tms: data.parcel_tms || null,
+        parcel_tms_number: data.parcel_tms || null,
         source: data.source || null,
         assigned_to: data.assigned_to || null,
-        entity_id: data.entity_id || null,
-        archived: false,
+        owner_entity_id: data.entity_id || null,
       }
 
-      // Type-specific fields
+      // Type-specific fields (scattered lot)
       if (type === 'scattered_lot') {
         Object.assign(payload, {
-          zoning: data.zoning || null,
+          zoning_current: data.zoning || null,
           build_type: data.build_type || null,
-          road_type: data.road_type || null,
-          road_frontage: data.road_frontage || null,
-          setback_front: data.setback_front ?? null,
-          setback_rear: data.setback_rear ?? null,
-          setback_left: data.setback_left ?? null,
-          setback_right: data.setback_right ?? null,
-          historic_overlay: data.historic_overlay ?? false,
-          has_water: data.has_water ?? false,
-          has_sewer: data.has_sewer ?? false,
-          has_electric: data.has_electric ?? false,
+          road_surrounding: data.road_type || null,
+          // Combine individual setbacks into a single description string
+          construction_buffers_setbacks: formatSetbacks(data),
+          historic_district_overlay: data.historic_overlay ?? false,
+          has_public_water: data.has_water ?? false,
+          has_public_sewer: data.has_sewer ?? false,
+          has_power: data.has_electric ?? false,
           floor_plan_id: data.floor_plan_id || null,
           garage_position: data.garage_position || null,
-          survey_status: data.survey_status || null,
+          survey_complete: data.survey_status === 'completed',
           lot_width: data.lot_width ?? null,
           lot_depth: data.lot_depth ?? null,
-          lot_sqft: data.lot_sqft ?? null,
-          lot_acreage: data.lot_acreage ?? null,
+          lot_sf: data.lot_sqft ?? null,
+          total_acreage: data.lot_acreage ?? null,
         })
       }
 
-      if (type === 'lot_development') {
+      // Type-specific fields (lot development / community development)
+      if (type === 'lot_development' || type === 'community_development') {
         Object.assign(payload, {
           total_acreage: data.total_acreage ?? null,
-          estimated_lots: data.estimated_lots ?? null,
-          zoning_required: data.zoning_required ?? false,
+          estimated_total_lots: data.estimated_lots ?? null,
+          zoning_required: data.zoning_required ? 'yes' : null,
           preliminary_plat_status: data.preliminary_plat_status || null,
           target_builders: data.target_builders || null,
-          infrastructure_estimate: data.infrastructure_estimate ?? null,
+          infrastructure_scope_estimate: data.infrastructure_estimate ?? null,
         })
       }
 
@@ -89,17 +105,16 @@ export default function NewOpportunityPage() {
       Object.assign(payload, {
         projected_purchase_price: data.projected_purchase_price ?? null,
         projected_sale_price: data.projected_sale_price ?? null,
-        projected_arv: data.projected_arv ?? null,
-        date_offer: data.date_offer || null,
-        date_contract: data.date_contract || null,
-        date_dd_expiration: data.date_dd_expiration || null,
-        date_closing: data.date_closing || null,
-        notes: data.notes || null,
+        offer_date: data.date_offer || null,
+        contract_date: data.date_contract || null,
+        dd_expiration_date: data.date_dd_expiration || null,
+        closing_date: data.date_closing || null,
       })
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data: created, error } = await supabase
         .from('opportunities')
-        .insert(payload)
+        .insert(payload as any)
         .select('id')
         .single()
 
@@ -112,15 +127,23 @@ export default function NewOpportunityPage() {
 
       router.push(`/opportunities/${created.id}`)
     } catch (err) {
+      const message =
+        err instanceof Error ? err.message : 'Failed to create opportunity.'
+      setSubmitError(`Opportunity creation failed: ${message}`)
       toast({
-        title: 'Error',
-        description:
-          err instanceof Error
-            ? err.message
-            : 'Failed to create opportunity.',
+        title: 'Creation failed',
+        description: message,
         variant: 'destructive',
       })
     }
+  }
+
+  if (orgLoading) {
+    return (
+      <div className="flex items-center justify-center p-12">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    )
   }
 
   return (
@@ -134,6 +157,12 @@ export default function NewOpportunityPage() {
         </p>
       </div>
 
+      {(submitError || orgError) && (
+        <div className="rounded-lg border border-destructive bg-destructive/10 p-4 text-sm text-destructive">
+          {submitError || orgError}
+        </div>
+      )}
+
       <OpportunityForm
         mode="create"
         onSubmit={handleSubmit}
@@ -141,4 +170,14 @@ export default function NewOpportunityPage() {
       />
     </div>
   )
+}
+
+/** Serialize individual setback values into a single description string for the DB. */
+function formatSetbacks(data: Record<string, unknown>): string | null {
+  const parts: string[] = []
+  if (data.setback_front != null) parts.push(`Front: ${data.setback_front}ft`)
+  if (data.setback_rear != null) parts.push(`Rear: ${data.setback_rear}ft`)
+  if (data.setback_left != null) parts.push(`Left: ${data.setback_left}ft`)
+  if (data.setback_right != null) parts.push(`Right: ${data.setback_right}ft`)
+  return parts.length > 0 ? parts.join(', ') : null
 }

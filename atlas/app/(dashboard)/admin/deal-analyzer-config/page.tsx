@@ -20,6 +20,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Label } from "@/components/ui/label"
 import { createClient } from "@/lib/supabase/client"
 import { useToast } from "@/components/ui/use-toast"
+import { useOrganizationId } from "@/lib/hooks/use-organization"
 
 interface OrgConfig {
   id: string
@@ -52,12 +53,14 @@ const DEFAULT_CONFIG: OrgConfig = {
 export default function DealAnalyzerConfigPage() {
   const router = useRouter()
   const { toast } = useToast()
+  const { organizationId, loading: orgLoading, error: orgError } = useOrganizationId()
   const [config, setConfig] = useState<OrgConfig>(DEFAULT_CONFIG)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   const fetchConfig = useCallback(async () => {
+    if (!organizationId) return
     setLoading(true)
     setError(null)
     try {
@@ -67,7 +70,7 @@ export default function DealAnalyzerConfigPage() {
         .select(
           "id, margin_strong_threshold, margin_good_threshold, margin_marginal_threshold, default_ltc_ratio, default_interest_rate, default_construction_period_days, default_cost_of_capital_rate, default_selling_cost_pct, default_contingency_pct, default_retainage_pct"
         )
-        .limit(1)
+        .eq("id", organizationId)
         .single()
 
       if (fetchError) throw fetchError
@@ -79,30 +82,45 @@ export default function DealAnalyzerConfigPage() {
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [organizationId])
 
   useEffect(() => {
-    fetchConfig()
-  }, [fetchConfig])
+    if (!orgLoading && organizationId) {
+      fetchConfig()
+    } else if (!orgLoading && !organizationId) {
+      setLoading(false)
+      setError(orgError || "No organization found. Please contact your administrator.")
+    }
+  }, [orgLoading, organizationId, orgError, fetchConfig])
 
   const handleSave = async () => {
+    if (!config.id) {
+      toast({
+        title: "Save failed",
+        description: "No organization loaded. Cannot save configuration.",
+        variant: "destructive",
+      })
+      return
+    }
+
     setSaving(true)
     try {
       const supabase = createClient()
+      const updatePayload = {
+        margin_strong_threshold: config.margin_strong_threshold ?? undefined,
+        margin_good_threshold: config.margin_good_threshold ?? undefined,
+        margin_marginal_threshold: config.margin_marginal_threshold ?? undefined,
+        default_ltc_ratio: config.default_ltc_ratio ?? undefined,
+        default_interest_rate: config.default_interest_rate ?? undefined,
+        default_construction_period_days: config.default_construction_period_days ?? undefined,
+        default_cost_of_capital_rate: config.default_cost_of_capital_rate ?? undefined,
+        default_selling_cost_pct: config.default_selling_cost_pct ?? undefined,
+        default_contingency_pct: config.default_contingency_pct ?? undefined,
+        default_retainage_pct: config.default_retainage_pct ?? undefined,
+      }
       const { error: updateError } = await supabase
         .from("organizations")
-        .update({
-          margin_strong_threshold: config.margin_strong_threshold,
-          margin_good_threshold: config.margin_good_threshold,
-          margin_marginal_threshold: config.margin_marginal_threshold,
-          default_ltc_ratio: config.default_ltc_ratio,
-          default_interest_rate: config.default_interest_rate,
-          default_construction_period_days: config.default_construction_period_days,
-          default_cost_of_capital_rate: config.default_cost_of_capital_rate,
-          default_selling_cost_pct: config.default_selling_cost_pct,
-          default_contingency_pct: config.default_contingency_pct,
-          default_retainage_pct: config.default_retainage_pct,
-        })
+        .update(updatePayload)
         .eq("id", config.id)
 
       if (updateError) throw updateError
@@ -111,10 +129,11 @@ export default function DealAnalyzerConfigPage() {
         title: "Configuration saved",
         description: "Deal analyzer defaults have been updated successfully.",
       })
-    } catch {
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Unknown error"
       toast({
-        title: "Error",
-        description: "Failed to save configuration",
+        title: "Save failed",
+        description: `Failed to save configuration: ${message}`,
         variant: "destructive",
       })
     } finally {
@@ -143,7 +162,7 @@ export default function DealAnalyzerConfigPage() {
     return { label: "Below Threshold", color: "text-red-700 bg-red-100", icon: TrendingDown }
   }
 
-  if (loading) {
+  if (loading || orgLoading) {
     return (
       <div className="flex items-center justify-center p-12">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />

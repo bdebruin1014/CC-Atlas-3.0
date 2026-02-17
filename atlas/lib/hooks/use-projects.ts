@@ -453,15 +453,14 @@ export function useCreateProject() {
 
   return useMutation({
     mutationFn: async (
-      projectData: Omit<Project, "id" | "created_at" | "updated_at" | "owner_entity_name" | "builder_entity_name" | "current_spend" | "committed_amount" | "projected_final">
+      projectData: Record<string, unknown>
     ) => {
       const { data, error } = await supabase
         .from("projects")
         .insert({
           ...projectData,
           current_spend: 0,
-          committed_amount: 0,
-          projected_final: projectData.total_budget,
+          projected_final_cost: Number(projectData.total_budget) || 0,
         })
         .select()
         .single()
@@ -530,7 +529,8 @@ export function useConvertOpportunityToProject() {
       const nextNum = ((count ?? 0) + 1).toString().padStart(3, "0")
       const projectNumber = `${year}-${nextNum}`
 
-      // 3. Create the project
+      // 3. Create the project (field names aligned to DB schema)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data: project, error: createError } = await supabase
         .from('projects')
         .insert({
@@ -539,32 +539,32 @@ export function useConvertOpportunityToProject() {
           name: input.projectName ?? opportunity.name,
           type: input.projectType,
           status: 'pre_construction' as ProjectStatus,
-          address: opportunity.address_line1 ?? opportunity.address ?? null,
-          city: opportunity.city ?? null,
-          state: opportunity.state ?? null,
-          zip: opportunity.zip ?? null,
+          address_line1: opportunity.address_line1 ?? null,
+          address_city: opportunity.address_city ?? null,
+          address_state: opportunity.address_state ?? null,
+          address_zip: opportunity.address_zip ?? null,
           source_opportunity_id: input.opportunityId,
-          total_budget: input.totalBudget ?? opportunity.estimated_value ?? 0,
+          total_budget: input.totalBudget ?? opportunity.projected_purchase_price ?? 0,
           current_spend: 0,
-          committed_amount: 0,
-          projected_final: input.totalBudget ?? opportunity.estimated_value ?? 0,
+          projected_final_cost: input.totalBudget ?? opportunity.projected_purchase_price ?? 0,
           construction_start_date: input.startDate ?? null,
           projected_completion_date: input.estimatedCompletion ?? null,
-          notes: opportunity.description ?? null,
-        })
+          notes: opportunity.notes ?? null,
+        } as any)
         .select()
         .single()
 
       if (createError) throw createError
 
       // 4. Update opportunity status to converted
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       await supabase
         .from('opportunities')
         .update({
           status: 'converted',
-          stage: 'won',
+          current_stage: 'closed_won',
           updated_at: new Date().toISOString(),
-        })
+        } as any)
         .eq('id', input.opportunityId)
 
       // 5. Copy contact assignments

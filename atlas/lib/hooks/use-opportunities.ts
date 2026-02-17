@@ -41,22 +41,27 @@ export interface OpportunityFilters {
 }
 
 export interface CreateOpportunityData {
+  organization_id: string
   name: string
   type: string
-  stage?: string
+  current_stage?: string
   status?: string
-  estimated_value?: number | null
-  probability?: number | null
-  expected_close_date?: string | null
   source?: string | null
-  description?: string | null
   address_line1?: string | null
-  address_line2?: string | null
-  city?: string | null
-  state?: string | null
-  zip?: string | null
+  address_city?: string | null
+  address_county?: string | null
+  address_state?: string | null
+  address_zip?: string | null
   assigned_to?: string | null
-  metadata?: Record<string, unknown> | null
+  owner_entity_id?: string | null
+  projected_purchase_price?: number | null
+  projected_sale_price?: number | null
+  offer_date?: string | null
+  contract_date?: string | null
+  dd_expiration_date?: string | null
+  closing_date?: string | null
+  notes?: string | null
+  [key: string]: unknown
 }
 
 export interface UpdateOpportunityData extends Partial<CreateOpportunityData> {
@@ -156,18 +161,19 @@ export function useCreateOpportunity() {
 
   return useMutation({
     mutationFn: async (input: CreateOpportunityData) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data, error } = await supabase
         .from('opportunities')
         .insert({
           ...input,
           status: input.status ?? 'active',
-          stage: input.stage ?? 'new_lead',
-        })
+          current_stage: input.current_stage ?? 'lead',
+        } as any)
         .select()
         .single()
 
       if (error) throw error
-      return data as Opportunity
+      return data as unknown as Opportunity
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: keys.lists() })
@@ -184,15 +190,16 @@ export function useUpdateOpportunity() {
 
   return useMutation({
     mutationFn: async ({ id, ...updates }: UpdateOpportunityData) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data, error } = await supabase
         .from('opportunities')
-        .update({ ...updates, updated_at: new Date().toISOString() })
+        .update({ ...updates, updated_at: new Date().toISOString() } as any)
         .eq('id', id)
         .select()
         .single()
 
       if (error) throw error
-      return data as Opportunity
+      return data as unknown as Opportunity
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: keys.lists() })
