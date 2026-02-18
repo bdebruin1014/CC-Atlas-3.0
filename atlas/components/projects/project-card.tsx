@@ -1,6 +1,6 @@
 "use client"
 
-import { useRouter } from "next/navigation"
+import Link from "next/link"
 import {
   Calendar,
   MapPin,
@@ -24,8 +24,6 @@ interface ProjectCardProps {
 }
 
 export function ProjectCard({ project }: ProjectCardProps) {
-  const router = useRouter()
-
   const budgetTotal = project.budget_total ?? 0
   const actualCost = project.actual_total_cost ?? 0
 
@@ -38,9 +36,9 @@ export function ProjectCard({ project }: ProjectCardProps) {
   const budgetBarColor = getBudgetHealthColor(actualCost, budgetTotal)
 
   return (
+    <Link href={`/projects/${project.id}`} className="block">
     <Card
       className="group cursor-pointer transition-all hover:shadow-md hover:border-primary/30"
-      onClick={() => router.push(`/projects/${project.id}`)}
     >
       <CardContent className="p-5">
         {/* Top row: number + badges */}
@@ -134,5 +132,6 @@ export function ProjectCard({ project }: ProjectCardProps) {
         </div>
       </CardContent>
     </Card>
+    </Link>
   )
 }

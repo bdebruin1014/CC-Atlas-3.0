@@ -123,6 +123,8 @@ export function useUnits(jobId: string) {
       return (data ?? []) as unknown as Unit[]
     },
     enabled: !!jobId,
+    staleTime: 2 * 60 * 1000,
+    placeholderData: (previousData: unknown) => previousData,
   })
 }
 
@@ -142,6 +144,8 @@ export function useUnit(id: string) {
       return data as unknown as Unit
     },
     enabled: !!id,
+    staleTime: 5 * 60 * 1000,
+    placeholderData: (previousData: unknown) => previousData,
   })
 }
 
@@ -191,15 +195,28 @@ export function useUpdateUnit() {
       if (error) throw error
       return data as unknown as Unit
     },
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: keys.listByJob(data.job_id) })
-      queryClient.invalidateQueries({ queryKey: keys.detail(data.id) })
-      queryClient.invalidateQueries({
-        queryKey: ['jobs', 'detail', data.job_id],
-      })
+    onMutate: async ({ id, ...updates }) => {
+      await queryClient.cancelQueries({ queryKey: keys.detail(id) })
+      const previous = queryClient.getQueryData(keys.detail(id))
+      queryClient.setQueryData(keys.detail(id), (old: Unit | undefined) =>
+        old ? { ...old, ...updates } : old
+      )
+      return { previous }
     },
-    onError: (error) => {
+    onError: (error, { id }, context) => {
       console.error('Failed to update unit:', error)
+      if (context?.previous) {
+        queryClient.setQueryData(keys.detail(id), context.previous)
+      }
+    },
+    onSettled: (data, _error, { id }) => {
+      queryClient.invalidateQueries({ queryKey: keys.detail(id) })
+      if (data?.job_id) {
+        queryClient.invalidateQueries({ queryKey: keys.listByJob(data.job_id) })
+        queryClient.invalidateQueries({
+          queryKey: ['jobs', 'detail', data.job_id],
+        })
+      }
     },
   })
 }
@@ -220,6 +237,8 @@ export function useUnitMilestones(unitId: string) {
       return (data ?? []) as unknown as UnitMilestone[]
     },
     enabled: !!unitId,
+    staleTime: 2 * 60 * 1000,
+    placeholderData: (previousData: unknown) => previousData,
   })
 }
 

@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from "react"
 import { useRouter } from "next/navigation"
+import Link from "next/link"
 import {
   Search,
   Plus,
@@ -173,10 +174,12 @@ export default function ConstructionDashboardPage() {
             Manage jobs, units, schedules, and vendor coordination
           </p>
         </div>
-        <Button onClick={() => router.push("/construction/jobs/new")}>
-          <Plus className="mr-2 h-4 w-4" />
-          New Job
-        </Button>
+        <Link href="/construction/jobs/new">
+          <Button>
+            <Plus className="mr-2 h-4 w-4" />
+            New Job
+          </Button>
+        </Link>
       </div>
 
       {/* Summary Stats */}
@@ -238,23 +241,23 @@ export default function ConstructionDashboardPage() {
               color: "text-amber-600 bg-amber-50",
             },
           ].map((item) => (
-            <Card
-              key={item.href}
-              className="group cursor-pointer transition-all hover:shadow-md hover:border-primary/30"
-              onClick={() => router.push(item.href)}
-            >
-              <CardContent className="p-4 flex flex-col gap-2">
-                <div className={cn("w-9 h-9 rounded-lg flex items-center justify-center", item.color)}>
-                  <item.icon className="h-5 w-5" />
-                </div>
-                <div>
-                  <h3 className="text-sm font-semibold group-hover:text-primary transition-colors">
-                    {item.label}
-                  </h3>
-                  <p className="text-xs text-muted-foreground">{item.description}</p>
-                </div>
-              </CardContent>
-            </Card>
+            <Link key={item.href} href={item.href} className="block">
+              <Card
+                className="group cursor-pointer transition-all hover:shadow-md hover:border-primary/30 h-full"
+              >
+                <CardContent className="p-4 flex flex-col gap-2">
+                  <div className={cn("w-9 h-9 rounded-lg flex items-center justify-center", item.color)}>
+                    <item.icon className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-semibold group-hover:text-primary transition-colors">
+                      {item.label}
+                    </h3>
+                    <p className="text-xs text-muted-foreground">{item.description}</p>
+                  </div>
+                </CardContent>
+              </Card>
+            </Link>
           ))}
         </div>
       </div>
@@ -336,10 +339,12 @@ export default function ConstructionDashboardPage() {
                 : "Get started by creating a new job."}
             </p>
             {!hasFilters && (
-              <Button onClick={() => router.push("/construction/jobs/new")}>
-                <Plus className="mr-2 h-4 w-4" />
-                New Job
-              </Button>
+              <Link href="/construction/jobs/new">
+                <Button>
+                  <Plus className="mr-2 h-4 w-4" />
+                  New Job
+                </Button>
+              </Link>
             )}
           </CardContent>
         </Card>

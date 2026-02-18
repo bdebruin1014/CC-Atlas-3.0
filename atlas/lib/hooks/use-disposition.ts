@@ -200,6 +200,7 @@ export function useListings(filters: ListingFilters = {}) {
       return res
     },
     staleTime: 30000,
+    placeholderData: (previousData: unknown) => previousData,
   })
 }
 
@@ -215,6 +216,7 @@ export function useListing(id: string) {
     },
     enabled: !!id,
     staleTime: 30000,
+    placeholderData: (previousData: unknown) => previousData,
   })
 }
 
@@ -276,6 +278,7 @@ export function useShowings(listingId: string) {
     },
     enabled: !!listingId,
     staleTime: 30000,
+    placeholderData: (previousData: unknown) => previousData,
   })
 }
 
@@ -321,6 +324,7 @@ export function useOffers(listingId: string) {
     },
     enabled: !!listingId,
     staleTime: 30000,
+    placeholderData: (previousData: unknown) => previousData,
   })
 }
 
@@ -400,6 +404,7 @@ export function useContract(listingId: string) {
     },
     enabled: !!listingId,
     staleTime: 30000,
+    placeholderData: (previousData: unknown) => previousData,
   })
 }
 
@@ -448,6 +453,7 @@ export function useSettlement(listingId: string) {
     },
     enabled: !!listingId,
     staleTime: 30000,
+    placeholderData: (previousData: unknown) => previousData,
   })
 }
 
@@ -525,6 +531,7 @@ export function useCosts(listingId: string) {
     },
     enabled: !!listingId,
     staleTime: 30000,
+    placeholderData: (previousData: unknown) => previousData,
   })
 }
 
@@ -625,6 +632,7 @@ export function useCommunityStats(projectId: string) {
     },
     enabled: !!projectId,
     staleTime: 30000,
+    placeholderData: (previousData: unknown) => previousData,
   })
 }
 
@@ -644,6 +652,7 @@ export function useBulkSaleAgreements(projectId: string) {
     },
     enabled: !!projectId,
     staleTime: 30000,
+    placeholderData: (previousData: unknown) => previousData,
   })
 }
 
@@ -715,6 +724,7 @@ export function useTakedownSchedule(agreementId: string) {
     },
     enabled: !!agreementId,
     staleTime: 30000,
+    placeholderData: (previousData: unknown) => previousData,
   })
 }
 

@@ -419,6 +419,8 @@ export function useProjects(filters: ProjectFilters = {}) {
         builder_entity_name: (row.builder_entity as { name?: string } | null)?.name ?? null,
       })) as Project[]
     },
+    staleTime: 2 * 60 * 1000,
+    placeholderData: (previousData: unknown) => previousData,
   })
 }
 
@@ -451,6 +453,8 @@ export function useProject(id: string) {
       return mapped
     },
     enabled: !!id,
+    staleTime: 5 * 60 * 1000,
+    placeholderData: (previousData: unknown) => previousData,
   })
 }
 
@@ -502,12 +506,23 @@ export function useUpdateProject() {
       if (error) throw error
       return data as unknown as Project
     },
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: keys.lists() })
-      queryClient.invalidateQueries({ queryKey: keys.detail(data.id) })
+    onMutate: async ({ id, ...updates }) => {
+      await queryClient.cancelQueries({ queryKey: keys.detail(id) })
+      const previous = queryClient.getQueryData(keys.detail(id))
+      queryClient.setQueryData(keys.detail(id), (old: Project | undefined) =>
+        old ? { ...old, ...updates } : old
+      )
+      return { previous }
     },
-    onError: (error) => {
+    onError: (error, { id }, context) => {
       console.error('Failed to update project:', error)
+      if (context?.previous) {
+        queryClient.setQueryData(keys.detail(id), context.previous)
+      }
+    },
+    onSettled: (_data, _error, { id }) => {
+      queryClient.invalidateQueries({ queryKey: keys.lists() })
+      queryClient.invalidateQueries({ queryKey: keys.detail(id) })
     },
   })
 }
@@ -927,6 +942,8 @@ export function useEntities() {
       if (error) throw error
       return (data ?? []) as unknown as Entity[]
     },
+    staleTime: 10 * 60 * 1000,
+    placeholderData: (previousData: unknown) => previousData,
   })
 
   return { entities: query.data ?? [], loading: query.isLoading }
@@ -946,6 +963,8 @@ export function useFloorPlans() {
       if (error) throw error
       return (data ?? []) as unknown as FloorPlan[]
     },
+    staleTime: 10 * 60 * 1000,
+    placeholderData: (previousData: unknown) => previousData,
   })
 
   return { floorPlans: query.data ?? [], loading: query.isLoading }

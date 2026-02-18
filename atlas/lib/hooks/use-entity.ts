@@ -34,6 +34,8 @@ export function useEntities(filters: EntityFilters = {}) {
   return useQuery({
     queryKey: ["entities", filters],
     queryFn: () => fetchEntities(filters),
+    staleTime: 2 * 60 * 1000,
+    placeholderData: (previousData: unknown) => previousData,
   })
 }
 
@@ -42,6 +44,8 @@ export function useEntity(id: string) {
     queryKey: ["entity", id],
     queryFn: () => fetchEntity(id),
     enabled: !!id,
+    staleTime: 5 * 60 * 1000,
+    placeholderData: (previousData: unknown) => previousData,
   })
 }
 

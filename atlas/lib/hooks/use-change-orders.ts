@@ -53,6 +53,8 @@ export function useChangeOrders(jobId: string) {
       return (data ?? []) as unknown as ChangeOrder[]
     },
     enabled: !!jobId,
+    staleTime: 2 * 60 * 1000,
+    placeholderData: (previousData: unknown) => previousData,
   })
 }
 
@@ -75,6 +77,8 @@ export function useChangeOrder(id: string) {
       return data as unknown as ChangeOrder
     },
     enabled: !!id,
+    staleTime: 5 * 60 * 1000,
+    placeholderData: (previousData: unknown) => previousData,
   })
 }
 

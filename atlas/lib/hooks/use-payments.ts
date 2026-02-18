@@ -30,6 +30,8 @@ export function usePayments(filters: PaymentFilters = {}) {
   return useQuery({
     queryKey: ["ap-payments", filters],
     queryFn: () => fetchPayments(filters),
+    staleTime: 2 * 60 * 1000,
+    placeholderData: (previousData: unknown) => previousData,
   })
 }
 

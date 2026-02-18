@@ -33,6 +33,8 @@ export function useLoans(filters: LoanFilters = {}) {
   return useQuery({
     queryKey: ["loans", filters],
     queryFn: () => fetchLoans(filters),
+    staleTime: 2 * 60 * 1000,
+    placeholderData: (previousData: unknown) => previousData,
   })
 }
 
@@ -41,6 +43,8 @@ export function useLoanDraws(loanId: string) {
     queryKey: ["loan-draws", loanId],
     queryFn: () => fetchLoanDraws(loanId),
     enabled: !!loanId,
+    staleTime: 2 * 60 * 1000,
+    placeholderData: (previousData: unknown) => previousData,
   })
 }
 

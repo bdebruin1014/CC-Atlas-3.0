@@ -27,6 +27,8 @@ export function useFinancialReport(filters: ReportFilters) {
     queryKey: ["financial-report", filters],
     queryFn: () => fetchReport(filters),
     enabled: !!filters.entity_id && !!filters.report_type,
+    staleTime: 5 * 60 * 1000,
+    placeholderData: (previousData: unknown) => previousData,
   })
 }
 
@@ -50,6 +52,8 @@ export function useConsolidatedReport(filters: {
       return res.json()
     },
     enabled: !!filters.parent_entity_id && !!filters.report_type,
+    staleTime: 5 * 60 * 1000,
+    placeholderData: (previousData: unknown) => previousData,
   })
 }
 
@@ -62,6 +66,8 @@ export function useProjectPL(projectId: string) {
       return res.json()
     },
     enabled: !!projectId,
+    staleTime: 5 * 60 * 1000,
+    placeholderData: (previousData: unknown) => previousData,
   })
 }
 
@@ -84,5 +90,7 @@ export function useInvestorStatement(filters: {
       return res.json()
     },
     enabled: !!filters.entity_id && !!filters.investor_id,
+    staleTime: 5 * 60 * 1000,
+    placeholderData: (previousData: unknown) => previousData,
   })
 }

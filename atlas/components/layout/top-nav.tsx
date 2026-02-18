@@ -38,6 +38,7 @@ interface TopNavProps {
     email: string | null
     role: string | null
     avatar_url: string | null
+    organization_id?: string | null
   } | null
 }
 
@@ -82,6 +83,7 @@ export function TopNav({ user }: TopNavProps) {
             <Link
               key={tab.href}
               href={tab.href}
+              prefetch={true}
               className={cn(
                 "relative flex items-center px-3 py-1.5 text-[14px] font-medium text-white/80 transition-colors hover:bg-white/10 rounded",
                 isActive && "text-white"
@@ -118,8 +120,8 @@ export function TopNav({ user }: TopNavProps) {
         </button>
 
         {/* Notifications */}
-        <button
-          onClick={() => router.push("/admin/notifications")}
+        <Link
+          href="/admin/notifications"
           className="relative flex items-center justify-center rounded p-1.5 text-white/80 hover:bg-white/10"
         >
           <Bell className="h-4 w-4" />
@@ -128,7 +130,7 @@ export function TopNav({ user }: TopNavProps) {
               {notificationCount > 99 ? "99+" : notificationCount}
             </span>
           )}
-        </button>
+        </Link>
 
         {/* User dropdown */}
         <DropdownMenu>
@@ -155,19 +157,17 @@ export function TopNav({ user }: TopNavProps) {
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem
-              onClick={() => router.push("/admin/profile")}
-              className="cursor-pointer"
-            >
-              <User className="mr-2 h-4 w-4" />
-              Profile
+            <DropdownMenuItem asChild className="cursor-pointer">
+              <Link href="/admin/profile">
+                <User className="mr-2 h-4 w-4" />
+                Profile
+              </Link>
             </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => router.push("/admin/settings")}
-              className="cursor-pointer"
-            >
-              <Settings className="mr-2 h-4 w-4" />
-              Settings
+            <DropdownMenuItem asChild className="cursor-pointer">
+              <Link href="/admin/settings">
+                <Settings className="mr-2 h-4 w-4" />
+                Settings
+              </Link>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem

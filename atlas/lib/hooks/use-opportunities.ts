@@ -133,6 +133,8 @@ export function useOpportunities(filters?: OpportunityFilters) {
       if (error) throw error
       return (data ?? []) as unknown as Opportunity[]
     },
+    staleTime: 2 * 60 * 1000,
+    placeholderData: (previousData: unknown) => previousData,
   })
 }
 
@@ -152,6 +154,8 @@ export function useOpportunity(id: string) {
       return data as unknown as Opportunity
     },
     enabled: !!id,
+    staleTime: 5 * 60 * 1000,
+    placeholderData: (previousData: unknown) => previousData,
   })
 }
 
@@ -205,12 +209,23 @@ export function useUpdateOpportunity() {
       if (error) throw error
       return data as unknown as Opportunity
     },
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: keys.lists() })
-      queryClient.invalidateQueries({ queryKey: keys.detail(data.id) })
+    onMutate: async ({ id, ...updates }) => {
+      await queryClient.cancelQueries({ queryKey: keys.detail(id) })
+      const previous = queryClient.getQueryData(keys.detail(id))
+      queryClient.setQueryData(keys.detail(id), (old: Opportunity | undefined) =>
+        old ? { ...old, ...updates } : old
+      )
+      return { previous }
     },
-    onError: (error) => {
+    onError: (error, { id }, context) => {
       console.error('Failed to update opportunity:', error)
+      if (context?.previous) {
+        queryClient.setQueryData(keys.detail(id), context.previous)
+      }
+    },
+    onSettled: (_data, _error, { id }) => {
+      queryClient.invalidateQueries({ queryKey: keys.lists() })
+      queryClient.invalidateQueries({ queryKey: keys.detail(id) })
     },
   })
 }
@@ -255,5 +270,7 @@ export function useOpportunityStages(type: string) {
       return (data ?? []) as OpportunityStage[]
     },
     enabled: !!type,
+    staleTime: 10 * 60 * 1000,
+    placeholderData: (previousData: unknown) => previousData,
   })
 }

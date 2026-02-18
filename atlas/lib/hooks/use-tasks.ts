@@ -125,6 +125,8 @@ export function useTasks(filters: TaskFilters = {}) {
       const { data } = await res.json()
       return data as StandaloneTask[]
     },
+    staleTime: 2 * 60 * 1000,
+    placeholderData: (previousData: unknown) => previousData,
   })
 }
 
@@ -150,6 +152,8 @@ export function useMyTasks() {
       const { data } = await res.json()
       return data as StandaloneTask[]
     },
+    staleTime: 2 * 60 * 1000,
+    placeholderData: (previousData: unknown) => previousData,
   })
 }
 
@@ -168,6 +172,8 @@ export function useOverdueTasks() {
       const { data } = await res.json()
       return data as StandaloneTask[]
     },
+    staleTime: 2 * 60 * 1000,
+    placeholderData: (previousData: unknown) => previousData,
   })
 }
 
@@ -266,5 +272,7 @@ export function useRecordTasks(recordType: string, recordId: string) {
       return data as StandaloneTask[]
     },
     enabled: !!recordId,
+    staleTime: 2 * 60 * 1000,
+    placeholderData: (previousData: unknown) => previousData,
   })
 }

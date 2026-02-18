@@ -145,6 +145,8 @@ export function useTransactions(
       return (data ?? []) as unknown as Transaction[]
     },
     enabled: !!entityType && !!entityId,
+    staleTime: 2 * 60 * 1000,
+    placeholderData: (previousData: unknown) => previousData,
   })
 }
 
