@@ -63,7 +63,7 @@ function TableSkeleton({ columns, rows }: { columns: number; rows: number }) {
   return (
     <>
       {Array.from({ length: rows }).map((_, rowIdx) => (
-        <tr key={rowIdx} className="border-b border-[#E5E7EB]">
+        <tr key={rowIdx} className="border-b border-border">
           {Array.from({ length: columns }).map((_, colIdx) => (
             <td key={colIdx} className="px-4 py-2">
               <div className="h-4 w-full animate-pulse rounded bg-muted" />
@@ -207,10 +207,10 @@ export function DataTable<T extends Record<string, unknown>>({
   // ---- Render sort icon ----
   const renderSortIcon = (key: string) => {
     const isActiveSort = sortKey === key
-    if (!isActiveSort) return <ChevronsUpDown className="ml-1 h-3 w-3 text-[#5A6B75]" />
+    if (!isActiveSort) return <ChevronsUpDown className="ml-1 h-3 w-3 text-muted-foreground" />
     if (sortDirection === "asc")
-      return <ChevronUp className="ml-1 h-3 w-3 text-[#1a5632]" />
-    return <ChevronDown className="ml-1 h-3 w-3 text-[#1a5632]" />
+      return <ChevronUp className="ml-1 h-3 w-3 text-primary" />
+    return <ChevronDown className="ml-1 h-3 w-3 text-primary" />
   }
 
   // ---- Render cell value ----
@@ -218,7 +218,7 @@ export function DataTable<T extends Record<string, unknown>>({
     if (col.cell) return col.cell(row)
     const value = getNestedValue(row, col.key)
     if (value == null || value === "") {
-      return <span className="text-[#9CA3AF] italic">—</span>
+      return <span className="text-muted-foreground italic">—</span>
     }
     return String(value)
   }
@@ -244,7 +244,7 @@ export function DataTable<T extends Record<string, unknown>>({
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         {searchKey && (
           <div className="relative max-w-sm flex-1">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#5A6B75]" />
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -255,11 +255,11 @@ export function DataTable<T extends Record<string, unknown>>({
         )}
 
         <div className="flex items-center gap-2">
-          <span className="text-[13px] text-[#5A6B75]">Rows per page</span>
+          <span className="text-[13px] text-muted-foreground">Rows per page</span>
           <select
             value={pageSize}
             onChange={(e) => setPageSize(Number(e.target.value))}
-            className="h-8 rounded border border-[#E5E7EB] bg-transparent px-2 text-[13px] focus:outline-none focus:ring-1 focus:ring-[#1a5632]"
+            className="h-8 rounded border border-border bg-transparent px-2 text-[13px] focus:outline-none focus:ring-1 focus:ring-primary"
           >
             <option value={10}>10</option>
             <option value={20}>20</option>
@@ -269,17 +269,17 @@ export function DataTable<T extends Record<string, unknown>>({
       </div>
 
       {/* Table */}
-      <div className="overflow-x-auto rounded-md border border-[#E5E7EB]">
+      <div className="overflow-x-auto rounded-md border border-border">
         <table className="w-full">
           <thead>
-            <tr className="bg-[#F3F4F6]">
+            <tr className="bg-muted">
               {selectable && (
                 <th className="w-10 px-4 py-2.5">
                   <input
                     type="checkbox"
                     checked={allOnPageSelected && paginatedData.length > 0}
                     onChange={handleSelectAll}
-                    className="h-4 w-4 rounded border-[#E5E7EB]"
+                    className="h-4 w-4 rounded border-border"
                   />
                 </th>
               )}
@@ -287,9 +287,9 @@ export function DataTable<T extends Record<string, unknown>>({
                 <th
                   key={col.key}
                   className={cn(
-                    "px-4 py-2.5 text-left text-[11px] font-medium uppercase tracking-[0.3px] text-[#5A6B75]",
-                    col.sortable && "cursor-pointer select-none hover:text-[#1F2937]",
-                    sortKey === col.key && "text-[#1a5632]",
+                    "px-4 py-2.5 text-left text-[11px] font-medium uppercase tracking-[0.3px] text-muted-foreground",
+                    col.sortable && "cursor-pointer select-none hover:text-foreground",
+                    sortKey === col.key && "text-primary",
                     col.className
                   )}
                   onClick={col.sortable ? () => handleSort(col.key) : undefined}
@@ -312,7 +312,7 @@ export function DataTable<T extends Record<string, unknown>>({
               <tr>
                 <td
                   colSpan={columns.length + (selectable ? 1 : 0)}
-                  className="px-4 py-12 text-center text-[13px] text-[#5A6B75]"
+                  className="px-4 py-12 text-center text-[13px] text-muted-foreground"
                 >
                   {emptyMessage}
                 </td>
@@ -325,9 +325,9 @@ export function DataTable<T extends Record<string, unknown>>({
                   <tr
                     key={globalIdx}
                     className={cn(
-                      "border-b border-[#E5E7EB] transition-colors",
-                      onRowClick && "cursor-pointer hover:bg-[#f9fafb]",
-                      isSelected && "bg-[#f0fdf4]"
+                      "border-b border-border transition-colors",
+                      onRowClick && "cursor-pointer hover:bg-muted/50",
+                      isSelected && "bg-accent"
                     )}
                     style={{ height: "38px" }}
                     onClick={() => onRowClick?.(row)}
@@ -342,7 +342,7 @@ export function DataTable<T extends Record<string, unknown>>({
                             handleSelectRow(globalIdx)
                           }}
                           onClick={(e) => e.stopPropagation()}
-                          className="h-4 w-4 rounded border-[#E5E7EB]"
+                          className="h-4 w-4 rounded border-border"
                         />
                       </td>
                     )}
@@ -350,7 +350,7 @@ export function DataTable<T extends Record<string, unknown>>({
                       <td
                         key={col.key}
                         className={cn(
-                          "px-4 py-1.5 text-[13px] text-[#1F2937]",
+                          "px-4 py-1.5 text-[13px] text-foreground",
                           col.mono && "font-mono",
                           col.className
                         )}
@@ -368,7 +368,7 @@ export function DataTable<T extends Record<string, unknown>>({
 
       {/* Pagination */}
       <div className="flex items-center justify-between">
-        <p className="text-[13px] text-[#5A6B75]">
+        <p className="text-[13px] text-muted-foreground">
           {selectable && selectedRows.size > 0
             ? `${selectedRows.size} of ${sortedData.length} row(s) selected`
             : `Showing ${sortedData.length === 0 ? 0 : (safePage - 1) * pageSize + 1}-${Math.min(
@@ -393,8 +393,8 @@ export function DataTable<T extends Record<string, unknown>>({
               className={cn(
                 "flex h-8 w-8 items-center justify-center rounded text-[13px] font-medium transition-colors",
                 page === safePage
-                  ? "bg-[#1a5632] text-white"
-                  : "text-[#1F2937] hover:bg-[#f3f4f6]"
+                  ? "bg-primary text-primary-foreground"
+                  : "text-foreground hover:bg-muted"
               )}
             >
               {page}

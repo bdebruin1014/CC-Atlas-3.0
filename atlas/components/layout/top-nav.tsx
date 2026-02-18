@@ -89,7 +89,7 @@ export function TopNav({ user }: TopNavProps) {
             >
               {tab.label}
               {isActive && (
-                <span className="absolute bottom-0 left-1 right-1 h-[3px] rounded-t bg-[#1a5632]" />
+                <span className="absolute bottom-0 left-1 right-1 h-[3px] rounded-t bg-primary" />
               )}
             </Link>
           )
@@ -139,7 +139,7 @@ export function TopNav({ user }: TopNavProps) {
                   src={user?.avatar_url || undefined}
                   alt={displayName}
                 />
-                <AvatarFallback className="bg-[#1a5632] text-[10px] text-white">
+                <AvatarFallback className="bg-primary text-[10px] text-primary-foreground">
                   {initials}
                 </AvatarFallback>
               </Avatar>

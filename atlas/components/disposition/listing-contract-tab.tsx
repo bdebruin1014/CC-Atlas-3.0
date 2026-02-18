@@ -38,11 +38,11 @@ const TIMELINE_STEPS = [
 export function ListingContractTab({ listingId }: { listingId: string }) {
   const { data: contract, isLoading } = useContract(listingId)
 
-  if (isLoading) return <div className="py-12 text-center text-[13px] text-[#5A6B75]">Loading…</div>
+  if (isLoading) return <div className="py-12 text-center text-[13px] text-muted-foreground">Loading…</div>
   if (!contract) return (
-    <div className="flex flex-col items-center gap-3 rounded-lg border border-dashed border-[#E5E7EB] py-16">
-      <FileText className="h-10 w-10 text-[#9CA3AF]" />
-      <p className="text-[13px] text-[#5A6B75]">No contract yet. Accept an offer to create a contract.</p>
+    <div className="flex flex-col items-center gap-3 rounded-lg border border-dashed border-border py-16">
+      <FileText className="h-10 w-10 text-muted-foreground" />
+      <p className="text-[13px] text-muted-foreground">No contract yet. Accept an offer to create a contract.</p>
     </div>
   )
 
@@ -59,21 +59,21 @@ export function ListingContractTab({ listingId }: { listingId: string }) {
 function ClosingTimeline({ contract }: { contract: ContractDetail }) {
   const completedIdx = getCompletedIndex(contract)
   return (
-    <div className="mb-6 overflow-x-auto rounded-lg border border-[#E5E7EB] bg-white p-4">
+    <div className="mb-6 overflow-x-auto rounded-lg border border-border bg-white p-4">
       <div className="relative flex min-w-[700px] items-start justify-between">
-        <div className="absolute left-4 right-4 top-3 h-0.5 bg-[#E5E7EB]" />
-        <div className="absolute left-4 top-3 h-0.5 bg-[#1a5632]" style={{ width: `${Math.max(0, (completedIdx / (TIMELINE_STEPS.length - 1)) * 100)}%` }} />
+        <div className="absolute left-4 right-4 top-3 h-0.5 bg-border" />
+        <div className="absolute left-4 top-3 h-0.5 bg-primary" style={{ width: `${Math.max(0, (completedIdx / (TIMELINE_STEPS.length - 1)) * 100)}%` }} />
         {TIMELINE_STEPS.map((step, i) => {
           const done = i <= completedIdx
           const current = i === completedIdx + 1
           return (
             <div key={step} className="relative z-10 flex w-16 flex-col items-center">
               <div className={cn("flex h-6 w-6 items-center justify-center rounded-full border-2",
-                done ? "border-[#1a5632] bg-[#1a5632] text-white" : current ? "border-[#2563eb] bg-white text-[#2563eb]" : "border-[#E5E7EB] bg-white text-[#9CA3AF]"
+                done ? "border-primary bg-primary text-primary-foreground" : current ? "border-[#2563eb] bg-white text-[#2563eb]" : "border-border bg-white text-muted-foreground"
               )}>
                 {done ? <Check className="h-3 w-3" /> : current ? <Clock className="h-3 w-3" /> : <Minus className="h-3 w-3" />}
               </div>
-              <span className={cn("mt-1.5 text-center text-[10px] leading-tight", done ? "font-medium text-[#1a5632]" : current ? "font-medium text-[#2563eb]" : "text-[#9CA3AF]")}>{step}</span>
+              <span className={cn("mt-1.5 text-center text-[10px] leading-tight", done ? "font-medium text-primary" : current ? "font-medium text-[#2563eb]" : "text-muted-foreground")}>{step}</span>
             </div>
           )
         })}
@@ -112,7 +112,7 @@ function ContractForm({ contract, listingId }: { contract: ContractDetail; listi
         {editing ? (
           <>
             <Button size="sm" variant="outline" onClick={() => { setF({ ...contract }); setEditing(false) }}>Cancel</Button>
-            <Button size="sm" className="bg-[#1a5632] text-white hover:bg-[#164528]" onClick={save} disabled={update.isPending}><Save className="mr-1 h-3.5 w-3.5" />{update.isPending ? "Saving…" : "Save"}</Button>
+            <Button size="sm" className="bg-primary text-primary-foreground hover:bg-primary/90" onClick={save} disabled={update.isPending}><Save className="mr-1 h-3.5 w-3.5" />{update.isPending ? "Saving…" : "Save"}</Button>
           </>
         ) : <Button size="sm" variant="outline" onClick={() => { setF({ ...contract }); setEditing(true) }}>Edit</Button>}
       </div>
@@ -149,13 +149,13 @@ function BuyerMilestones({ contract }: { contract: ContractDetail }) {
     <FormSection title="Buyer Milestones">
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
         {cards.map((c) => (
-          <div key={c.title} className="rounded-lg border border-[#E5E7EB] bg-white p-4">
+          <div key={c.title} className="rounded-lg border border-border bg-white p-4">
             <div className="mb-2 flex items-center justify-between">
-              <span className="text-[13px] font-medium text-[#1F2937]">{c.title}</span>
+              <span className="text-[13px] font-medium text-foreground">{c.title}</span>
               {c.status && <Badge variant={MILESTONE_VARIANT[c.status] ?? "gray"}>{c.status.replace(/_/g, " ")}</Badge>}
             </div>
-            <p className="text-[12px] text-[#5A6B75]">{c.date ? formatDate(c.date) : "No date set"}</p>
-            {c.extra && <p className="mt-1 text-[12px] text-[#5A6B75]">{c.extra}</p>}
+            <p className="text-[12px] text-muted-foreground">{c.date ? formatDate(c.date) : "No date set"}</p>
+            {c.extra && <p className="mt-1 text-[12px] text-muted-foreground">{c.extra}</p>}
           </div>
         ))}
       </div>
@@ -179,7 +179,7 @@ function KeyDates({ contract }: { contract: ContractDetail }) {
         {dates.map((d) => {
           const past = d.value && new Date(d.value) < now
           const complete = d.milestone && !["pending", "scheduled", "ordered", "pre_approved", "underwriting"].includes(d.milestone)
-          const color = past ? (complete ? "text-[#1a5632]" : "text-[#ef4444]") : ""
+          const color = past ? (complete ? "text-primary" : "text-[#ef4444]") : ""
           return (
             <FormField key={d.label} label={d.label}>
               <span className={cn("text-[13px]", color)}>{formatDate(d.value)}</span>

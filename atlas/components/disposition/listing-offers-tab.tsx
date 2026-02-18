@@ -65,10 +65,10 @@ export function ListingOffersTab({ listingId }: { listingId: string }) {
     <div>
       <div className="mb-4 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <h2 className="text-[15px] font-medium text-[#1F2937]">Offers</h2>
+          <h2 className="text-[15px] font-medium text-foreground">Offers</h2>
           <Badge variant="secondary" className="text-xs">{count}</Badge>
         </div>
-        <Button size="sm" className="bg-[#1a5632] text-white hover:bg-[#164528]" onClick={() => setFormOpen(true)}>
+        <Button size="sm" className="bg-primary text-primary-foreground hover:bg-primary/90" onClick={() => setFormOpen(true)}>
           <Plus className="mr-1 h-3.5 w-3.5" />Record Offer
         </Button>
       </div>
@@ -76,19 +76,19 @@ export function ListingOffersTab({ listingId }: { listingId: string }) {
       {showComparison && <ComparisonCard offers={comparables} bestNet={bestNet} />}
 
       {isLoading ? (
-        <div className="py-12 text-center text-[13px] text-[#5A6B75]">Loading…</div>
+        <div className="py-12 text-center text-[13px] text-muted-foreground">Loading…</div>
       ) : count === 0 ? (
-        <div className="flex flex-col items-center gap-3 rounded-lg border border-dashed border-[#E5E7EB] py-16">
-          <FileText className="h-10 w-10 text-[#9CA3AF]" />
-          <p className="text-[13px] text-[#5A6B75]">No offers recorded yet</p>
-          <Button size="sm" className="bg-[#1a5632] text-white hover:bg-[#164528]" onClick={() => setFormOpen(true)}>
+        <div className="flex flex-col items-center gap-3 rounded-lg border border-dashed border-border py-16">
+          <FileText className="h-10 w-10 text-muted-foreground" />
+          <p className="text-[13px] text-muted-foreground">No offers recorded yet</p>
+          <Button size="sm" className="bg-primary text-primary-foreground hover:bg-primary/90" onClick={() => setFormOpen(true)}>
             <Plus className="mr-1 h-3.5 w-3.5" />Record Offer
           </Button>
         </div>
       ) : (
         <Table>
           <TableHeader>
-            <TableRow className="bg-[#F3F4F6]">
+            <TableRow className="bg-muted">
               {["Offer #", "Buyer", "Amount", "Financing", "Contingencies", "Net to Seller", "Status", ""].map((h) => (
                 <TableHead key={h} className="text-[11px] uppercase tracking-wide">{h}</TableHead>
               ))}
@@ -96,7 +96,7 @@ export function ListingOffersTab({ listingId }: { listingId: string }) {
           </TableHeader>
           <TableBody>
             {offers!.map((o) => (
-              <TableRow key={o.id} className={`h-10 hover:bg-[#f9fafb] ${o.status === "accepted" ? "bg-[#f0fdf4]" : ""}`}>
+              <TableRow key={o.id} className={`h-10 hover:bg-[#f9fafb] ${o.status === "accepted" ? "bg-accent" : ""}`}>
                 <TableCell className="font-mono text-[13px]">{o.offer_number || "—"}</TableCell>
                 <TableCell className="text-[13px]">{o.buyer_name || "—"}</TableCell>
                 <TableCell className="text-[13px] font-semibold tabular-nums">{formatCurrency(o.offer_price)}</TableCell>
@@ -137,17 +137,17 @@ export function ListingOffersTab({ listingId }: { listingId: string }) {
           <DialogHeader><DialogTitle>Counter Offer</DialogTitle></DialogHeader>
           <div className="space-y-4">
             <div className="flex flex-col gap-1.5">
-              <label className="text-[11px] font-medium uppercase tracking-[0.3px] text-[#6B7280]">Counter Price</label>
+              <label className="text-[11px] font-medium uppercase tracking-[0.3px] text-muted-foreground">Counter Price</label>
               <Input type="number" value={counterPrice} onChange={(e) => setCounterPrice(e.target.value)} />
             </div>
             <div className="flex flex-col gap-1.5">
-              <label className="text-[11px] font-medium uppercase tracking-[0.3px] text-[#6B7280]">Counter Notes</label>
+              <label className="text-[11px] font-medium uppercase tracking-[0.3px] text-muted-foreground">Counter Notes</label>
               <Textarea rows={3} value={counterNotes} onChange={(e) => setCounterNotes(e.target.value)} />
             </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setCounterOffer(null)}>Cancel</Button>
-            <Button className="bg-[#1a5632] text-white hover:bg-[#164528]" onClick={submitCounter} disabled={updateOffer.isPending}>
+            <Button className="bg-primary text-primary-foreground hover:bg-primary/90" onClick={submitCounter} disabled={updateOffer.isPending}>
               {updateOffer.isPending ? "Saving…" : "Send Counter"}
             </Button>
           </DialogFooter>
@@ -170,7 +170,7 @@ export function ListingOffersTab({ listingId }: { listingId: string }) {
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
-              className={confirmAction?.action === "accepted" ? "bg-[#1a5632] hover:bg-[#164528]" : "bg-[#ef4444] hover:bg-[#dc2626]"}
+              className={confirmAction?.action === "accepted" ? "bg-primary hover:bg-primary/90" : "bg-[#ef4444] hover:bg-[#dc2626]"}
               onClick={() => { if (confirmAction) doAction(confirmAction.offer, confirmAction.action); setConfirmAction(null) }}
             >
               {confirmAction?.action === "accepted" ? "Accept" : confirmAction?.action === "rejected" ? "Reject" : "Withdraw"}
@@ -184,18 +184,18 @@ export function ListingOffersTab({ listingId }: { listingId: string }) {
 
 function ComparisonCard({ offers, bestNet }: { offers: DispositionOffer[]; bestNet: number }) {
   return (
-    <div className="mb-4 rounded-lg border border-[#E5E7EB] bg-white p-4">
-      <h3 className="mb-3 flex items-center gap-2 text-[13px] font-semibold text-[#1F2937]"><BarChart3 className="h-4 w-4" />Offer Comparison</h3>
+    <div className="mb-4 rounded-lg border border-border bg-white p-4">
+      <h3 className="mb-3 flex items-center gap-2 text-[13px] font-semibold text-foreground"><BarChart3 className="h-4 w-4" />Offer Comparison</h3>
       <div className="flex gap-4 overflow-x-auto">
         {offers.map((o) => (
-          <div key={o.id} className="min-w-[180px] flex-1 rounded-md border border-[#E5E7EB] p-3">
+          <div key={o.id} className="min-w-[180px] flex-1 rounded-md border border-border p-3">
             <p className="mb-2 truncate text-[13px] font-medium">{o.buyer_name || "Unknown"}</p>
             <div className="space-y-1 text-[12px]">
               <Row label="Price" value={formatCurrency(o.offer_price)} />
               <Row label="Financing" value={FIN_CFG[o.financing_type ?? ""]?.label ?? "—"} />
               <Row label="Contingencies" value={[o.contingency_inspection && "Insp", o.contingency_appraisal && "Appr", o.contingency_financing && "Fin", o.contingency_sale && "Sale"].filter(Boolean).join(", ") || "None"} />
               <Row label="Concessions" value={formatCurrency((o.closing_cost_assistance ?? 0) + (o.other_concessions ?? 0))} />
-              <div className={`flex justify-between font-semibold ${o.net_to_seller === bestNet ? "text-[#1a5632]" : ""}`}>
+              <div className={`flex justify-between font-semibold ${o.net_to_seller === bestNet ? "text-primary" : ""}`}>
                 <span>Net to Seller</span><span>{formatCurrency(o.net_to_seller)}</span>
               </div>
             </div>
@@ -207,5 +207,5 @@ function ComparisonCard({ offers, bestNet }: { offers: DispositionOffer[]; bestN
 }
 
 function Row({ label, value }: { label: string; value: string }) {
-  return <div className="flex justify-between text-[#5A6B75]"><span>{label}</span><span className="font-medium text-[#1F2937]">{value}</span></div>
+  return <div className="flex justify-between text-muted-foreground"><span>{label}</span><span className="font-medium text-foreground">{value}</span></div>
 }

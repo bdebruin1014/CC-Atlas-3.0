@@ -19,12 +19,12 @@ export function ListingSettlementTab({ listingId }: { listingId: string }) {
   const { data: contract } = useContract(listingId)
   const createSettlement = useCreateSettlement()
 
-  if (isLoading) return <div className="py-12 text-center text-[13px] text-[#5A6B75]">Loading…</div>
+  if (isLoading) return <div className="py-12 text-center text-[13px] text-muted-foreground">Loading…</div>
 
   if (!settlement) return (
-    <div className="flex flex-col items-center gap-3 rounded-lg border border-dashed border-[#E5E7EB] py-16">
-      <p className="text-[13px] text-[#5A6B75]">No settlement record yet.</p>
-      <Button size="sm" className="bg-[#1a5632] text-white hover:bg-[#164528]" disabled={createSettlement.isPending}
+    <div className="flex flex-col items-center gap-3 rounded-lg border border-dashed border-border py-16">
+      <p className="text-[13px] text-muted-foreground">No settlement record yet.</p>
+      <Button size="sm" className="bg-primary text-primary-foreground hover:bg-primary/90" disabled={createSettlement.isPending}
         onClick={async () => {
           try {
             await createSettlement.mutateAsync({
@@ -76,17 +76,17 @@ function SettlementForm({ settlement: s, listingId }: { settlement: SettlementDe
   return (
     <div>
       {isClosed && (
-        <div className="mb-4 flex items-center gap-2 rounded-lg bg-[#f0fdf4] p-3 text-[13px] text-[#1a5632]">
+        <div className="mb-4 flex items-center gap-2 rounded-lg bg-accent p-3 text-[13px] text-primary">
           <CheckCircle2 className="h-4 w-4" /> Closed on {formatDate(s.closing_date)}.{s.wire_confirmation ? ` Wire received: ${s.wire_confirmation}` : ""}
         </div>
       )}
 
       <div className="mb-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <span className="font-mono text-[13px] text-[#5A6B75]">{s.settlement_number || "—"}</span>
+          <span className="font-mono text-[13px] text-muted-foreground">{s.settlement_number || "—"}</span>
           <Badge variant={STATUS_V[s.status] ?? "gray"}>{s.status}</Badge>
         </div>
-        <Button size="sm" className="bg-[#1a5632] text-white hover:bg-[#164528]" onClick={save} disabled={update.isPending}>
+        <Button size="sm" className="bg-primary text-primary-foreground hover:bg-primary/90" onClick={save} disabled={update.isPending}>
           <Save className="mr-1 h-3.5 w-3.5" />{update.isPending ? "Saving…" : "Save"}
         </Button>
       </div>
@@ -133,17 +133,17 @@ function SettlementForm({ settlement: s, listingId }: { settlement: SettlementDe
 
       <FormSection title="Settlement Summary">
         <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-          <div className="rounded-lg border border-[#E5E7EB] bg-white p-4 text-center">
-            <p className="text-[11px] font-medium uppercase tracking-[0.3px] text-[#6B7280]">Total Credits</p>
-            <p className="mt-1 text-xl font-semibold tabular-nums text-[#1a5632]">{formatCurrency(totalCredits)}</p>
+          <div className="rounded-lg border border-border bg-white p-4 text-center">
+            <p className="text-[11px] font-medium uppercase tracking-[0.3px] text-muted-foreground">Total Credits</p>
+            <p className="mt-1 text-xl font-semibold tabular-nums text-primary">{formatCurrency(totalCredits)}</p>
           </div>
-          <div className="rounded-lg border border-[#E5E7EB] bg-white p-4 text-center">
-            <p className="text-[11px] font-medium uppercase tracking-[0.3px] text-[#6B7280]">Total Charges</p>
+          <div className="rounded-lg border border-border bg-white p-4 text-center">
+            <p className="text-[11px] font-medium uppercase tracking-[0.3px] text-muted-foreground">Total Charges</p>
             <p className="mt-1 text-xl font-semibold tabular-nums text-[#ef4444]">{formatCurrency(totalCharges)}</p>
           </div>
-          <div className="rounded-lg border border-[#E5E7EB] bg-white p-4 text-center">
-            <p className="text-[11px] font-medium uppercase tracking-[0.3px] text-[#6B7280]">Net to Seller</p>
-            <p className={`mt-1 text-2xl font-bold tabular-nums ${netToSeller >= 0 ? "text-[#1a5632]" : "text-[#ef4444]"}`}>{formatCurrency(netToSeller)}</p>
+          <div className="rounded-lg border border-border bg-white p-4 text-center">
+            <p className="text-[11px] font-medium uppercase tracking-[0.3px] text-muted-foreground">Net to Seller</p>
+            <p className={`mt-1 text-2xl font-bold tabular-nums ${netToSeller >= 0 ? "text-primary" : "text-[#ef4444]"}`}>{formatCurrency(netToSeller)}</p>
           </div>
         </div>
       </FormSection>
@@ -153,7 +153,7 @@ function SettlementForm({ settlement: s, listingId }: { settlement: SettlementDe
           <FormField label="Funds Received">
             <div className="flex items-center gap-2">
               <Switch checked={!!f.funds_received} onCheckedChange={(v) => upd("funds_received", v)} />
-              <span className={`text-[13px] ${f.funds_received ? "font-medium text-[#1a5632]" : "text-[#5A6B75]"}`}>{f.funds_received ? "Received" : "Pending"}</span>
+              <span className={`text-[13px] ${f.funds_received ? "font-medium text-primary" : "text-muted-foreground"}`}>{f.funds_received ? "Received" : "Pending"}</span>
             </div>
           </FormField>
           <FormField label="Date Received"><Input type="date" value={f.date_received ?? ""} onChange={(e) => upd("date_received", e.target.value || null)} /></FormField>
@@ -164,7 +164,7 @@ function SettlementForm({ settlement: s, listingId }: { settlement: SettlementDe
 
       {!isClosed && (
         <div className="mt-6 flex justify-end">
-          <Button className="bg-[#1a5632] px-6 text-white hover:bg-[#164528]" onClick={() => setConfirmClose(true)}>Record Closing</Button>
+          <Button className="bg-primary px-6 text-primary-foreground hover:bg-primary/90" onClick={() => setConfirmClose(true)}>Record Closing</Button>
         </div>
       )}
 
@@ -176,7 +176,7 @@ function SettlementForm({ settlement: s, listingId }: { settlement: SettlementDe
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction className="bg-[#1a5632] hover:bg-[#164528]" onClick={recordClosing}>Confirm Closing</AlertDialogAction>
+            <AlertDialogAction className="bg-primary hover:bg-primary/90" onClick={recordClosing}>Confirm Closing</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -186,14 +186,14 @@ function SettlementForm({ settlement: s, listingId }: { settlement: SettlementDe
 
 function LedgerTable({ rows, total, totalLabel }: { rows: [string, number | null, (v: string) => void][]; total: number; totalLabel: string }) {
   return (
-    <div className="rounded-md border border-[#E5E7EB]">
+    <div className="rounded-md border border-border">
       {rows.map(([label, value, onChange]) => (
-        <div key={label} className="flex items-center justify-between border-b border-[#E5E7EB] px-3 py-2 last:border-b-0">
-          <span className="text-[13px] text-[#5A6B75]">{label}</span>
+        <div key={label} className="flex items-center justify-between border-b border-border px-3 py-2 last:border-b-0">
+          <span className="text-[13px] text-muted-foreground">{label}</span>
           <Input type="number" className="w-36 text-right" value={value ?? ""} onChange={(e) => onChange(e.target.value)} />
         </div>
       ))}
-      <div className="flex items-center justify-between bg-[#F3F4F6] px-3 py-2 font-semibold">
+      <div className="flex items-center justify-between bg-muted px-3 py-2 font-semibold">
         <span className="text-[13px]">{totalLabel}</span>
         <span className="text-[13px] tabular-nums">{formatCurrency(total)}</span>
       </div>

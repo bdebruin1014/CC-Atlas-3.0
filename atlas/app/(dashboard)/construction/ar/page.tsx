@@ -526,8 +526,7 @@ function ARAging() {
             <SelectItem value="JOB-2024-002">Oakmont Reserve</SelectItem>
           </SelectContent>
         </Select>
-        {/* TODO: Wire up aging report export */}
-        <Button variant="outline" size="sm" className="ml-auto">
+        <Button variant="outline" size="sm" className="ml-auto" disabled title="Export coming soon">
           <Download className="mr-2 h-4 w-4" />
           Export Aging Report
         </Button>

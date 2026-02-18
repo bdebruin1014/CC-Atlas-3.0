@@ -173,18 +173,22 @@ export default function AccountingDashboardPage() {
   const router = useRouter()
   const [entities, setEntities] = useState<Entity[]>(MOCK_ENTITIES)
   const [loading, setLoading] = useState(false)
+  const [loadError, setLoadError] = useState<string | null>(null)
 
   // Load entities from Supabase
   useEffect(() => {
     async function loadData() {
       setLoading(true)
+      setLoadError(null)
       const supabase = createClient()
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("entities")
         .select("*")
         .order("name")
 
-      if (data && data.length > 0) {
+      if (error) {
+        setLoadError("Failed to load entities. Using cached data.")
+      } else if (data && data.length > 0) {
         setEntities(data as unknown as Entity[])
       }
       setLoading(false)
@@ -229,6 +233,14 @@ export default function AccountingDashboardPage() {
           Manage Entities
         </Button>
       </div>
+
+      {/* Error banner */}
+      {loadError && (
+        <div className="flex items-center gap-3 rounded-lg border border-destructive bg-destructive/10 p-4 text-sm text-destructive">
+          <AlertTriangle className="h-5 w-5 shrink-0" />
+          {loadError}
+        </div>
+      )}
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">

@@ -229,13 +229,11 @@ export default function JobCostPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          {/* TODO: Wire up PDF export */}
-          <Button variant="outline" onClick={() => {/* TODO: generate and download PDF report */}}>
+          <Button variant="outline" disabled title="Export coming soon">
             <Download className="mr-2 h-4 w-4" />
             Export PDF
           </Button>
-          {/* TODO: Wire up Excel export */}
-          <Button variant="outline" onClick={() => {/* TODO: generate and download Excel report */}}>
+          <Button variant="outline" disabled title="Export coming soon">
             <FileText className="mr-2 h-4 w-4" />
             Export Excel
           </Button>

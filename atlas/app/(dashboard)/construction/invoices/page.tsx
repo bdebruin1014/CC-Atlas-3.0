@@ -17,6 +17,7 @@ import {
   MoreHorizontal,
 } from "lucide-react"
 import { cn, formatCurrency, formatDate } from "@/lib/utils/format"
+import { toast } from "@/lib/hooks/use-toast"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
@@ -471,8 +472,15 @@ function InvoiceForm({ onClose }: { onClose: () => void }) {
         <Button variant="outline" onClick={onClose}>
           Cancel
         </Button>
-        {/* TODO: Wire up form submission to API */}
-        <Button onClick={onClose}>
+        <Button
+          onClick={() => {
+            onClose()
+            toast({
+              title: "Invoice creation coming soon",
+              description: "Invoice API integration is not yet available.",
+            })
+          }}
+        >
           <Plus className="mr-2 h-4 w-4" />
           Create Invoice
         </Button>
@@ -577,13 +585,11 @@ export default function InvoicesPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          {/* TODO: Wire up payment run navigation */}
-          <Button variant="outline" onClick={() => {/* TODO: navigate to payment run */}}>
+          <Button variant="outline" disabled title="Payment run coming soon">
             <CreditCard className="mr-2 h-4 w-4" />
             Payment Run
           </Button>
-          {/* TODO: Wire up aging report export */}
-          <Button variant="outline" onClick={() => {/* TODO: export aging report */}}>
+          <Button variant="outline" disabled title="Export coming soon">
             <Download className="mr-2 h-4 w-4" />
             Export Aging Report
           </Button>

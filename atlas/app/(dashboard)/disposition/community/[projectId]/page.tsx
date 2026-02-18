@@ -34,7 +34,7 @@ export default function CommunityDashboardPage() {
   }
 
   if (!project) {
-    return <div className="flex h-64 items-center justify-center text-[#5A6B75]">Project not found</div>
+    return <div className="flex h-64 items-center justify-center text-muted-foreground">Project not found</div>
   }
 
   if (!listings.length && !isLoading) {
@@ -43,8 +43,8 @@ export default function CommunityDashboardPage() {
         <Header name={project.name} />
         <div className="mt-12 flex flex-col items-center gap-3 rounded-lg border border-dashed border-[#E5E7EB] py-16">
           <Home className="h-10 w-10 text-[#9CA3AF]" />
-          <p className="text-[14px] font-medium text-[#1F2937]">No listings for this project yet</p>
-          <p className="text-[13px] text-[#5A6B75]">Create listings to see community analytics</p>
+          <p className="text-[14px] font-medium text-foreground">No listings for this project yet</p>
+          <p className="text-[13px] text-muted-foreground">Create listings to see community analytics</p>
           <Link href="/disposition"><Button size="sm" className="mt-2 bg-[#1a5632] text-white hover:bg-[#164528]">Go to Disposition</Button></Link>
         </div>
       </div>
@@ -78,13 +78,13 @@ function Header({ name }: { name: string }) {
   return (
     <div className="flex items-center justify-between">
       <div className="flex items-center gap-3">
-        <Link href="/disposition" className="text-[#5A6B75] hover:text-[#1F2937]"><ArrowLeft className="h-5 w-5" /></Link>
+        <Link href="/disposition" className="text-muted-foreground hover:text-foreground"><ArrowLeft className="h-5 w-5" /></Link>
         <div>
-          <h1 className="text-xl font-semibold text-[#1F2937]">{name}</h1>
-          <p className="text-[13px] text-[#5A6B75]">Community Sales Dashboard</p>
+          <h1 className="text-xl font-semibold text-foreground">{name}</h1>
+          <p className="text-[13px] text-muted-foreground">Community Sales Dashboard</p>
         </div>
       </div>
-      <Button variant="outline" size="sm"><Download className="mr-1.5 h-3.5 w-3.5" />Export Report</Button>
+      <Button variant="outline" size="sm" disabled title="Export coming soon"><Download className="mr-1.5 h-3.5 w-3.5" />Export Report</Button>
     </div>
   )
 }

@@ -35,6 +35,12 @@ import {
 } from "lucide-react"
 import { toast } from "@/lib/hooks/use-toast"
 import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
+import {
   usePunchItems,
   useCreatePunchItem,
   useCompletePunchItem,
@@ -233,36 +239,56 @@ export function PunchListTab({ jobId, unitId }: PunchListTabProps) {
             </Badge>
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={() => setVendorView(!vendorView)}>
-            {vendorView ? "Room View" : "Vendor View"}
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleBulkVerify}
-            disabled={summary.complete === 0 || bulkVerifyMutation.isPending}
-          >
-            <ShieldCheck className="mr-1 h-4 w-4" />
-            Verify All Complete
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleNewRound}
-            disabled={
-              summary.open + summary.inProgress + summary.disputed === 0 ||
-              newRoundMutation.isPending
-            }
-          >
-            <RotateCcw className="mr-1 h-4 w-4" />
-            New Round
-          </Button>
-          <Button size="sm" onClick={() => setAddOpen(true)}>
-            <Plus className="mr-1 h-4 w-4" />
-            Add Item
-          </Button>
-        </div>
+        <TooltipProvider delayDuration={200}>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={() => setVendorView(!vendorView)}>
+              {vendorView ? "Room View" : "Vendor View"}
+            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleBulkVerify}
+                    disabled={summary.complete === 0 || bulkVerifyMutation.isPending}
+                  >
+                    <ShieldCheck className="mr-1 h-4 w-4" />
+                    Verify All Complete
+                  </Button>
+                </span>
+              </TooltipTrigger>
+              {summary.complete === 0 && (
+                <TooltipContent>No completed items to verify</TooltipContent>
+              )}
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleNewRound}
+                    disabled={
+                      summary.open + summary.inProgress + summary.disputed === 0 ||
+                      newRoundMutation.isPending
+                    }
+                  >
+                    <RotateCcw className="mr-1 h-4 w-4" />
+                    New Round
+                  </Button>
+                </span>
+              </TooltipTrigger>
+              {summary.open + summary.inProgress + summary.disputed === 0 && (
+                <TooltipContent>No open items to carry forward</TooltipContent>
+              )}
+            </Tooltip>
+            <Button size="sm" onClick={() => setAddOpen(true)}>
+              <Plus className="mr-1 h-4 w-4" />
+              Add Item
+            </Button>
+          </div>
+        </TooltipProvider>
       </div>
 
       {vendorView ? (

@@ -18,6 +18,7 @@ import {
   AlertTriangle,
 } from "lucide-react"
 import { cn, formatCurrency, formatDate } from "@/lib/utils/format"
+import { toast } from "@/lib/hooks/use-toast"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
@@ -447,8 +448,7 @@ function PaymentRun() {
               </p>
             </div>
             <div className="flex gap-2">
-              {/* TODO: Wire up export payment register */}
-              <Button variant="outline" disabled={selectedInvoices.length === 0}>
+              <Button variant="outline" disabled title="Export coming soon">
                 <Download className="mr-2 h-4 w-4" />
                 Export Register
               </Button>
@@ -512,8 +512,15 @@ function PaymentRun() {
             <Button variant="outline" onClick={() => setShowConfirmDialog(false)}>
               Cancel
             </Button>
-            {/* TODO: Wire up actual payment processing API */}
-            <Button onClick={() => setShowConfirmDialog(false)}>
+            <Button
+              onClick={() => {
+                setShowConfirmDialog(false)
+                toast({
+                  title: "Payment processing coming soon",
+                  description: "Payment API integration is not yet available.",
+                })
+              }}
+            >
               <CheckCircle className="mr-2 h-4 w-4" />
               Confirm & Process
             </Button>

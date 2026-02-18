@@ -181,7 +181,7 @@ export function ContactForm({
     [onSubmit, contactTypes, tags]
   )
 
-  const inputClass = "h-9 border-[#E5E7EB] focus:ring-[#1a5632]"
+  const inputClass = "h-9 border-border focus:ring-primary"
 
   return (
     <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-4">
@@ -216,7 +216,7 @@ export function ContactForm({
             <select
               {...register("status")}
               className={cn(
-                "flex h-9 w-full rounded-md border border-[#E5E7EB] bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#1a5632]"
+                "flex h-9 w-full rounded-md border border-border bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary"
               )}
             >
               <option value="active">Active</option>
@@ -297,7 +297,7 @@ export function ContactForm({
 
       {/* Tags */}
       <FormSection title="Tags">
-        <div className="flex flex-wrap items-center gap-2 rounded-md border border-[#E5E7EB] p-2">
+        <div className="flex flex-wrap items-center gap-2 rounded-md border border-border p-2">
           {tags.map((tag) => (
             <Badge key={tag} variant="secondary" className="gap-1">
               {tag}

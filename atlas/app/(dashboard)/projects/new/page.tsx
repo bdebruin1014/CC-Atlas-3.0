@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { ProjectForm } from "@/components/projects/project-form"
 import { useCreateProject } from "@/lib/hooks/use-projects"
 import { useOrganizationId } from "@/lib/hooks/use-organization"
+import { toast } from "@/lib/hooks/use-toast"
 
 export default function NewProjectPage() {
   const router = useRouter()
@@ -49,10 +50,19 @@ export default function NewProjectPage() {
 
     try {
       const result = await createMutation.mutateAsync(payload)
+      toast({
+        title: "Project Created",
+        description: `${payload.name} has been created successfully.`,
+      })
       router.push(`/projects/${result.id}`)
     } catch (err) {
       const message = err instanceof Error ? err.message : "Failed to create project"
       setError(`Project creation failed: ${message}`)
+      toast({
+        title: "Project creation failed",
+        description: message,
+        variant: "destructive",
+      })
     }
   }
 

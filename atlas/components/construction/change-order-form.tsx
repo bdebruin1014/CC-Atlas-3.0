@@ -95,8 +95,12 @@ export function ChangeOrderForm({
       toast({ title: "Change order submitted" })
       onOpenChange(false)
       resetForm()
-    } catch {
-      toast({ title: "Failed to create change order", variant: "destructive" })
+    } catch (err) {
+      toast({
+        title: "Failed to create change order",
+        description: err instanceof Error ? err.message : "An unexpected error occurred",
+        variant: "destructive",
+      })
     }
   }
 

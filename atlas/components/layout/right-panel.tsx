@@ -30,8 +30,8 @@ export function RightPanel() {
               className={cn(
                 "px-3 py-2.5 text-[11px] font-medium tracking-wide transition-colors",
                 rightPanelTab === tab.key
-                  ? "border-b-2 border-[#1a5632] text-[#1a5632]"
-                  : "text-[#5A6B75] hover:text-[#1F2937]"
+                  ? "border-b-2 border-primary text-primary"
+                  : "text-muted-foreground hover:text-foreground"
               )}
             >
               {tab.label}
@@ -40,7 +40,7 @@ export function RightPanel() {
         </div>
         <button
           onClick={() => setRightPanelOpen(false)}
-          className="mr-2 rounded p-1 text-[#5A6B75] hover:bg-[var(--muted)] hover:text-[#1F2937]"
+          className="mr-2 rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
         >
           <X className="h-3.5 w-3.5" />
         </button>
@@ -48,7 +48,7 @@ export function RightPanel() {
 
       {/* Body */}
       <div className="flex flex-1 items-center justify-center p-4">
-        <p className="text-sm text-[#5A6B75]">Coming soon</p>
+        <p className="text-sm text-muted-foreground">Coming soon</p>
       </div>
     </aside>
   )
