@@ -433,8 +433,8 @@ The Deal Analyzer is a built-in calculation engine on the Opportunity detail pag
 **Data Sources (pulled from Admin):**
 - Floor Plan Library: heated SF, bed/bath/garage, stories, type (SFH/TH), width/depth, base sticks-and-bricks cost, upgrade packages
 - Municipality Soft Cost Table: water tap, sewer tap, gas tap, permitting fees, impact fees, architect, engineering, survey — per jurisdiction
-- Default Fees: builder fee structure (greater of $25,000 or 10% of construction costs), contingency (greater of $10,000 or 5%), builder's risk insurance, PO fee, PM fee, warranty reserve
-- Default Financing Assumptions: LTC ratio (85%), interest rate, construction period (default 120 days), cost of capital rate (16% annual)
+- Default Fees: builder fee structure $15,000, contingency of $11,000, builder's risk insurance is $1,500, PO fee is $3,000, PM fee is $3,500, warranty reserve is $5,000
+- Default Financing Assumptions: LTC ratio (85%), interest rate, construction period (default 160 days), cost of capital rate (16% annual)
 - Default Selling Costs: commission + closing (8.5% of ASP default)
 
 **User Inputs per Deal:**
@@ -458,15 +458,15 @@ Section 1 — Cost Summary:
 - Lot Preparation (user input)
 - Site-Specific Vertical Adjustments (user input)
 - Municipality Soft Costs (from municipality selection)
-- Builder Fee: greater of $25,000 or 10% × (S&B + Upgrades + Lot Prep + Site Adjustments + Soft Costs)
-- Contingency: greater of $10,000 or 5% × (S&B + Upgrades + Lot Prep + Site Adjustments + Soft Costs)
+- Builder Fees: builder fee $15,000, PO fee is $3,000, PM fee is $3,500
+- Contingency: contingency of $11,000
 - Total Contract Cost (Red Cedar)
 
 Section 2 — Fixed Per-House Costs:
-- Builder warranty reserve
-- Builder's risk insurance
+- Builder warranty reserve $5,000
+- Builder's risk insurance $1,500
 - Closing costs (5% of purchase price)
-- Utility charges
+- Utility charges $12 daily rate based on project timeline
 
 Section 3 — Total Project Cost (excluding carry):
 - Purchase price + Total Contract Cost + Fixed Per-House Costs
@@ -845,7 +845,7 @@ During active construction. Fields: Unit, milestone, category (Safety Hazard, Qu
 
 **Accounts Payable:**
 - PO at "Invoiced" status creates AP entry
-- Workflow: Invoice Received → Coded to Job/Unit/Cost Code → Approved for Payment → Scheduled → Paid
+- Workflow: Bill Received → Coded to Job/Unit/Cost Code → Approved for Payment → Scheduled → Paid
 - AP aging: Current, 30, 60, 90+ by vendor
 - Payment runs: batch payments by vendor across Jobs
 - Retainage tracking: held per vendor per Job, released at substantial completion + final lien waiver
