@@ -27,6 +27,8 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { DataTable, type ColumnDef } from "@/components/shared/data-table"
 import { cn, formatCurrency, formatDate } from "@/lib/utils/format"
+import { useUIStore } from "@/lib/stores/ui-store"
+import { ViewToggle } from "@/components/shared/view-toggle"
 import {
   useListings,
   useCreateListing,
@@ -972,6 +974,7 @@ export default function DispositionPage() {
 
   const [view, setView] = useState<ViewMode>("all")
   const [showCreate, setShowCreate] = useState(false)
+  const { selectedEntityId } = useUIStore()
   const [filters, setFilters] = useState<PageFilters>({
     statuses: initialStatus ? [initialStatus] : [],
     propertyTypes: [],
@@ -994,8 +997,11 @@ export default function DispositionPage() {
     if (filters.search) {
       f.search = filters.search
     }
+    if (selectedEntityId) {
+      f.entity_id = selectedEntityId
+    }
     return f
-  }, [filters])
+  }, [filters, selectedEntityId])
 
   const { data: listingsData, isLoading, isError, refetch } = useListings(apiFilters)
   const allListings = (listingsData?.data ?? []) as ListingWithAgent[]

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import {
@@ -48,6 +48,8 @@ import {
   type ProjectStatus,
 } from "@/lib/hooks/use-projects"
 import { ProjectCard } from "@/components/projects/project-card"
+import { useUIStore } from "@/lib/stores/ui-store"
+import { ViewToggle } from "@/components/shared/view-toggle"
 
 // ---------------------------------------------------------------------------
 // Loading skeletons
@@ -118,7 +120,17 @@ export default function ProjectsPage() {
   const [typeFilter, setTypeFilter] = useState<ProjectType | "all">("all")
   const [statusFilter, setStatusFilter] = useState<ProjectStatus | "all">("all")
   const [entityFilter, setEntityFilter] = useState<string>("all")
-  const [viewMode, setViewMode] = useState<"grid" | "table">("grid")
+  const { selectedEntityId, viewPreferences } = useUIStore()
+  const viewMode = viewPreferences.projects === "card" ? "grid" : "table"
+
+  // Sync global entity selector → local filter
+  const prevGlobalEntity = useRef(selectedEntityId)
+  useEffect(() => {
+    if (selectedEntityId !== prevGlobalEntity.current) {
+      prevGlobalEntity.current = selectedEntityId
+      setEntityFilter(selectedEntityId ?? "all")
+    }
+  }, [selectedEntityId])
 
   const debouncedSearch = useDebounce(searchInput, 300)
   const { entities } = useEntities()
@@ -237,23 +249,8 @@ export default function ProjectsPage() {
         )}
 
         {/* View toggle */}
-        <div className="ml-auto flex items-center border border-border rounded-lg overflow-hidden">
-          <Button
-            variant={viewMode === "grid" ? "secondary" : "ghost"}
-            size="sm"
-            className="rounded-none h-8"
-            onClick={() => setViewMode("grid")}
-          >
-            <LayoutGrid className="h-4 w-4" />
-          </Button>
-          <Button
-            variant={viewMode === "table" ? "secondary" : "ghost"}
-            size="sm"
-            className="rounded-none h-8"
-            onClick={() => setViewMode("table")}
-          >
-            <List className="h-4 w-4" />
-          </Button>
+        <div className="ml-auto">
+          <ViewToggle module="projects" />
         </div>
       </div>
 
