@@ -20,6 +20,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Switch } from "@/components/ui/switch"
+import { Checkbox } from "@/components/ui/checkbox"
 import {
   Dialog,
   DialogContent,
@@ -68,6 +69,25 @@ const EVENT_TYPE_LABELS: Record<string, string> = {
 }
 
 // ---------------------------------------------------------------------------
+// Module toggle config
+// ---------------------------------------------------------------------------
+interface ModuleToggle {
+  key: string
+  label: string
+  color: string
+  eventTypes: string[]
+}
+
+const MODULE_TOGGLES: ModuleToggle[] = [
+  { key: "milestones", label: "Construction Milestones", color: "#f97316", eventTypes: ["milestone_due"] },
+  { key: "tasks", label: "Task Due Dates", color: "#3b82f6", eventTypes: ["task_due"] },
+  { key: "closings", label: "Closing Dates", color: "#22c55e", eventTypes: ["closing"] },
+  { key: "permits", label: "Permit Expirations", color: "#ef4444", eventTypes: ["permit_expiration"] },
+  { key: "loans", label: "Loan Maturities", color: "#8b5cf6", eventTypes: ["loan_maturity"] },
+  { key: "insurance", label: "Insurance Expirations", color: "#ec4899", eventTypes: ["insurance_expiration"] },
+]
+
+// ---------------------------------------------------------------------------
 // Linked record helpers
 // ---------------------------------------------------------------------------
 function getRecordPath(recordType: string | null, recordId: string | null): string | null {
@@ -80,10 +100,101 @@ function getRecordPath(recordType: string | null, recordId: string | null): stri
     case "job":
       return `/construction/jobs/${recordId}`
     case "unit":
-      return null // units are nested under jobs
+      return null
+    case "task":
+      return `/tasks`
     default:
       return null
   }
+}
+
+// ---------------------------------------------------------------------------
+// Mini Calendar Component
+// ---------------------------------------------------------------------------
+function MiniCalendar({
+  selectedDate,
+  onDateSelect,
+}: {
+  selectedDate: Date
+  onDateSelect: (date: Date) => void
+}) {
+  const [viewMonth, setViewMonth] = useState(
+    new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1)
+  )
+
+  const year = viewMonth.getFullYear()
+  const month = viewMonth.getMonth()
+  const firstDay = new Date(year, month, 1).getDay()
+  const daysInMonth = new Date(year, month + 1, 0).getDate()
+  const today = new Date()
+
+  const monthLabel = viewMonth.toLocaleString("default", {
+    month: "long",
+    year: "numeric",
+  })
+
+  const prevMonth = () =>
+    setViewMonth(new Date(year, month - 1, 1))
+  const nextMonth = () =>
+    setViewMonth(new Date(year, month + 1, 1))
+
+  const days: (number | null)[] = []
+  for (let i = 0; i < firstDay; i++) days.push(null)
+  for (let d = 1; d <= daysInMonth; d++) days.push(d)
+
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center justify-between">
+        <button
+          onClick={prevMonth}
+          className="p-1 rounded hover:bg-muted transition-colors"
+        >
+          <ChevronLeft className="h-4 w-4" />
+        </button>
+        <span className="text-sm font-medium">{monthLabel}</span>
+        <button
+          onClick={nextMonth}
+          className="p-1 rounded hover:bg-muted transition-colors"
+        >
+          <ChevronRight className="h-4 w-4" />
+        </button>
+      </div>
+      <div className="grid grid-cols-7 gap-0">
+        {["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"].map((d) => (
+          <div
+            key={d}
+            className="text-[10px] text-center text-muted-foreground font-medium py-1"
+          >
+            {d}
+          </div>
+        ))}
+        {days.map((day, idx) => {
+          if (day === null) return <div key={`e-${idx}`} />
+          const date = new Date(year, month, day)
+          const isToday =
+            date.toDateString() === today.toDateString()
+          const isSelected =
+            date.toDateString() === selectedDate.toDateString()
+          return (
+            <button
+              key={day}
+              onClick={() => onDateSelect(date)}
+              className={cn(
+                "text-xs h-7 w-7 mx-auto rounded-full flex items-center justify-center transition-colors",
+                isSelected
+                  ? "bg-[#1a5632] text-white"
+                  : isToday
+                    ? "bg-muted font-bold"
+                    : "hover:bg-muted"
+              )}
+            >
+              {day}
+            </button>
+          )
+        })}
+      </div>
+    </div>
+  )
 }
 
 // ---------------------------------------------------------------------------
@@ -95,15 +206,23 @@ export default function CalendarPage() {
   const { toast } = useToast()
 
   // State
-  const [events, setEvents] = useState<CalendarEvent[]>([])
+  const [calendarEvents, setCalendarEvents] = useState<CalendarEvent[]>([])
+  const [moduleEvents, setModuleEvents] = useState<CalendarEvent[]>([])
   const [loading, setLoading] = useState(true)
   const [viewMode, setViewMode] = useState<CalendarViewMode>("dayGridMonth")
   const [isCompanyCalendar, setIsCompanyCalendar] = useState(true)
+  const [isMyCalendar, setIsMyCalendar] = useState(false)
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
+  const [selectedDate, setSelectedDate] = useState(new Date())
   const [dateRange, setDateRange] = useState<{ start: Date; end: Date }>({
     start: new Date(new Date().getFullYear(), new Date().getMonth(), 1),
     end: new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0),
   })
+
+  // Module toggles — all on by default
+  const [enabledModules, setEnabledModules] = useState<Record<string, boolean>>(
+    Object.fromEntries(MODULE_TOGGLES.map((m) => [m.key, true]))
+  )
 
   // Event detail dialog
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null)
@@ -146,11 +265,11 @@ export default function CalendarPage() {
       const { data } = await supabase
         .from("profiles")
         .select("id, first_name, last_name")
-        .eq("is_active", true)
         .order("last_name")
       if (data) {
         setUsers(
-          data.map((u) => ({
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (data as any[]).map((u) => ({
             id: u.id,
             full_name: [u.first_name, u.last_name].filter(Boolean).join(" ") || "Unknown",
           }))
@@ -160,9 +279,10 @@ export default function CalendarPage() {
     loadUsers()
   }, [supabase])
 
-  // Fetch events
-  const fetchEvents = useCallback(async () => {
-    setLoading(true)
+  // ---------------------------------------------------------------------------
+  // Fetch calendar_events (direct events)
+  // ---------------------------------------------------------------------------
+  const fetchCalendarEvents = useCallback(async () => {
     try {
       let query = supabase
         .from("calendar_events")
@@ -187,8 +307,7 @@ export default function CalendarPage() {
         .lte("start_date", dateRange.end.toISOString())
         .order("start_date", { ascending: true })
 
-      // Filter to only user's events if "My Calendar"
-      if (!isCompanyCalendar && currentUserId) {
+      if (isMyCalendar && currentUserId) {
         query = query.eq("assigned_to", currentUserId)
       }
 
@@ -196,12 +315,7 @@ export default function CalendarPage() {
 
       if (error) {
         console.error("Error fetching calendar events:", error)
-        toast({
-          title: "Error loading events",
-          description: error.message,
-          variant: "destructive",
-        })
-        setEvents([])
+        setCalendarEvents([])
         return
       }
 
@@ -230,17 +344,238 @@ export default function CalendarPage() {
         }
       })
 
-      setEvents(mapped)
+      setCalendarEvents(mapped)
     } catch (err) {
-      console.error("Failed to fetch events:", err)
-    } finally {
-      setLoading(false)
+      console.error("Failed to fetch calendar events:", err)
     }
-  }, [supabase, dateRange, isCompanyCalendar, currentUserId, toast])
+  }, [supabase, dateRange, isMyCalendar, currentUserId])
+
+  // ---------------------------------------------------------------------------
+  // Fetch aggregated module events
+  // ---------------------------------------------------------------------------
+  const fetchModuleEvents = useCallback(async () => {
+    const aggregated: CalendarEvent[] = []
+    const rangeStart = dateRange.start.toISOString().slice(0, 10)
+    const rangeEnd = dateRange.end.toISOString().slice(0, 10)
+
+    // 1. Construction Milestones
+    try {
+      const { data: milestones } = await supabase
+        .from("unit_milestones")
+        .select("id, name, phase_number, planned_end_date, actual_end_date, status, unit_id")
+        .or(`planned_end_date.gte.${rangeStart},actual_end_date.gte.${rangeStart}`)
+        .or(`planned_end_date.lte.${rangeEnd},actual_end_date.lte.${rangeEnd}`)
+
+      if (milestones) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        for (const m of milestones as any[]) {
+          const dateStr = m.actual_end_date || m.planned_end_date
+          if (!dateStr) continue
+          aggregated.push({
+            id: `milestone-${m.id}`,
+            title: `Milestone: ${m.name}`,
+            event_type: "milestone_due",
+            start_date: dateStr,
+            all_day: true,
+            linked_record_type: "job",
+            linked_record_id: null,
+            description: `Phase ${m.phase_number} — ${m.status}`,
+          })
+        }
+      }
+    } catch {
+      // table may not exist
+    }
+
+    // 2. Task due dates
+    try {
+      const { data: tasks } = await supabase
+        .from("standalone_tasks")
+        .select("id, title, due_date, status, module, linked_record_id, priority")
+        .not("due_date", "is", null)
+        .gte("due_date", rangeStart)
+        .lte("due_date", rangeEnd)
+        .not("status", "in", '("completed","cancelled")')
+
+      if (tasks) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        for (const t of tasks as any[]) {
+          if (!t.due_date) continue
+          aggregated.push({
+            id: `task-${t.id}`,
+            title: t.title,
+            event_type: "task_due",
+            start_date: t.due_date,
+            all_day: true,
+            linked_record_type: "task",
+            linked_record_id: t.id,
+            description: `Priority: ${t.priority} — Module: ${t.module}`,
+          })
+        }
+      }
+    } catch {
+      // table may not exist
+    }
+
+    // 3. Closing dates
+    try {
+      const { data: contracts } = await supabase
+        .from("disposition_contracts")
+        .select("id, contract_number, closing_date, status, listing_id")
+        .not("closing_date", "is", null)
+        .gte("closing_date", rangeStart)
+        .lte("closing_date", rangeEnd)
+
+      if (contracts) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        for (const c of contracts as any[]) {
+          if (!c.closing_date) continue
+          aggregated.push({
+            id: `closing-${c.id}`,
+            title: `Closing: ${c.contract_number || "Contract"}`,
+            event_type: "closing",
+            start_date: c.closing_date,
+            all_day: true,
+            linked_record_type: "project",
+            linked_record_id: null,
+            description: `Status: ${c.status}`,
+          })
+        }
+      }
+    } catch {
+      // table may not exist
+    }
+
+    // 4. Permit expirations
+    try {
+      const { data: permits } = await supabase
+        .from("permits")
+        .select("id, permit_type, permit_number, expiration_date, status, record_type, record_id")
+        .not("expiration_date", "is", null)
+        .gte("expiration_date", rangeStart)
+        .lte("expiration_date", rangeEnd)
+
+      if (permits) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        for (const p of permits as any[]) {
+          if (!p.expiration_date) continue
+          aggregated.push({
+            id: `permit-${p.id}`,
+            title: `Permit Exp: ${p.permit_type || p.permit_number || "Permit"}`,
+            event_type: "permit_expiration",
+            start_date: p.expiration_date,
+            all_day: true,
+            linked_record_type: p.record_type || null,
+            linked_record_id: p.record_id || null,
+            description: `Permit #${p.permit_number || "N/A"} — ${p.status}`,
+          })
+        }
+      }
+    } catch {
+      // table may not exist
+    }
+
+    // 5. Loan maturities
+    try {
+      const { data: loans } = await supabase
+        .from("loans")
+        .select("id, loan_type, maturity_date, original_amount, entity_id, project_id")
+        .not("maturity_date", "is", null)
+        .gte("maturity_date", rangeStart)
+        .lte("maturity_date", rangeEnd)
+
+      if (loans) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        for (const l of loans as any[]) {
+          if (!l.maturity_date) continue
+          aggregated.push({
+            id: `loan-${l.id}`,
+            title: `Loan Maturity: ${l.loan_type || "Loan"}`,
+            event_type: "loan_maturity",
+            start_date: l.maturity_date,
+            all_day: true,
+            linked_record_type: l.project_id ? "project" : null,
+            linked_record_id: l.project_id || null,
+            description: l.original_amount
+              ? `Original: $${Number(l.original_amount).toLocaleString()}`
+              : null,
+          })
+        }
+      }
+    } catch {
+      // table may not exist
+    }
+
+    // 6. Key project dates (permit dates, construction dates)
+    try {
+      const { data: projects } = await supabase
+        .from("projects")
+        .select("id, name, permit_submitted_date, permit_approved_date, construction_start_date, projected_completion_date, co_date, warranty_end_date")
+
+      if (projects) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        for (const p of projects as any[]) {
+          const keyDates: { date: string; label: string; type: string }[] = []
+          if (p.permit_submitted_date) keyDates.push({ date: p.permit_submitted_date, label: "Permit Submitted", type: "permit_expiration" })
+          if (p.permit_approved_date) keyDates.push({ date: p.permit_approved_date, label: "Permit Approved", type: "permit_expiration" })
+          if (p.construction_start_date) keyDates.push({ date: p.construction_start_date, label: "Construction Start", type: "milestone_due" })
+          if (p.projected_completion_date) keyDates.push({ date: p.projected_completion_date, label: "Projected Completion", type: "milestone_due" })
+          if (p.co_date) keyDates.push({ date: p.co_date, label: "CO Date", type: "milestone_due" })
+
+          for (const kd of keyDates) {
+            if (kd.date >= rangeStart && kd.date <= rangeEnd) {
+              aggregated.push({
+                id: `project-${p.id}-${kd.label.replace(/\s/g, "-").toLowerCase()}`,
+                title: `${kd.label}: ${p.name}`,
+                event_type: kd.type,
+                start_date: kd.date,
+                all_day: true,
+                linked_record_type: "project",
+                linked_record_id: p.id,
+              })
+            }
+          }
+        }
+      }
+    } catch {
+      // skip
+    }
+
+    setModuleEvents(aggregated)
+  }, [supabase, dateRange])
+
+  // ---------------------------------------------------------------------------
+  // Combined fetch
+  // ---------------------------------------------------------------------------
+  const fetchAllEvents = useCallback(async () => {
+    setLoading(true)
+    await Promise.all([fetchCalendarEvents(), fetchModuleEvents()])
+    setLoading(false)
+  }, [fetchCalendarEvents, fetchModuleEvents])
 
   useEffect(() => {
-    fetchEvents()
-  }, [fetchEvents])
+    fetchAllEvents()
+  }, [fetchAllEvents])
+
+  // ---------------------------------------------------------------------------
+  // Filter events by enabled modules
+  // ---------------------------------------------------------------------------
+  const enabledEventTypes = useMemo(() => {
+    const types = new Set<string>()
+    for (const m of MODULE_TOGGLES) {
+      if (enabledModules[m.key]) {
+        m.eventTypes.forEach((t) => types.add(t))
+      }
+    }
+    return types
+  }, [enabledModules])
+
+  const filteredEvents = useMemo(() => {
+    const filtered = moduleEvents.filter((e) => enabledEventTypes.has(e.event_type))
+    // Calendar events (direct) are always shown when company/my calendar is on
+    const direct = isCompanyCalendar || isMyCalendar ? calendarEvents : []
+    return [...direct, ...filtered]
+  }, [calendarEvents, moduleEvents, enabledEventTypes, isCompanyCalendar, isMyCalendar])
 
   // Handle date range change from calendar navigation
   function handleDatesChange(start: Date, end: Date) {
@@ -279,6 +614,30 @@ export default function CalendarPage() {
     setShowCreateDialog(true)
   }
 
+  // Navigate mini calendar to a date
+  function handleMiniCalendarSelect(date: Date) {
+    setSelectedDate(date)
+    setDateRange({
+      start: new Date(date.getFullYear(), date.getMonth(), 1),
+      end: new Date(date.getFullYear(), date.getMonth() + 1, 0),
+    })
+  }
+
+  // Today button
+  function handleTodayClick() {
+    const now = new Date()
+    setSelectedDate(now)
+    setDateRange({
+      start: new Date(now.getFullYear(), now.getMonth(), 1),
+      end: new Date(now.getFullYear(), now.getMonth() + 1, 0),
+    })
+  }
+
+  // Toggle module
+  function toggleModule(key: string) {
+    setEnabledModules((prev) => ({ ...prev, [key]: !prev[key] }))
+  }
+
   // Create event
   async function handleCreateEvent(e: React.FormEvent) {
     e.preventDefault()
@@ -313,7 +672,8 @@ export default function CalendarPage() {
         linked_record_id: createForm.linked_record_id || null,
       }
 
-      const { error } = await supabase.from("calendar_events").insert(payload)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error } = await supabase.from("calendar_events").insert(payload as any)
 
       if (error) {
         toast({
@@ -326,7 +686,7 @@ export default function CalendarPage() {
 
       toast({ title: "Event created", description: "Calendar event has been added." })
       setShowCreateDialog(false)
-      fetchEvents()
+      fetchAllEvents()
     } catch (err) {
       console.error("Create event error:", err)
       toast({
@@ -354,7 +714,7 @@ export default function CalendarPage() {
   }, [selectedEvent])
 
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col gap-6 p-6">
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
@@ -364,34 +724,11 @@ export default function CalendarPage() {
           </p>
         </div>
 
-        <div className="flex items-center gap-4">
-          {/* Company / My Calendar toggle */}
-          <div className="flex items-center gap-2">
-            <span
-              className={cn(
-                "text-sm font-medium",
-                isCompanyCalendar
-                  ? "text-foreground"
-                  : "text-muted-foreground"
-              )}
-            >
-              Company
-            </span>
-            <Switch
-              checked={!isCompanyCalendar}
-              onCheckedChange={(checked) => setIsCompanyCalendar(!checked)}
-            />
-            <span
-              className={cn(
-                "text-sm font-medium",
-                !isCompanyCalendar
-                  ? "text-foreground"
-                  : "text-muted-foreground"
-              )}
-            >
-              My Calendar
-            </span>
-          </div>
+        <div className="flex items-center gap-3">
+          {/* Today button */}
+          <Button variant="outline" size="sm" onClick={handleTodayClick}>
+            Today
+          </Button>
 
           {/* View toggle buttons */}
           <div className="hidden sm:flex items-center rounded-lg border border-border p-1">
@@ -400,55 +737,122 @@ export default function CalendarPage() {
               size="sm"
               onClick={() => setViewMode("dayGridMonth")}
             >
-              Month
+              Monthly
             </Button>
             <Button
               variant={viewMode === "timeGridWeek" ? "default" : "ghost"}
               size="sm"
               onClick={() => setViewMode("timeGridWeek")}
             >
-              Week
-            </Button>
-            <Button
-              variant={viewMode === "timeGridDay" ? "default" : "ghost"}
-              size="sm"
-              onClick={() => setViewMode("timeGridDay")}
-            >
-              Day
+              Weekly
             </Button>
           </div>
 
-          <Button onClick={() => {
-            const now = new Date()
-            setCreateForm({
-              title: "",
-              description: "",
-              event_type: "other",
-              start_date: now.toISOString().slice(0, 16),
-              end_date: "",
-              all_day: false,
-              linked_record_type: "",
-              linked_record_id: "",
-            })
-            setAssignedTo("")
-            setShowCreateDialog(true)
-          }}>
+          {/* Create Event */}
+          <Button
+            className="bg-[#1a5632] hover:bg-[#1a5632]/90 text-white"
+            onClick={() => {
+              const now = new Date()
+              setCreateForm({
+                title: "",
+                description: "",
+                event_type: "other",
+                start_date: now.toISOString().slice(0, 16),
+                end_date: "",
+                all_day: false,
+                linked_record_type: "",
+                linked_record_id: "",
+              })
+              setAssignedTo("")
+              setShowCreateDialog(true)
+            }}
+          >
             <Plus className="h-4 w-4" />
-            Add Event
+            Create Event
           </Button>
         </div>
       </div>
 
-      {/* Calendar */}
-      <CalendarView
-        events={events}
-        view={viewMode}
-        loading={loading}
-        editable={false}
-        onEventClick={handleEventClick}
-        onDateClick={handleDateClick}
-        onDatesChange={handleDatesChange}
-      />
+      {/* Main layout: sidebar + calendar */}
+      <div className="flex gap-6">
+        {/* Sidebar */}
+        <aside className="hidden lg:block w-64 shrink-0 space-y-6">
+          {/* Mini Calendar */}
+          <div className="rounded-lg border border-border p-3">
+            <MiniCalendar
+              selectedDate={selectedDate}
+              onDateSelect={handleMiniCalendarSelect}
+            />
+          </div>
+
+          {/* Calendar Toggles */}
+          <div className="rounded-lg border border-border p-4 space-y-4">
+            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+              Calendars
+            </h3>
+
+            {/* My Calendar */}
+            <label className="flex items-center gap-3 cursor-pointer">
+              <Checkbox
+                checked={isMyCalendar}
+                onCheckedChange={(v) => {
+                  setIsMyCalendar(!!v)
+                  if (v) setIsCompanyCalendar(false)
+                }}
+              />
+              <span className="h-2.5 w-2.5 rounded-full bg-green-500 shrink-0" />
+              <span className="text-sm">My Calendar</span>
+            </label>
+
+            {/* Company Calendar */}
+            <label className="flex items-center gap-3 cursor-pointer">
+              <Checkbox
+                checked={isCompanyCalendar}
+                onCheckedChange={(v) => {
+                  setIsCompanyCalendar(!!v)
+                  if (v) setIsMyCalendar(false)
+                }}
+              />
+              <span className="h-2.5 w-2.5 rounded-full bg-blue-500 shrink-0" />
+              <span className="text-sm">Company Calendar</span>
+            </label>
+          </div>
+
+          {/* Module Toggles */}
+          <div className="rounded-lg border border-border p-4 space-y-4">
+            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+              Modules
+            </h3>
+
+            {MODULE_TOGGLES.map((m) => (
+              <label key={m.key} className="flex items-center gap-3 cursor-pointer">
+                <Checkbox
+                  checked={enabledModules[m.key]}
+                  onCheckedChange={() => toggleModule(m.key)}
+                />
+                <span
+                  className="h-2.5 w-2.5 rounded-full shrink-0"
+                  style={{ backgroundColor: m.color }}
+                />
+                <span className="text-sm">{m.label}</span>
+              </label>
+            ))}
+          </div>
+        </aside>
+
+        {/* Calendar */}
+        <div className="flex-1 min-w-0">
+          <CalendarView
+            events={filteredEvents}
+            view={viewMode}
+            loading={loading}
+            editable={false}
+            onEventClick={handleEventClick}
+            onDateClick={handleDateClick}
+            onDatesChange={handleDatesChange}
+          />
+        </div>
+      </div>
 
       {/* Event Detail Dialog */}
       <Dialog open={showEventDetail} onOpenChange={setShowEventDetail}>
@@ -556,21 +960,21 @@ export default function CalendarPage() {
 
             {/* Description */}
             <div className="space-y-2">
-              <Label htmlFor="event-desc">Description</Label>
+              <Label htmlFor="event-desc">Notes</Label>
               <Textarea
                 id="event-desc"
                 value={createForm.description}
                 onChange={(e) =>
                   setCreateForm((p) => ({ ...p, description: e.target.value }))
                 }
-                placeholder="Optional description..."
+                placeholder="Optional notes..."
                 rows={3}
               />
             </div>
 
             {/* Event type */}
             <div className="space-y-2">
-              <Label>Event Type</Label>
+              <Label>Module</Label>
               <Select
                 value={createForm.event_type}
                 onValueChange={(val) =>
@@ -598,7 +1002,7 @@ export default function CalendarPage() {
             {/* Dates */}
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="start-date">Start Date *</Label>
+                <Label htmlFor="start-date">Date *</Label>
                 <Input
                   id="start-date"
                   type="datetime-local"
@@ -610,7 +1014,7 @@ export default function CalendarPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="end-date">End Date</Label>
+                <Label htmlFor="end-date">Time (optional)</Label>
                 <Input
                   id="end-date"
                   type="datetime-local"
@@ -655,7 +1059,7 @@ export default function CalendarPage() {
             {/* Link to record */}
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Link To</Label>
+                <Label>Link to Record</Label>
                 <Select
                   value={createForm.linked_record_type}
                   onValueChange={(val) =>
@@ -700,7 +1104,11 @@ export default function CalendarPage() {
               >
                 Cancel
               </Button>
-              <Button type="submit" disabled={creating}>
+              <Button
+                type="submit"
+                disabled={creating}
+                className="bg-[#1a5632] hover:bg-[#1a5632]/90 text-white"
+              >
                 {creating ? "Creating..." : "Create Event"}
               </Button>
             </DialogFooter>
