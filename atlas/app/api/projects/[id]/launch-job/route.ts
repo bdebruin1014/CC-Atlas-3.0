@@ -221,6 +221,7 @@ export async function POST(
           cursor.setDate(cursor.getDate() + phase.duration_days)
           const plannedEnd = new Date(cursor)
 
+          const isFirst = phase.phase_number === 1
           milestonePayloads.push({
             unit_id: unit.id,
             phase_number: phase.phase_number,
@@ -228,7 +229,8 @@ export async function POST(
             standard_duration_days: phase.duration_days,
             planned_start_date: plannedStart.toISOString().slice(0, 10),
             planned_end_date: plannedEnd.toISOString().slice(0, 10),
-            status: "not_started",
+            status: isFirst ? "in_progress" : "not_started",
+            ...(isFirst ? { actual_start_date: plannedStart.toISOString().slice(0, 10) } : {}),
           })
         }
       }
@@ -238,31 +240,26 @@ export async function POST(
       }
     }
 
-    // Check if draw_schedules table exists and create 5-draw schedule
+    // Create 5-draw schedule per job (draw_schedules is job-level, not unit-level)
     try {
-      if (units && units.length > 0) {
-        const DEFAULT_DRAWS = [
-          { draw_number: 1, name: "Deposit", percentage: 20 },
-          { draw_number: 2, name: "Foundation", percentage: 20 },
-          { draw_number: 3, name: "Framing/Dry-In", percentage: 25 },
-          { draw_number: 4, name: "Drywall/Trim", percentage: 25 },
-          { draw_number: 5, name: "Final", percentage: 10 },
-        ]
+      const DEFAULT_DRAWS = [
+        { draw_number: 1, name: "Deposit", percentage: 20 },
+        { draw_number: 2, name: "Foundation", percentage: 20 },
+        { draw_number: 3, name: "Framing/Dry-In", percentage: 25 },
+        { draw_number: 4, name: "Drywall/Trim", percentage: 25 },
+        { draw_number: 5, name: "Final", percentage: 10 },
+      ]
 
-        const drawPayloads = units.flatMap((unit) =>
-          DEFAULT_DRAWS.map((d) => ({
-            unit_id: unit.id,
-            job_id: job.id,
-            draw_number: d.draw_number,
-            name: d.name,
-            percentage: d.percentage,
-            amount: 0,
-            status: "pending",
-          }))
-        )
+      const drawPayloads = DEFAULT_DRAWS.map((d) => ({
+        job_id: job.id,
+        draw_number: d.draw_number,
+        name: d.name,
+        percentage: d.percentage,
+        amount: 0,
+        status: "pending",
+      }))
 
-        await supabase.from("draw_schedules").insert(drawPayloads)
-      }
+      await supabase.from("draw_schedules").insert(drawPayloads)
     } catch {
       // draw_schedules table may not exist yet — skip silently
     }

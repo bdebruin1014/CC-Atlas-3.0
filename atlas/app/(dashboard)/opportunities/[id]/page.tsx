@@ -123,7 +123,7 @@ export default function OpportunityDetailPage() {
       const { data, error } = await supabase
         .from('opportunities')
         .select(
-          '*, assigned_user:profiles!opportunities_assigned_to_fkey(id, full_name, avatar_url), entity:entities!opportunities_entity_id_fkey(id, name), floor_plan:floor_plans!opportunities_floor_plan_id_fkey(id, name, sqft, base_cost)'
+          '*, assigned_user:profiles!opportunities_assigned_to_fkey(id, full_name, avatar_url), entity:entities!opportunities_owner_entity_id_fkey(id, name), floor_plan:floor_plans!opportunities_floor_plan_id_fkey(id, name, sqft, base_cost)'
         )
         .eq('id', id)
         .single()

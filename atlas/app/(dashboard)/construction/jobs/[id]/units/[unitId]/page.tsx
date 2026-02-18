@@ -22,6 +22,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Loader2 } from "lucide-react"
 import { MilestoneTracker } from "@/components/construction/milestone-tracker"
 import { StatCard } from "@/components/construction/job-dashboard"
 import {
@@ -37,10 +38,13 @@ import {
   SELECTION_STATUS_CONFIG,
   INSPECTION_RESULT_CONFIG,
 } from "@/lib/construction/types"
+import type { Inspection } from "@/lib/construction/types"
 import { RecordTasksPanel, useRecordTaskCount } from "@/components/shared/record-tasks-panel"
 import { PhotoGallery } from "@/components/construction/photo-gallery"
 import { PunchListTab } from "@/components/construction/punch-list-tab"
 import { PreCOChecklist } from "@/components/construction/pre-co-checklist"
+import { useUnit, useUnitMilestones } from "@/lib/hooks/use-units"
+import { useCompleteMilestone } from "@/lib/hooks/use-milestones"
 
 export default function UnitDetailPage() {
   const router = useRouter()
@@ -50,7 +54,43 @@ export default function UnitDetailPage() {
 
   const taskCount = useRecordTaskCount("unit", unitId)
 
-  const unit = MOCK_UNITS_JOB001.find((u) => u.id === unitId)
+  // Fetch real data from Supabase
+  const { data: dbUnit, isLoading: unitLoading } = useUnit(unitId)
+  const { data: dbMilestones = [] } = useUnitMilestones(unitId)
+  const completeMilestone = useCompleteMilestone()
+
+  // Fall back to mock data for legacy unit IDs
+  const mockUnit = MOCK_UNITS_JOB001.find((u) => u.id === unitId)
+
+  // Merge: prefer real DB unit, fall back to mock
+  const unit = dbUnit
+    ? {
+        id: dbUnit.id,
+        unit_number: dbUnit.unit_number,
+        address: dbUnit.lot_address ?? "",
+        floor_plan_name: "",
+        floor_plan_specs: "",
+        upgrade_package: dbUnit.upgrade_package,
+        status: (dbUnit.current_milestone ?? 0) >= 16 ? "complete" as const : (dbUnit.current_milestone ?? 0) > 0 ? "in_progress" as const : "not_started" as const,
+        current_phase: dbUnit.current_milestone ?? 0,
+        total_budget: dbUnit.total_budget ?? 0,
+        committed: dbUnit.total_committed ?? 0,
+        actual: dbUnit.total_actual ?? 0,
+        schedule_status: "on_schedule" as const,
+        permit_date: dbUnit.permit_date,
+        construction_start: dbUnit.start_date,
+        projected_completion: dbUnit.projected_completion_date,
+        co_date: dbUnit.co_date,
+      }
+    : mockUnit
+
+  if (unitLoading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    )
+  }
 
   if (!unit) {
     return (
@@ -67,7 +107,23 @@ export default function UnitDetailPage() {
     )
   }
 
-  const milestones = generateMilestones(unitId, unit.current_phase)
+  // Use real milestones if available, fall back to generated mock milestones
+  const milestones = dbMilestones.length > 0
+    ? dbMilestones.map((m) => ({
+        id: m.id,
+        unit_id: unitId,
+        phase_number: m.phase_number,
+        phase_name: m.phase_name ?? CONSTRUCTION_PHASES.find((p) => p.number === m.phase_number)?.name ?? `Phase ${m.phase_number}`,
+        status: m.status === "completed" ? "completed" as const : m.status === "in_progress" ? "in_progress" as const : "not_started" as const,
+        planned_start: m.planned_start_date ?? "",
+        planned_end: m.planned_end_date ?? "",
+        actual_start: m.actual_start_date ?? undefined,
+        actual_end: m.actual_end_date ?? undefined,
+        planned_duration: 0,
+        inspections: [] as Inspection[],
+      }))
+    : generateMilestones(unitId, unit.current_phase)
+
   const purchaseOrders = MOCK_PURCHASE_ORDERS.filter(
     (po) => po.unit_id === unitId
   )
@@ -85,12 +141,22 @@ export default function UnitDetailPage() {
       : "Not Started"
 
   const handleAdvance = (phaseNumber: number) => {
-    // In production, this would call Supabase
-    alert(`Advancing from Phase ${phaseNumber} to Phase ${phaseNumber + 1}`)
+    // Find the milestone to complete
+    const milestone = milestones.find((m) => m.phase_number === phaseNumber)
+    if (milestone && dbMilestones.length > 0) {
+      completeMilestone.mutate({ id: milestone.id, unitId })
+    } else {
+      alert(`Advancing from Phase ${phaseNumber} to Phase ${phaseNumber + 1}`)
+    }
   }
 
   const handleOverride = (phaseNumber: number, note: string) => {
-    alert(`Override Phase ${phaseNumber}: ${note}`)
+    const milestone = milestones.find((m) => m.phase_number === phaseNumber)
+    if (milestone && dbMilestones.length > 0) {
+      completeMilestone.mutate({ id: milestone.id, unitId, overrideNote: note })
+    } else {
+      alert(`Override Phase ${phaseNumber}: ${note}`)
+    }
   }
 
   return (
