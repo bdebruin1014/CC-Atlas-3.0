@@ -197,7 +197,7 @@ export function ContactAssignment({
 
       if (error) throw error
 
-      setSelectedContact(data as ContactResult)
+      setSelectedContact(data as unknown as ContactResult)
       setShowNewContactForm(false)
       setNewContactData({
         first_name: "",

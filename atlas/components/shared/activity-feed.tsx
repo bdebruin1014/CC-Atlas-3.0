@@ -144,7 +144,7 @@ export function ActivityFeed({
 
         if (error) throw error
 
-        const fetched = (data as ActivityEntry[]) ?? []
+        const fetched = (data as unknown as ActivityEntry[]) ?? []
         setHasMore(fetched.length === limit)
 
         if (append) {

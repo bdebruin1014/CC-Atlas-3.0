@@ -79,7 +79,7 @@ export async function GET(request: Request) {
           accountMap[acct.id] = {
             account_number: acct.account_number,
             account_name: acct.account_name,
-            account_type: acct.account_type,
+            account_type: acct.account_type as string,
             entity_id: acct.entity_id,
           }
         }

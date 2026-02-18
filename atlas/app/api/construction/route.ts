@@ -101,7 +101,7 @@ export async function GET(request: Request) {
       .range(filters.offset, filters.offset + filters.limit - 1)
 
     if (filters.status) {
-      query = query.eq("status", filters.status)
+      query = query.eq("status", filters.status as any)
     }
     if (filters.client_type) {
       query = query.eq("client_type", filters.client_type)

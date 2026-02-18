@@ -150,8 +150,8 @@ export async function GET(request: Request) {
           consolidated[key] = {
             account_number: acct.account_number,
             account_name: acct.account_name,
-            account_type: acct.account_type,
-            normal_balance: acct.normal_balance,
+            account_type: acct.account_type as string,
+            normal_balance: acct.normal_balance as string,
             balance: 0,
             entity_balances: {},
           }

@@ -27,11 +27,12 @@ export async function POST(
     const { id: invoiceId } = ParamsSchema.parse({ id })
 
     // Verify invoice exists and is in a state that can be approved
-    const { data: invoice, error: fetchError } = await supabase
+    const { data: rawInvoice, error: fetchError } = await supabase
       .from("ap_invoices")
       .select("id, status")
       .eq("id", invoiceId)
       .single()
+    const invoice = rawInvoice as any
 
     if (fetchError || !invoice) {
       return NextResponse.json(
@@ -74,7 +75,7 @@ export async function POST(
   } catch (err) {
     if (err instanceof z.ZodError) {
       return NextResponse.json(
-        { error: "Validation error", details: err.errors },
+        { error: "Validation error", details: err.issues },
         { status: 400 }
       )
     }

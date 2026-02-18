@@ -128,7 +128,7 @@ export function useJob(id: string) {
         .single()
 
       if (error) throw error
-      return data as Job
+      return data as unknown as Job
     },
     enabled: !!id,
   })
@@ -143,14 +143,14 @@ export function useCreateJob() {
       const { data, error } = await supabase
         .from('jobs')
         .insert({
-          ...input,
+          ...(input as any),
           status: input.status ?? 'planned',
-        })
+        } as any)
         .select()
         .single()
 
       if (error) throw error
-      return data as Job
+      return data as unknown as Job
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: keys.lists() })
@@ -177,13 +177,13 @@ export function useUpdateJob() {
     mutationFn: async ({ id, ...updates }: UpdateJobData) => {
       const { data, error } = await supabase
         .from('jobs')
-        .update({ ...updates, updated_at: new Date().toISOString() })
+        .update({ ...(updates as any), updated_at: new Date().toISOString() } as any)
         .eq('id', id)
         .select()
         .single()
 
       if (error) throw error
-      return data as Job
+      return data as unknown as Job
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: keys.lists() })

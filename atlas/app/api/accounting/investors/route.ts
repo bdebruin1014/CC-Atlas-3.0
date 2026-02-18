@@ -97,7 +97,7 @@ export async function GET(request: Request) {
     }
 
     // Enrich with computed fields
-    const enriched = (data || []).map((inv) => {
+    const enriched = (data || []).map((inv: any) => {
       const capitalCommitment = inv.capital_commitment || 0
       const contributedToDate = inv.contributed_to_date || 0
       const capitalRemaining = capitalCommitment - contributedToDate

@@ -79,11 +79,12 @@ export async function GET(request: Request) {
     }
 
     // Fetch paid invoices (actual amounts) grouped by unit and cost code
-    const { data: invoices, error: invError } = await supabase
+    const { data: rawInvoices, error: invError } = await supabase
       .from("ap_invoices")
       .select("unit_id, cost_code, amount_paid, status")
       .eq("job_id", params.job_id)
       .in("unit_id", unitIds)
+    const invoices = rawInvoices as any[]
 
     if (invError) {
       return NextResponse.json({ error: invError.message }, { status: 500 })
@@ -194,7 +195,7 @@ export async function GET(request: Request) {
   } catch (err) {
     if (err instanceof z.ZodError) {
       return NextResponse.json(
-        { error: "Validation error", details: err.errors },
+        { error: "Validation error", details: err.issues },
         { status: 400 }
       )
     }

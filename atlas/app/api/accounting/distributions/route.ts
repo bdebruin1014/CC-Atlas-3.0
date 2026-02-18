@@ -162,7 +162,7 @@ export async function POST(request: Request) {
         .single()
 
       if (structure?.tiers) {
-        waterfallTiers = structure.tiers as typeof waterfallTiers
+        waterfallTiers = structure.tiers as unknown as typeof waterfallTiers
       }
     }
 

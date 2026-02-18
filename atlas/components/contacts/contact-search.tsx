@@ -77,7 +77,7 @@ export function ContactSearch({
 
         if (error) throw error
 
-        const filtered = ((data as ContactResult[]) ?? []).filter(
+        const filtered = ((data as unknown as ContactResult[]) ?? []).filter(
           (c) => !excludeIds.includes(c.id)
         )
         setResults(filtered)

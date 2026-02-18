@@ -168,7 +168,7 @@ export function DealAnalyzer({ opportunityId, initialData }: DealAnalyzerProps) 
 
   // Form
   const form = useForm<DealInputForm>({
-    resolver: zodResolver(dealInputSchema),
+    resolver: zodResolver(dealInputSchema) as any,
     defaultValues: {
       floor_plan_id: initialData?.floorPlanId || '',
       upgrade_package: 'standard',
@@ -210,18 +210,19 @@ export function DealAnalyzer({ opportunityId, initialData }: DealAnalyzerProps) 
           .single(),
       ])
 
-      if (plansRes.data) setFloorPlans(plansRes.data as FloorPlan[])
-      if (muniRes.data) setMunicipalities(muniRes.data as Municipality[])
+      if (plansRes.data) setFloorPlans(plansRes.data as unknown as FloorPlan[])
+      if (muniRes.data) setMunicipalities(muniRes.data as unknown as Municipality[])
       if (orgRes.data) {
+        const orgData = orgRes.data as any
         setOrgDefaults({
-          default_interest_rate: orgRes.data.default_interest_rate ?? DEFAULT_ORG_DEFAULTS.default_interest_rate,
-          default_cost_of_capital: orgRes.data.default_cost_of_capital ?? DEFAULT_ORG_DEFAULTS.default_cost_of_capital,
-          default_project_duration_days: orgRes.data.default_project_duration_days ?? DEFAULT_ORG_DEFAULTS.default_project_duration_days,
-          default_ltc_ratio: orgRes.data.default_ltc_ratio ?? DEFAULT_ORG_DEFAULTS.default_ltc_ratio,
-          default_selling_cost_rate: orgRes.data.default_selling_cost_rate ?? DEFAULT_ORG_DEFAULTS.default_selling_cost_rate,
-          default_warranty_reserve: orgRes.data.default_warranty_reserve ?? DEFAULT_ORG_DEFAULTS.default_warranty_reserve,
-          default_builders_risk: orgRes.data.default_builders_risk ?? DEFAULT_ORG_DEFAULTS.default_builders_risk,
-          default_utility_charges: orgRes.data.default_utility_charges ?? DEFAULT_ORG_DEFAULTS.default_utility_charges,
+          default_interest_rate: orgData.default_interest_rate ?? DEFAULT_ORG_DEFAULTS.default_interest_rate,
+          default_cost_of_capital: orgData.default_cost_of_capital ?? DEFAULT_ORG_DEFAULTS.default_cost_of_capital,
+          default_project_duration_days: orgData.default_project_duration_days ?? DEFAULT_ORG_DEFAULTS.default_project_duration_days,
+          default_ltc_ratio: orgData.default_ltc_ratio ?? DEFAULT_ORG_DEFAULTS.default_ltc_ratio,
+          default_selling_cost_rate: orgData.default_selling_cost_rate ?? DEFAULT_ORG_DEFAULTS.default_selling_cost_rate,
+          default_warranty_reserve: orgData.default_warranty_reserve ?? DEFAULT_ORG_DEFAULTS.default_warranty_reserve,
+          default_builders_risk: orgData.default_builders_risk ?? DEFAULT_ORG_DEFAULTS.default_builders_risk,
+          default_utility_charges: orgData.default_utility_charges ?? DEFAULT_ORG_DEFAULTS.default_utility_charges,
         })
       }
       setLoading(false)
@@ -303,7 +304,7 @@ export function DealAnalyzer({ opportunityId, initialData }: DealAnalyzerProps) 
         net_profit: results.netProfit,
         net_profit_margin: results.netProfitMargin,
         verdict: results.verdictLabel,
-      })
+      } as any)
       if (error) throw error
       toast({
         title: 'Analysis Saved',
@@ -334,7 +335,7 @@ export function DealAnalyzer({ opportunityId, initialData }: DealAnalyzerProps) 
         .limit(20)
 
       if (error) throw error
-      setHistory((data as DealAnalysis[]) ?? [])
+      setHistory((data as unknown as DealAnalysis[]) ?? [])
     } catch {
       toast({
         title: 'Error',

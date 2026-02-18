@@ -134,7 +134,8 @@ export async function POST(request: Request) {
       query = query.eq("akaunting_synced", false)
     }
 
-    const { data: transactions, error: txError } = await query
+    const { data: rawTransactions, error: txError } = await query
+    const transactions = rawTransactions as any[]
 
     if (txError) {
       return NextResponse.json(
