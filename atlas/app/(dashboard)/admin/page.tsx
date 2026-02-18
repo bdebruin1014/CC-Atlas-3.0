@@ -13,7 +13,6 @@ import {
   Map,
   Landmark,
   HardHat,
-  CalendarDays,
   Package,
   PieChart,
   Search,
@@ -88,12 +87,6 @@ const ADMIN_CARDS: AdminCard[] = [
     description: "Define trade categories with cost ranges and default vendors",
     href: "/admin/trade-categories",
     icon: HardHat,
-  },
-  {
-    title: "Schedule Templates",
-    description: "Configure construction phase schedules by floor plan",
-    href: "/admin/schedule-templates",
-    icon: CalendarDays,
   },
   {
     title: "Integrations",
