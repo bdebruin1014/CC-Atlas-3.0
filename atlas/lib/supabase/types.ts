@@ -742,6 +742,60 @@ export interface VendorProfile {
   updated_at: string
 }
 
+export type PhotoCategory = 'progress' | 'inspection' | 'issue' | 'completion' | 'before' | 'after' | 'aerial' | 'other'
+
+export interface ConstructionPhoto {
+  id: string
+  organization_id: string | null
+  job_id: string | null
+  unit_id: string | null
+  milestone_id: string | null
+  file_url: string
+  thumbnail_url: string | null
+  file_name: string | null
+  file_size: number | null
+  caption: string | null
+  category: PhotoCategory | null
+  taken_date: string | null
+  taken_by: string | null
+  latitude: number | null
+  longitude: number | null
+  tags: string[] | null
+  created_at: string
+}
+
+export interface MilestonePhotoRequirement {
+  id: string
+  milestone_sequence: number
+  required_count: number
+  required_angles: string[] | null
+  description: string | null
+}
+
+export interface DailyLog {
+  id: string
+  organization_id: string | null
+  job_id: string
+  log_date: string
+  weather: string | null
+  temperature_high: number | null
+  temperature_low: number | null
+  wind: string | null
+  crew_count: number | null
+  subcontractors_on_site: string[] | null
+  work_performed: string
+  materials_delivered: string | null
+  equipment_on_site: string | null
+  safety_incidents: string | null
+  visitor_log: string | null
+  delays: string | null
+  delay_reason: string | null
+  notes: string | null
+  created_by: string | null
+  created_at: string
+  updated_at: string
+}
+
 export interface Selection {
   id: string
   unit_id: string
@@ -1120,6 +1174,10 @@ export interface Database {
       disposition_price_changes: { Row: DispositionPriceChange; Insert: Partial<DispositionPriceChange> & { listing_id: string }; Update: Partial<DispositionPriceChange>; Relationships: [] }
       disposition_bulk_sale_agreements: { Row: DispositionBulkSaleAgreement; Insert: Partial<DispositionBulkSaleAgreement> & { project_id: string; organization_id: string }; Update: Partial<DispositionBulkSaleAgreement>; Relationships: [] }
       disposition_takedown_schedule: { Row: DispositionTakedownSchedule; Insert: Partial<DispositionTakedownSchedule> & { bulk_sale_agreement_id: string }; Update: Partial<DispositionTakedownSchedule>; Relationships: [] }
+      // Construction photos & daily logs
+      construction_photos: { Row: ConstructionPhoto; Insert: Partial<ConstructionPhoto> & { file_url: string }; Update: Partial<ConstructionPhoto>; Relationships: [] }
+      milestone_photo_requirements: { Row: MilestonePhotoRequirement; Insert: Partial<MilestonePhotoRequirement> & { milestone_sequence: number }; Update: Partial<MilestonePhotoRequirement>; Relationships: [] }
+      daily_logs: { Row: DailyLog; Insert: Partial<DailyLog> & { job_id: string; log_date: string; work_performed: string }; Update: Partial<DailyLog>; Relationships: [] }
       [key: string]: AnyTable | { Row: any; Insert: any; Update: any; Relationships: any }
     }
     Views: {

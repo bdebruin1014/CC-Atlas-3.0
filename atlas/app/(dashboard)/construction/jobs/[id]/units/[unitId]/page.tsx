@@ -38,6 +38,7 @@ import {
   INSPECTION_RESULT_CONFIG,
 } from "@/lib/construction/types"
 import { RecordTasksPanel, useRecordTaskCount } from "@/components/shared/record-tasks-panel"
+import { PhotoGallery } from "@/components/construction/photo-gallery"
 
 export default function UnitDetailPage() {
   const router = useRouter()
@@ -267,6 +268,7 @@ export default function UnitDetailPage() {
           <TabsTrigger value="selections">Selections</TabsTrigger>
           <TabsTrigger value="inspections">Inspections</TabsTrigger>
           <TabsTrigger value="issues">Issues</TabsTrigger>
+          <TabsTrigger value="photos">Photos</TabsTrigger>
           <TabsTrigger value="tasks">
             Tasks{taskCount > 0 ? ` (${taskCount})` : ""}
           </TabsTrigger>
@@ -575,6 +577,11 @@ export default function UnitDetailPage() {
               </p>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        {/* ---- Photos Tab ---- */}
+        <TabsContent value="photos" className="space-y-4">
+          <PhotoGallery jobId={jobId} unitId={unitId} />
         </TabsContent>
 
         {/* ---- Tasks Tab ---- */}

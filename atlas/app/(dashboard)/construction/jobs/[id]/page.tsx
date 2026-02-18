@@ -16,6 +16,7 @@ import {
   Plus,
   HardHat,
   MapPin,
+  Camera,
 } from "lucide-react"
 import { cn, formatCurrency, formatDate, formatPercent } from "@/lib/utils/format"
 import { Button } from "@/components/ui/button"
@@ -44,6 +45,7 @@ import {
 } from "@/lib/construction/types"
 import type { ChangeOrderStatus } from "@/lib/construction/types"
 import { RecordTasksPanel, useRecordTaskCount } from "@/components/shared/record-tasks-panel"
+import { PhotoGallery } from "@/components/construction/photo-gallery"
 
 export default function JobDetailPage() {
   const router = useRouter()
@@ -223,6 +225,7 @@ export default function JobDetailPage() {
           <TabsTrigger value="schedule">Schedule</TabsTrigger>
           <TabsTrigger value="change-orders">Change Orders</TabsTrigger>
           <TabsTrigger value="financials">Financials</TabsTrigger>
+          <TabsTrigger value="photos">Photos</TabsTrigger>
           <TabsTrigger value="tasks">
             Tasks{taskCount > 0 ? ` (${taskCount})` : ""}
           </TabsTrigger>
@@ -849,6 +852,14 @@ export default function JobDetailPage() {
               />
             </CardContent>
           </Card>
+        </TabsContent>
+
+        {/* ============ PHOTOS TAB ============ */}
+        <TabsContent value="photos" className="space-y-4">
+          <PhotoGallery
+            jobId={jobId}
+            units={units.map((u) => ({ id: u.id, unit_number: u.unit_number }))}
+          />
         </TabsContent>
 
         {/* ============ TASKS TAB ============ */}

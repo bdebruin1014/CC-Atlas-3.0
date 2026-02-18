@@ -33,6 +33,25 @@ import { DashboardSummary } from "@/components/construction/job-dashboard"
 import { MOCK_JOBS, MOCK_PURCHASE_ORDERS, MOCK_CHANGE_ORDERS } from "@/lib/construction/mock-data"
 import { JOB_STATUS_CONFIG } from "@/lib/construction/types"
 import type { JobStatus, ClientType } from "@/lib/construction/types"
+import { useComplianceSummary, usePhotoCountsByJob } from "@/lib/hooks/use-daily-logs"
+
+// Workdays in a month up to today (or full month if past)
+function getWorkdaysInMonth(year: number, month: number): number {
+  const today = new Date()
+  const firstDay = new Date(year, month - 1, 1)
+  const lastDay =
+    month === today.getMonth() + 1 && year === today.getFullYear()
+      ? today
+      : new Date(year, month, 0)
+  let count = 0
+  const d = new Date(firstDay)
+  while (d <= lastDay) {
+    const dow = d.getDay()
+    if (dow !== 0 && dow !== 6) count++
+    d.setDate(d.getDate() + 1)
+  }
+  return count
+}
 
 export default function ConstructionDashboardPage() {
   const router = useRouter()
@@ -89,6 +108,58 @@ export default function ConstructionDashboardPage() {
   }, [search, statusFilter, clientTypeFilter])
 
   const hasFilters = statusFilter !== "all" || clientTypeFilter !== "all" || search !== ""
+
+  // ---- Compliance dashboard data ----
+  const now = new Date()
+  const currentYear = now.getFullYear()
+  const currentMonth = now.getMonth() + 1
+  const activeJobIds = useMemo(
+    () => MOCK_JOBS.filter((j) => j.status === "active").map((j) => j.id),
+    []
+  )
+  const workdaysThisMonth = getWorkdaysInMonth(currentYear, currentMonth)
+
+  const { data: complianceLogs } = useComplianceSummary(
+    activeJobIds,
+    currentYear,
+    currentMonth
+  )
+  const { data: photoCountsData } = usePhotoCountsByJob(
+    activeJobIds,
+    currentYear,
+    currentMonth
+  )
+
+  const complianceByJob = useMemo(() => {
+    if (!complianceLogs) return []
+
+    return MOCK_JOBS.filter((j) => j.status === "active").map((job) => {
+      const jobLogs = complianceLogs.filter((l) => l.job_id === job.id)
+      const logDates = new Set(jobLogs.map((l) => l.log_date))
+      const daysLogged = logDates.size
+      const lastLogDate =
+        jobLogs.length > 0
+          ? jobLogs
+              .map((l) => l.log_date)
+              .sort()
+              .reverse()[0]
+          : null
+      const daysMissing = Math.max(0, workdaysThisMonth - daysLogged)
+      const compliancePct =
+        workdaysThisMonth > 0 ? (daysLogged / workdaysThisMonth) * 100 : 0
+      const photoCount =
+        photoCountsData?.filter((p) => p.job_id === job.id).length ?? 0
+
+      return {
+        ...job,
+        daysLogged,
+        lastLogDate,
+        daysMissing,
+        compliancePct,
+        photoCount,
+      }
+    })
+  }, [complianceLogs, photoCountsData, workdaysThisMonth])
 
   return (
     <div className="flex flex-col gap-6 p-6">
@@ -362,6 +433,106 @@ export default function ConstructionDashboardPage() {
               </Card>
             )
           })}
+        </div>
+      )}
+
+      {/* Compliance Dashboard */}
+      {activeJobIds.length > 0 && (
+        <div>
+          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+            Daily Log Compliance &mdash;{" "}
+            {new Date(currentYear, currentMonth - 1).toLocaleString("default", {
+              month: "long",
+              year: "numeric",
+            })}
+          </h2>
+          <Card>
+            <CardContent className="p-0">
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b bg-muted/50">
+                      <th className="text-left p-3 font-medium">Job</th>
+                      <th className="text-center p-3 font-medium">Last Log</th>
+                      <th className="text-center p-3 font-medium">
+                        Days Missing
+                      </th>
+                      <th className="text-center p-3 font-medium">Photos</th>
+                      <th className="text-center p-3 font-medium">
+                        Compliance
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {complianceByJob.map((job) => {
+                      const isGap = job.compliancePct < 80
+                      return (
+                        <tr
+                          key={job.id}
+                          className={cn(
+                            "border-b last:border-0 cursor-pointer hover:bg-muted/30 transition-colors",
+                            isGap && "bg-red-50/50 dark:bg-red-950/10"
+                          )}
+                          onClick={() =>
+                            router.push(
+                              `/construction/jobs/${job.id}/daily-log`
+                            )
+                          }
+                        >
+                          <td className="p-3">
+                            <div className="font-medium">{job.name}</div>
+                            <div className="text-xs text-muted-foreground">
+                              {job.job_number}
+                            </div>
+                          </td>
+                          <td className="p-3 text-center">
+                            {job.lastLogDate ? (
+                              formatDate(job.lastLogDate)
+                            ) : (
+                              <span className="text-red-500 font-medium">
+                                No logs
+                              </span>
+                            )}
+                          </td>
+                          <td className="p-3 text-center">
+                            <span
+                              className={cn(
+                                "font-medium",
+                                job.daysMissing > 0
+                                  ? "text-red-600"
+                                  : "text-green-600"
+                              )}
+                            >
+                              {job.daysMissing}
+                            </span>
+                          </td>
+                          <td className="p-3 text-center">{job.photoCount}</td>
+                          <td className="p-3 text-center">
+                            <div className="flex items-center justify-center gap-2">
+                              <Progress
+                                value={job.compliancePct}
+                                className="h-2 w-16"
+                              />
+                              <span
+                                className={cn(
+                                  "text-xs font-medium min-w-[3rem]",
+                                  job.compliancePct >= 80
+                                    ? "text-green-600"
+                                    : "text-red-600"
+                                )}
+                              >
+                                {formatPercent(job.compliancePct, 0)}
+                              </span>
+                            </div>
+                          </td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       )}
     </div>
