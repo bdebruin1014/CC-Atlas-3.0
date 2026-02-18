@@ -8,14 +8,12 @@ import {
   Calendar,
   DollarSign,
   User,
-  MapPin,
-  FileText,
+  Loader2,
 } from "lucide-react"
-import { cn, formatCurrency } from "@/lib/utils/format"
+import { formatCurrency } from "@/lib/utils/format"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import {
   Select,
@@ -25,16 +23,28 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { useToast } from "@/components/ui/use-toast"
+import { useCreateJob } from "@/lib/hooks/use-jobs"
+import { useEntities } from "@/lib/hooks/use-projects"
+import { useProjects } from "@/lib/hooks/use-projects"
+import { useOrgProfiles } from "@/lib/hooks/use-workflow"
+import { useOrganizationId } from "@/lib/hooks/use-organization"
 import type { ClientType, ContractType } from "@/lib/construction/types"
 
 export default function NewJobPage() {
   const router = useRouter()
   const { toast } = useToast()
+  const createJob = useCreateJob()
+  const { organizationId, loading: orgLoading, error: orgError } = useOrganizationId()
+
+  // Fetch real data for dropdowns
+  const { entities, loading: entitiesLoading } = useEntities()
+  const { data: projects, isLoading: projectsLoading } = useProjects()
+  const { data: orgProfiles = [], isLoading: profilesLoading } = useOrgProfiles()
 
   // ---- Form State ----
   const [jobName, setJobName] = useState("")
   const [clientType, setClientType] = useState<ClientType>("internal")
-  const [clientEntity, setClientEntity] = useState("")
+  const [clientEntityId, setClientEntityId] = useState("")
   const [clientName, setClientName] = useState("")
   const [contractType, setContractType] = useState<ContractType>("cost_plus")
   const [contractAmount, setContractAmount] = useState("")
@@ -42,11 +52,11 @@ export default function NewJobPage() {
   const [unitCount, setUnitCount] = useState("")
   const [linkedProject, setLinkedProject] = useState("")
   const [state, setState] = useState<"SC" | "NC">("SC")
-  const [superintendent, setSuperintendent] = useState("")
-  const [projectManager, setProjectManager] = useState("")
+  const [superintendentId, setSuperintendentId] = useState("")
+  const [projectManagerId, setProjectManagerId] = useState("")
   const [startDate, setStartDate] = useState("")
   const [projectedCompletion, setProjectedCompletion] = useState("")
-  const [submitting, setSubmitting] = useState(false)
+  const [formError, setFormError] = useState<string | null>(null)
 
   const parsedContractAmount = parseFloat(contractAmount) || 0
   const parsedBuilderFee = parseFloat(builderFee) || 0
@@ -59,21 +69,35 @@ export default function NewJobPage() {
 
   const isValid =
     jobName &&
-    (clientType === "internal" ? clientEntity : clientName) &&
+    (clientType === "internal" ? clientEntityId : clientName) &&
     contractType &&
     parsedContractAmount > 0 &&
     parsedUnitCount > 0 &&
-    superintendent &&
-    projectManager &&
+    superintendentId &&
+    projectManagerId &&
     startDate
 
   const handleSubmit = async () => {
     if (!isValid) return
-    setSubmitting(true)
+    setFormError(null)
 
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000))
+      const result = await createJob.mutateAsync({
+        name: jobName,
+        client_type: clientType,
+        client_entity_id: clientType === "internal" ? clientEntityId : null,
+        client_id: clientType === "third_party" ? clientName : null,
+        contract_type: contractType,
+        contract_amount: parsedContractAmount,
+        builder_fee: parsedBuilderFee || null,
+        unit_count: parsedUnitCount,
+        linked_project_id: linkedProject || null,
+        state,
+        superintendent_id: superintendentId,
+        pm_id: projectManagerId,
+        start_date: startDate,
+        projected_completion: projectedCompletion || null,
+      })
 
       toast({
         title: "Job Created",
@@ -83,14 +107,21 @@ export default function NewJobPage() {
       router.push("/construction")
     } catch (err) {
       const message = err instanceof Error ? err.message : "Failed to create job"
+      setFormError(message)
       toast({
         title: "Job creation failed",
         description: message,
         variant: "destructive",
       })
-    } finally {
-      setSubmitting(false)
     }
+  }
+
+  if (orgLoading) {
+    return (
+      <div className="flex items-center justify-center p-12">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    )
   }
 
   return (
@@ -114,6 +145,13 @@ export default function NewJobPage() {
           </p>
         </div>
       </div>
+
+      {/* Error */}
+      {(formError || orgError) && (
+        <div className="rounded-lg border border-destructive bg-destructive/10 p-4 text-sm text-destructive">
+          {formError || orgError}
+        </div>
+      )}
 
       {/* Job Information */}
       <Card>
@@ -154,23 +192,16 @@ export default function NewJobPage() {
             {clientType === "internal" ? (
               <div className="space-y-2">
                 <Label>Client Entity *</Label>
-                <Select value={clientEntity} onValueChange={setClientEntity}>
+                <Select value={clientEntityId} onValueChange={setClientEntityId}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select entity..." />
+                    <SelectValue placeholder={entitiesLoading ? "Loading..." : "Select entity..."} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Red Cedar Homes SC, LLC">
-                      Red Cedar Homes SC, LLC
-                    </SelectItem>
-                    <SelectItem value="Red Cedar Homes NC, LLC">
-                      Red Cedar Homes NC, LLC
-                    </SelectItem>
-                    <SelectItem value="Red Cedar Development, LLC">
-                      Red Cedar Development, LLC
-                    </SelectItem>
-                    <SelectItem value="RCH Land Holdings, LLC">
-                      RCH Land Holdings, LLC
-                    </SelectItem>
+                    {entities.map((entity) => (
+                      <SelectItem key={entity.id} value={entity.id}>
+                        {entity.name}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -222,18 +253,14 @@ export default function NewJobPage() {
               <Label htmlFor="linkedProject">Linked Project (optional)</Label>
               <Select value={linkedProject} onValueChange={setLinkedProject}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select project to link..." />
+                  <SelectValue placeholder={projectsLoading ? "Loading..." : "Select project to link..."} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="proj-001">
-                    PRJ-001 - Millbrook Crossing
-                  </SelectItem>
-                  <SelectItem value="proj-003">
-                    PRJ-003 - River Bend
-                  </SelectItem>
-                  <SelectItem value="proj-005">
-                    PRJ-005 - Magnolia Row
-                  </SelectItem>
+                  {(projects ?? []).map((project) => (
+                    <SelectItem key={project.id} value={project.id}>
+                      {project.project_number} - {project.name}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
@@ -339,31 +366,32 @@ export default function NewJobPage() {
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Superintendent *</Label>
-              <Select value={superintendent} onValueChange={setSuperintendent}>
+              <Select value={superintendentId} onValueChange={setSuperintendentId}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Assign superintendent..." />
+                  <SelectValue placeholder={profilesLoading ? "Loading..." : "Assign superintendent..."} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Mike Thompson">Mike Thompson</SelectItem>
-                  <SelectItem value="Dave Rodriguez">
-                    Dave Rodriguez
-                  </SelectItem>
-                  <SelectItem value="Jim Patterson">Jim Patterson</SelectItem>
+                  {orgProfiles.map((p) => (
+                    <SelectItem key={p.id} value={p.id}>
+                      {p.first_name} {p.last_name}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
 
             <div className="space-y-2">
               <Label>Project Manager *</Label>
-              <Select value={projectManager} onValueChange={setProjectManager}>
+              <Select value={projectManagerId} onValueChange={setProjectManagerId}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Assign PM..." />
+                  <SelectValue placeholder={profilesLoading ? "Loading..." : "Assign PM..."} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Sarah Chen">Sarah Chen</SelectItem>
-                  <SelectItem value="Maria Gonzalez">
-                    Maria Gonzalez
-                  </SelectItem>
+                  {orgProfiles.map((p) => (
+                    <SelectItem key={p.id} value={p.id}>
+                      {p.first_name} {p.last_name}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
@@ -414,8 +442,8 @@ export default function NewJobPage() {
         >
           Cancel
         </Button>
-        <Button disabled={!isValid || submitting} onClick={handleSubmit}>
-          {submitting ? "Creating..." : "Create Job"}
+        <Button disabled={!isValid || createJob.isPending} onClick={handleSubmit}>
+          {createJob.isPending ? "Creating..." : "Create Job"}
         </Button>
       </div>
     </div>
