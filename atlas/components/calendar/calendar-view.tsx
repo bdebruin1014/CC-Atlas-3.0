@@ -1,6 +1,6 @@
 "use client"
 
-import { useRef, useEffect, useState } from "react"
+import { useRef, useEffect, useState, useMemo } from "react"
 import FullCalendar from "@fullcalendar/react"
 import dayGridPlugin from "@fullcalendar/daygrid"
 import timeGridPlugin from "@fullcalendar/timegrid"
@@ -75,6 +75,27 @@ interface CalendarViewProps {
   className?: string
 }
 
+// Memoize plugins array to prevent FullCalendar re-initialization
+const PLUGINS = [dayGridPlugin, timeGridPlugin, interactionPlugin]
+
+const BUSINESS_HOURS = {
+  daysOfWeek: [1, 2, 3, 4, 5],
+  startTime: "08:00",
+  endTime: "17:00",
+}
+
+const EVENT_TIME_FORMAT = {
+  hour: "numeric" as const,
+  minute: "2-digit" as const,
+  meridiem: "short" as const,
+}
+
+const HEADER_TOOLBAR = {
+  left: "prev,next today",
+  center: "title",
+  right: "dayGridMonth,timeGridWeek,timeGridDay",
+}
+
 // ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
@@ -90,7 +111,12 @@ export function CalendarView({
   className,
 }: CalendarViewProps) {
   const calendarRef = useRef<FullCalendar>(null)
-  const [currentView, setCurrentView] = useState<CalendarViewMode>(view)
+  const [mounted, setMounted] = useState(false)
+
+  // Track whether FullCalendar has mounted at least once
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   // Sync external view prop changes
   useEffect(() => {
@@ -98,34 +124,37 @@ export function CalendarView({
       const api = calendarRef.current.getApi()
       if (api.view.type !== view) {
         api.changeView(view)
-        setCurrentView(view)
       }
     }
   }, [view])
 
-  // Map DB events to FullCalendar format
-  const fcEvents = events.map((evt) => {
-    const colors = getEventColors(evt.event_type)
-    return {
-      id: evt.id,
-      title: evt.title,
-      start: evt.start_date,
-      end: evt.end_date || undefined,
-      allDay: evt.all_day,
-      backgroundColor: colors.bg,
-      borderColor: colors.border,
-      textColor: colors.text,
-      extendedProps: {
-        description: evt.description,
-        event_type: evt.event_type,
-        linked_record_type: evt.linked_record_type,
-        linked_record_id: evt.linked_record_id,
-        assigned_to: evt.assigned_to,
-        assigned_user: evt.assigned_user,
-        originalEvent: evt,
-      },
-    }
-  })
+  // Map DB events to FullCalendar format — memoized to prevent unnecessary re-renders
+  const fcEvents = useMemo(
+    () =>
+      events.map((evt) => {
+        const colors = getEventColors(evt.event_type)
+        return {
+          id: evt.id,
+          title: evt.title,
+          start: evt.start_date,
+          end: evt.end_date || undefined,
+          allDay: evt.all_day,
+          backgroundColor: colors.bg,
+          borderColor: colors.border,
+          textColor: colors.text,
+          extendedProps: {
+            description: evt.description,
+            event_type: evt.event_type,
+            linked_record_type: evt.linked_record_type,
+            linked_record_id: evt.linked_record_id,
+            assigned_to: evt.assigned_to,
+            assigned_user: evt.assigned_user,
+            originalEvent: evt,
+          },
+        }
+      }),
+    [events]
+  )
 
   function handleEventClick(info: EventClickArg) {
     const original = info.event.extendedProps.originalEvent as CalendarEvent
@@ -141,11 +170,12 @@ export function CalendarView({
   }
 
   function handleDatesSet(info: DatesSetArg) {
-    setCurrentView(info.view.type as CalendarViewMode)
     onDatesChange?.(info.start, info.end)
   }
 
-  if (loading) {
+  // Show skeleton only on FIRST load before FullCalendar has ever mounted.
+  // Once mounted, never unmount — just let it update its events in place.
+  if (!mounted && loading) {
     return (
       <div className={cn("space-y-4", className)}>
         <div className="flex items-center justify-between">
@@ -162,16 +192,12 @@ export function CalendarView({
   }
 
   return (
-    <div className={cn("atlas-calendar", className)}>
+    <div className={cn("atlas-calendar", loading ? "opacity-60 pointer-events-none" : "", className)}>
       <FullCalendar
         ref={calendarRef}
-        plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
-        initialView={currentView}
-        headerToolbar={{
-          left: "prev,next today",
-          center: "title",
-          right: "dayGridMonth,timeGridWeek,timeGridDay",
-        }}
+        plugins={PLUGINS}
+        initialView={view}
+        headerToolbar={HEADER_TOOLBAR}
         events={fcEvents}
         editable={editable}
         selectable={!!onDateSelect}
@@ -185,18 +211,10 @@ export function CalendarView({
         datesSet={handleDatesSet}
         height="auto"
         eventDisplay="block"
-        eventTimeFormat={{
-          hour: "numeric",
-          minute: "2-digit",
-          meridiem: "short",
-        }}
+        eventTimeFormat={EVENT_TIME_FORMAT}
         slotMinTime="06:00:00"
         slotMaxTime="20:00:00"
-        businessHours={{
-          daysOfWeek: [1, 2, 3, 4, 5],
-          startTime: "08:00",
-          endTime: "17:00",
-        }}
+        businessHours={BUSINESS_HOURS}
       />
     </div>
   )
