@@ -116,7 +116,7 @@ export function useTransactions(
         query = query.eq('category', filters.category)
       }
       if (filters?.status) {
-        query = query.eq('status', filters.status)
+        query = query.eq('status', filters.status as any)
       }
       if (filters?.startDate) {
         query = query.gte('date', filters.startDate)
@@ -142,7 +142,7 @@ export function useTransactions(
       const { data, error } = await query
 
       if (error) throw error
-      return (data ?? []) as Transaction[]
+      return (data ?? []) as unknown as Transaction[]
     },
     enabled: !!entityType && !!entityId,
   })
@@ -164,12 +164,12 @@ export function useCreateTransaction() {
           reconciled: false,
           created_by: user?.id ?? null,
           created_by_name: user?.user_metadata?.full_name ?? user?.email ?? null,
-        })
+        } as any)
         .select()
         .single()
 
       if (error) throw error
-      return data as Transaction
+      return data as unknown as Transaction
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({
@@ -207,28 +207,30 @@ export function useApproveTransaction() {
 
       const { data, error } = await supabase
         .from('transactions')
-        .update(updateData)
+        .update(updateData as any)
         .eq('id', id)
         .select()
         .single()
 
       if (error) throw error
 
+      const txn = data as unknown as Transaction
+
       // Log the approval/rejection
       await supabase.from('activity_log').insert({
-        record_type: data.entity_type,
-        record_id: data.entity_id,
+        record_type: txn.entity_type,
+        record_id: txn.entity_id,
         action: 'updated',
-        description: `Transaction ${data.transaction_number} ${action === 'approve' ? 'approved' : 'rejected'}`,
+        description: `Transaction ${txn.transaction_number} ${action === 'approve' ? 'approved' : 'rejected'}`,
         user_name: user?.user_metadata?.full_name ?? user?.email ?? 'Unknown',
         metadata: {
           transaction_id: id,
           action,
-          amount: data.amount,
+          amount: txn.amount,
         },
-      })
+      } as any)
 
-      return data as Transaction
+      return txn
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({
