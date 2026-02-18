@@ -73,6 +73,7 @@ import { useDebounce } from "@/lib/hooks/use-debounce"
 import { ProjectForm } from "@/components/projects/project-form"
 import { RecordTasksPanel, useRecordTaskCount } from "@/components/shared/record-tasks-panel"
 import { ProjectDispositionTab } from "@/components/projects/project-disposition-tab"
+import { LaunchJobDialog } from "@/components/projects/launch-job-dialog"
 
 // ---------------------------------------------------------------------------
 // Detail Skeleton
@@ -428,6 +429,7 @@ export default function ProjectDetailPage() {
 
   const [showEditDialog, setShowEditDialog] = useState(false)
   const [showStatusDialog, setShowStatusDialog] = useState(false)
+  const [showLaunchJobDialog, setShowLaunchJobDialog] = useState(false)
   const [newStatus, setNewStatus] = useState<ProjectStatus | "">("")
 
   if (isLoading) return <ProjectDetailSkeleton />
@@ -524,10 +526,16 @@ export default function ProjectDetailPage() {
             <Pencil className="mr-1.5 h-3.5 w-3.5" />
             Edit
           </Button>
-          <Button variant="outline" size="sm" onClick={() => router.push(`/projects/${projectId}/workflow`)}>
-            <Hammer className="mr-1.5 h-3.5 w-3.5" />
-            Launch Job
-          </Button>
+          {(project.status === "pre_construction" || project.status === "active") && (
+            <Button
+              size="sm"
+              className="bg-[#1a5632] hover:bg-[#1a5632]/90 text-white"
+              onClick={() => setShowLaunchJobDialog(true)}
+            >
+              <Hammer className="mr-1.5 h-3.5 w-3.5" />
+              Launch Construction Job
+            </Button>
+          )}
           <Button
             variant="outline"
             size="sm"
@@ -1062,6 +1070,13 @@ export default function ProjectDetailPage() {
           />
         </DialogContent>
       </Dialog>
+
+      {/* Launch Job Dialog */}
+      <LaunchJobDialog
+        project={project}
+        open={showLaunchJobDialog}
+        onOpenChange={setShowLaunchJobDialog}
+      />
     </div>
   )
 }
