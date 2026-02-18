@@ -207,6 +207,130 @@ export async function POST(request: Request) {
 
     if (error) throw error
 
+    // Auto-instantiate disposition workflow (best-effort, don't fail the create)
+    if (data?.id) {
+      try {
+        const { data: wfTemplate } = await supabase
+          .from("workflow_templates")
+          .select("id")
+          .eq("trigger_event", "listing_created")
+          .eq("is_active", true)
+          .limit(1)
+          .maybeSingle()
+
+        if (wfTemplate) {
+          const { data: authUser } = await supabase.auth.getUser()
+          const startDate = new Date().toISOString()
+
+          // Create workflow instance
+          const { data: wfInstance } = await supabase
+            .from("workflow_instances")
+            .insert({
+              workflow_template_id: wfTemplate.id,
+              record_type: "disposition",
+              record_id: data.id,
+              name: "Disposition — Listing Lifecycle",
+              status: "not_started",
+              started_by: authUser.user?.id ?? null,
+              progress_pct: 0,
+            })
+            .select("id")
+            .single()
+
+          if (wfInstance) {
+            // Fetch milestone templates and create instances
+            const { data: milestoneTemplates } = await supabase
+              .from("milestone_templates")
+              .select("id, name, sequence, duration_days")
+              .eq("workflow_template_id", wfTemplate.id)
+              .order("sequence", { ascending: true })
+
+            if (milestoneTemplates && milestoneTemplates.length > 0) {
+              let cursor = new Date(startDate)
+              const milestonePayloads = milestoneTemplates.map((mt) => {
+                const plannedStart = new Date(cursor)
+                const days = (mt.duration_days as number) || 7
+                cursor.setDate(cursor.getDate() + days)
+                const plannedEnd = new Date(cursor)
+                return {
+                  workflow_instance_id: wfInstance.id,
+                  milestone_template_id: mt.id,
+                  name: mt.name,
+                  sequence: mt.sequence,
+                  status: "not_started" as const,
+                  planned_start_date: plannedStart.toISOString().slice(0, 10),
+                  planned_end_date: plannedEnd.toISOString().slice(0, 10),
+                }
+              })
+
+              const { data: milestoneInstances } = await supabase
+                .from("milestone_instances")
+                .insert(milestonePayloads)
+                .select("id, milestone_template_id, planned_start_date")
+
+              // Set first milestone as current
+              if (milestoneInstances && milestoneInstances.length > 0) {
+                await supabase
+                  .from("workflow_instances")
+                  .update({ current_milestone_id: milestoneInstances[0].id })
+                  .eq("id", wfInstance.id)
+
+                // Create task instances from templates
+                const taskPayloads: Record<string, unknown>[] = []
+                for (const mi of milestoneInstances) {
+                  const { data: taskListTemplates } = await supabase
+                    .from("task_list_templates")
+                    .select("id, name")
+                    .eq("milestone_template_id", mi.milestone_template_id)
+                    .order("sequence", { ascending: true })
+
+                  if (taskListTemplates) {
+                    for (const tlt of taskListTemplates) {
+                      const { data: taskTemplates } = await supabase
+                        .from("task_templates")
+                        .select("id, name, description, sequence, duration_days")
+                        .eq("task_list_template_id", tlt.id)
+                        .order("sequence", { ascending: true })
+
+                      if (taskTemplates) {
+                        for (const tt of taskTemplates) {
+                          let dueDate: string | null = null
+                          if (tt.duration_days && mi.planned_start_date) {
+                            const d = new Date(mi.planned_start_date)
+                            d.setDate(d.getDate() + (tt.duration_days as number))
+                            dueDate = d.toISOString().slice(0, 10)
+                          }
+                          taskPayloads.push({
+                            milestone_instance_id: mi.id,
+                            task_template_id: tt.id,
+                            task_list_name: tlt.name,
+                            name: tt.name,
+                            description: tt.description,
+                            sequence: tt.sequence,
+                            status: "not_started",
+                            due_date: dueDate,
+                          })
+                        }
+                      }
+                    }
+                  }
+                }
+
+                if (taskPayloads.length > 0) {
+                  await supabase
+                    .from("task_instances")
+                    .insert(taskPayloads as any)
+                }
+              }
+            }
+          }
+        }
+      } catch (wfErr) {
+        // Workflow auto-instantiation is best-effort
+        console.error("Auto-instantiate disposition workflow error:", wfErr)
+      }
+    }
+
     return NextResponse.json({ data }, { status: 201 })
   } catch (err) {
     console.error("POST /api/disposition/listings error:", err)
