@@ -8,54 +8,53 @@ import { autoInstantiateWorkflow } from '@/lib/hooks/use-workflow'
 
 export interface Job {
   id: string
+  organization_id: string
   job_number: string
-  project_id: string
   name: string
-  type: string
+  client_type: string
+  client_entity_id: string | null
+  client_id: string | null
+  contract_type: string | null
+  contract_amount: number | null
+  builder_fee: number | null
   status: string
-  description: string | null
-  start_date: string | null
-  estimated_completion: string | null
-  actual_completion: string | null
-  budget: number | null
-  contract_value: number | null
-  superintendent_id: string | null
-  superintendent_name: string | null
-  address_line1: string | null
-  city: string | null
-  state: string | null
-  zip: string | null
   unit_count: number
-  completed_unit_count: number
+  linked_project_id: string | null
+  start_date: string | null
+  projected_completion: string | null
+  superintendent_id: string | null
+  pm_id: string | null
+  state: string | null
   created_at: string
   updated_at: string
-  metadata: Record<string, unknown> | null
 }
 
 export interface JobFilters {
-  projectId?: string
-  type?: string
+  linkedProjectId?: string
+  clientType?: string
   status?: string
   superintendentId?: string
   search?: string
 }
 
 export interface CreateJobData {
-  project_id: string
+  organization_id?: string
+  job_number?: string
   name: string
-  type: string
+  client_type: string
+  client_entity_id?: string | null
+  client_id?: string | null
+  contract_type?: string | null
+  contract_amount?: number | null
+  builder_fee?: number | null
   status?: string
-  description?: string | null
+  unit_count?: number
+  linked_project_id?: string | null
   start_date?: string | null
-  estimated_completion?: string | null
-  budget?: number | null
-  contract_value?: number | null
+  projected_completion?: string | null
   superintendent_id?: string | null
-  address_line1?: string | null
-  city?: string | null
+  pm_id?: string | null
   state?: string | null
-  zip?: string | null
-  metadata?: Record<string, unknown> | null
 }
 
 export interface UpdateJobData extends Partial<CreateJobData> {
@@ -89,11 +88,11 @@ export function useJobs(filters?: JobFilters) {
         .select('*')
         .order('created_at', { ascending: false })
 
-      if (filters?.projectId) {
-        query = query.eq('project_id', filters.projectId)
+      if (filters?.linkedProjectId) {
+        query = query.eq('linked_project_id', filters.linkedProjectId)
       }
-      if (filters?.type) {
-        query = query.eq('type', filters.type)
+      if (filters?.clientType) {
+        query = query.eq('client_type', filters.clientType as any)
       }
       if (filters?.status) {
         query = query.eq('status', filters.status as any)
@@ -103,7 +102,7 @@ export function useJobs(filters?: JobFilters) {
       }
       if (filters?.search) {
         query = query.or(
-          `name.ilike.%${filters.search}%,job_number.ilike.%${filters.search}%,address_line1.ilike.%${filters.search}%`
+          `name.ilike.%${filters.search}%,job_number.ilike.%${filters.search}%`
         )
       }
 
@@ -144,7 +143,7 @@ export function useCreateJob() {
         .from('jobs')
         .insert({
           ...(input as any),
-          status: input.status ?? 'planned',
+          status: input.status ?? 'pre_construction',
         } as any)
         .select()
         .single()
@@ -155,12 +154,14 @@ export function useCreateJob() {
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: keys.lists() })
       // Also invalidate parent project to refresh its data
-      queryClient.invalidateQueries({
-        queryKey: ['projects', 'detail', data.project_id],
-      })
+      if (data.linked_project_id) {
+        queryClient.invalidateQueries({
+          queryKey: ['projects', 'detail', data.linked_project_id],
+        })
+      }
       // Auto-instantiate the construction workflow
-      if (data.type) {
-        autoInstantiateWorkflow('job', data.id, data.type)
+      if (data.client_type) {
+        autoInstantiateWorkflow('job', data.id, data.client_type)
       }
     },
     onError: (error) => {
@@ -189,9 +190,11 @@ export function useUpdateJob() {
       queryClient.invalidateQueries({ queryKey: keys.lists() })
       queryClient.invalidateQueries({ queryKey: keys.detail(data.id) })
       // Also invalidate parent project
-      queryClient.invalidateQueries({
-        queryKey: ['projects', 'detail', data.project_id],
-      })
+      if (data.linked_project_id) {
+        queryClient.invalidateQueries({
+          queryKey: ['projects', 'detail', data.linked_project_id],
+        })
+      }
     },
     onError: (error) => {
       console.error('Failed to update job:', error)

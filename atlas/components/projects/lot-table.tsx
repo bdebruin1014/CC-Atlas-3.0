@@ -66,13 +66,12 @@ export function LotTable({ projectId }: LotTableProps) {
     lot_number: "",
     width: "",
     depth: "",
-    square_feet: "",
+    sqft: "",
     status: "raw" as LotStatus,
-    floor_plan: "",
+    assigned_floor_plan_id: "",
     upgrade_package: "",
-    projected_price: "",
-    actual_price: "",
-    buyer_name: "",
+    list_price: "",
+    sale_price: "",
     phase: "",
   })
 
@@ -95,28 +94,26 @@ export function LotTable({ projectId }: LotTableProps) {
         lot_number: newLot.lot_number,
         width: newLot.width ? parseFloat(newLot.width) : null,
         depth: newLot.depth ? parseFloat(newLot.depth) : null,
-        square_feet: newLot.square_feet ? parseFloat(newLot.square_feet) : null,
+        sqft: newLot.sqft ? parseFloat(newLot.sqft) : null,
         status: newLot.status,
-        floor_plan: newLot.floor_plan || null,
+        assigned_floor_plan_id: newLot.assigned_floor_plan_id || null,
         upgrade_package: newLot.upgrade_package || null,
-        projected_price: newLot.projected_price ? parseFloat(newLot.projected_price) : null,
-        actual_price: newLot.actual_price ? parseFloat(newLot.actual_price) : null,
-        buyer_name: newLot.buyer_name || null,
+        list_price: newLot.list_price ? parseFloat(newLot.list_price) : null,
+        sale_price: newLot.sale_price ? parseFloat(newLot.sale_price) : null,
         buyer_contact_id: null,
         phase: newLot.phase || null,
-      })
+      } as any)
       setShowAddDialog(false)
       setNewLot({
         lot_number: "",
         width: "",
         depth: "",
-        square_feet: "",
+        sqft: "",
         status: "raw",
-        floor_plan: "",
+        assigned_floor_plan_id: "",
         upgrade_package: "",
-        projected_price: "",
-        actual_price: "",
-        buyer_name: "",
+        list_price: "",
+        sale_price: "",
         phase: "",
       })
     } catch {
@@ -211,9 +208,8 @@ export function LotTable({ projectId }: LotTableProps) {
                   <TableHead>Status</TableHead>
                   <TableHead>Floor Plan</TableHead>
                   <TableHead>Upgrade</TableHead>
-                  <TableHead className="text-right">Proj. Price</TableHead>
-                  <TableHead className="text-right">Act. Price</TableHead>
-                  <TableHead>Buyer</TableHead>
+                  <TableHead className="text-right">List Price</TableHead>
+                  <TableHead className="text-right">Sale Price</TableHead>
                   <TableHead>Phase</TableHead>
                 </TableRow>
               </TableHeader>
@@ -228,8 +224,8 @@ export function LotTable({ projectId }: LotTableProps) {
                       {lot.depth != null ? `${lot.depth}'` : "—"}
                     </TableCell>
                     <TableCell className="text-right">
-                      {lot.square_feet != null
-                        ? lot.square_feet.toLocaleString()
+                      {lot.sqft != null
+                        ? lot.sqft.toLocaleString()
                         : "—"}
                     </TableCell>
                     <TableCell>
@@ -259,19 +255,18 @@ export function LotTable({ projectId }: LotTableProps) {
                         </SelectContent>
                       </Select>
                     </TableCell>
-                    <TableCell>{lot.floor_plan ?? "—"}</TableCell>
+                    <TableCell>{lot.assigned_floor_plan_id ?? "—"}</TableCell>
                     <TableCell>{lot.upgrade_package ?? "—"}</TableCell>
                     <TableCell className="text-right">
-                      {lot.projected_price != null
-                        ? formatCurrency(lot.projected_price)
+                      {lot.list_price != null
+                        ? formatCurrency(lot.list_price)
                         : "—"}
                     </TableCell>
                     <TableCell className="text-right">
-                      {lot.actual_price != null
-                        ? formatCurrency(lot.actual_price)
+                      {lot.sale_price != null
+                        ? formatCurrency(lot.sale_price)
                         : "—"}
                     </TableCell>
-                    <TableCell>{lot.buyer_name ?? "—"}</TableCell>
                     <TableCell>{lot.phase ?? "—"}</TableCell>
                   </TableRow>
                 ))}
@@ -283,15 +278,15 @@ export function LotTable({ projectId }: LotTableProps) {
                   </TableCell>
                   <TableCell className="text-right font-medium">
                     {formatCurrency(
-                      lots.reduce((s, l) => s + (l.projected_price ?? 0), 0)
+                      lots.reduce((s, l) => s + (l.list_price ?? 0), 0)
                     )}
                   </TableCell>
                   <TableCell className="text-right font-medium">
                     {formatCurrency(
-                      lots.reduce((s, l) => s + (l.actual_price ?? 0), 0)
+                      lots.reduce((s, l) => s + (l.sale_price ?? 0), 0)
                     )}
                   </TableCell>
-                  <TableCell colSpan={2} />
+                  <TableCell />
                 </TableRow>
               </TableFooter>
             </Table>
@@ -372,23 +367,23 @@ export function LotTable({ projectId }: LotTableProps) {
                 <Input
                   id="lot_sf"
                   type="number"
-                  value={newLot.square_feet}
+                  value={newLot.sqft}
                   onChange={(e) =>
-                    setNewLot({ ...newLot, square_feet: e.target.value })
+                    setNewLot({ ...newLot, sqft: e.target.value })
                   }
                 />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="lot_floor_plan">Floor Plan</Label>
+                <Label htmlFor="lot_floor_plan">Floor Plan ID</Label>
                 <Input
                   id="lot_floor_plan"
-                  value={newLot.floor_plan}
+                  value={newLot.assigned_floor_plan_id}
                   onChange={(e) =>
-                    setNewLot({ ...newLot, floor_plan: e.target.value })
+                    setNewLot({ ...newLot, assigned_floor_plan_id: e.target.value })
                   }
-                  placeholder="Plan name"
+                  placeholder="Floor plan ID"
                 />
               </div>
               <div className="space-y-2">
@@ -405,55 +400,42 @@ export function LotTable({ projectId }: LotTableProps) {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="lot_proj_price">Projected Price</Label>
+                <Label htmlFor="lot_list_price">List Price</Label>
                 <Input
-                  id="lot_proj_price"
+                  id="lot_list_price"
                   type="number"
                   step="0.01"
-                  value={newLot.projected_price}
+                  value={newLot.list_price}
                   onChange={(e) =>
-                    setNewLot({ ...newLot, projected_price: e.target.value })
+                    setNewLot({ ...newLot, list_price: e.target.value })
                   }
                   placeholder="0.00"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="lot_act_price">Actual Price</Label>
+                <Label htmlFor="lot_sale_price">Sale Price</Label>
                 <Input
-                  id="lot_act_price"
+                  id="lot_sale_price"
                   type="number"
                   step="0.01"
-                  value={newLot.actual_price}
+                  value={newLot.sale_price}
                   onChange={(e) =>
-                    setNewLot({ ...newLot, actual_price: e.target.value })
+                    setNewLot({ ...newLot, sale_price: e.target.value })
                   }
                   placeholder="0.00"
                 />
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="lot_buyer">Buyer Name</Label>
-                <Input
-                  id="lot_buyer"
-                  value={newLot.buyer_name}
-                  onChange={(e) =>
-                    setNewLot({ ...newLot, buyer_name: e.target.value })
-                  }
-                  placeholder="Buyer name"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="lot_phase">Phase</Label>
-                <Input
-                  id="lot_phase"
-                  value={newLot.phase}
-                  onChange={(e) =>
-                    setNewLot({ ...newLot, phase: e.target.value })
-                  }
-                  placeholder="e.g. Phase 1"
-                />
-              </div>
+            <div className="space-y-2">
+              <Label htmlFor="lot_phase">Phase</Label>
+              <Input
+                id="lot_phase"
+                value={newLot.phase}
+                onChange={(e) =>
+                  setNewLot({ ...newLot, phase: e.target.value })
+                }
+                placeholder="e.g. Phase 1"
+              />
             </div>
           </div>
           <DialogFooter>

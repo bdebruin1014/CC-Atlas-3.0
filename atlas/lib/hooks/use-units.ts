@@ -7,73 +7,73 @@ import { createClient } from '@/lib/supabase/client'
 
 export interface Unit {
   id: string
-  unit_number: string
   job_id: string
-  lot_number: string | null
-  block: string | null
-  address_line1: string | null
-  city: string | null
-  state: string | null
-  zip: string | null
-  plan_name: string | null
-  elevation: string | null
-  square_footage: number | null
-  bedrooms: number | null
-  bathrooms: number | null
-  garage_spaces: number | null
-  status: string
-  contract_price: number | null
-  buyer_name: string | null
-  buyer_contact_id: string | null
+  unit_number: string
+  lot_address: string | null
+  floor_plan_id: string | null
+  upgrade_package: string | null
+  current_milestone: number | null
+  base_sticks_bricks: number | null
+  upgrade_cost: number | null
+  lot_preparation_cost: number | null
+  site_specific_adjustments: number | null
+  soft_costs: number | null
+  builder_fee: number | null
+  contingency: number | null
+  total_budget: number | null
+  total_committed: number | null
+  total_actual: number | null
+  variance: number | null
+  permit_date: string | null
   start_date: string | null
-  estimated_completion: string | null
-  actual_completion: string | null
-  current_milestone: string | null
-  progress_percentage: number
+  projected_completion_date: string | null
+  actual_completion_date: string | null
+  co_date: string | null
   created_at: string
   updated_at: string
-  metadata: Record<string, unknown> | null
 }
 
 export interface UnitMilestone {
   id: string
   unit_id: string
-  milestone_template_id: string | null
-  name: string
+  phase_number: number
+  phase_name: string
   description: string | null
-  order: number
-  status: 'not_started' | 'in_progress' | 'completed' | 'skipped'
-  planned_date: string | null
+  planned_start_date: string | null
+  planned_end_date: string | null
   actual_start_date: string | null
-  actual_completion_date: string | null
-  assigned_to: string | null
-  assigned_to_name: string | null
+  actual_end_date: string | null
+  status: 'not_started' | 'in_progress' | 'completed' | 'skipped'
   notes: string | null
+  inspection_required: boolean | null
+  inspection_passed: boolean | null
   created_at: string
   updated_at: string
 }
 
 export interface CreateUnitData {
   job_id: string
-  lot_number?: string | null
-  block?: string | null
-  address_line1?: string | null
-  city?: string | null
-  state?: string | null
-  zip?: string | null
-  plan_name?: string | null
-  elevation?: string | null
-  square_footage?: number | null
-  bedrooms?: number | null
-  bathrooms?: number | null
-  garage_spaces?: number | null
-  status?: string
-  contract_price?: number | null
-  buyer_name?: string | null
-  buyer_contact_id?: string | null
+  unit_number?: string
+  lot_address?: string | null
+  floor_plan_id?: string | null
+  upgrade_package?: string | null
+  current_milestone?: number | null
+  base_sticks_bricks?: number | null
+  upgrade_cost?: number | null
+  lot_preparation_cost?: number | null
+  site_specific_adjustments?: number | null
+  soft_costs?: number | null
+  builder_fee?: number | null
+  contingency?: number | null
+  total_budget?: number | null
+  total_committed?: number | null
+  total_actual?: number | null
+  variance?: number | null
+  permit_date?: string | null
   start_date?: string | null
-  estimated_completion?: string | null
-  metadata?: Record<string, unknown> | null
+  projected_completion_date?: string | null
+  actual_completion_date?: string | null
+  co_date?: string | null
 }
 
 export interface UpdateUnitData extends Partial<CreateUnitData> {
@@ -84,9 +84,10 @@ export interface UpdateMilestoneData {
   id: string
   status?: 'not_started' | 'in_progress' | 'completed' | 'skipped'
   actual_start_date?: string | null
-  actual_completion_date?: string | null
-  assigned_to?: string | null
+  actual_end_date?: string | null
   notes?: string | null
+  inspection_required?: boolean | null
+  inspection_passed?: boolean | null
 }
 
 // ---------------------------------------------------------------------------
@@ -153,10 +154,8 @@ export function useCreateUnit() {
       const { data, error } = await supabase
         .from('units')
         .insert({
-          ...input,
-          status: input.status ?? 'planned',
-          progress_percentage: 0,
-        })
+          ...(input as any),
+        } as any)
         .select()
         .single()
 
@@ -184,7 +183,7 @@ export function useUpdateUnit() {
     mutationFn: async ({ id, ...updates }: UpdateUnitData) => {
       const { data, error } = await supabase
         .from('units')
-        .update({ ...updates, updated_at: new Date().toISOString() })
+        .update({ ...(updates as any), updated_at: new Date().toISOString() } as any)
         .eq('id', id)
         .select()
         .single()
@@ -215,7 +214,7 @@ export function useUnitMilestones(unitId: string) {
         .from('unit_milestones')
         .select('*')
         .eq('unit_id', unitId)
-        .order('order', { ascending: true })
+        .order('phase_number', { ascending: true })
 
       if (error) throw error
       return (data ?? []) as unknown as UnitMilestone[]
@@ -239,8 +238,8 @@ export function useUpdateMilestone() {
       if (updates.status === 'in_progress' && !updates.actual_start_date) {
         updateData.actual_start_date = new Date().toISOString()
       }
-      if (updates.status === 'completed' && !updates.actual_completion_date) {
-        updateData.actual_completion_date = new Date().toISOString()
+      if (updates.status === 'completed' && !updates.actual_end_date) {
+        updateData.actual_end_date = new Date().toISOString()
       }
 
       const { data, error } = await supabase
