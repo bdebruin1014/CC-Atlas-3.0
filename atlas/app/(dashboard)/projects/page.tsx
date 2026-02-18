@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from "react"
 import { useRouter } from "next/navigation"
+import Link from "next/link"
 import {
   Search,
   Plus,
@@ -157,10 +158,12 @@ export default function ProjectsPage() {
             Manage construction projects across all entities
           </p>
         </div>
-        <Button onClick={() => router.push("/projects/new")}>
-          <Plus className="mr-2 h-4 w-4" />
-          New Project
-        </Button>
+        <Link href="/projects/new">
+          <Button>
+            <Plus className="mr-2 h-4 w-4" />
+            New Project
+          </Button>
+        </Link>
       </div>
 
       {/* Filters */}
@@ -288,10 +291,12 @@ export default function ProjectsPage() {
                 : "Get started by creating your first project."}
             </p>
             {!hasActiveFilters && (
-              <Button onClick={() => router.push("/projects/new")}>
-                <Plus className="mr-2 h-4 w-4" />
-                New Project
-              </Button>
+              <Link href="/projects/new">
+                <Button>
+                  <Plus className="mr-2 h-4 w-4" />
+                  New Project
+                </Button>
+              </Link>
             )}
           </CardContent>
         </Card>

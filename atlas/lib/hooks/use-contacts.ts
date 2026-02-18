@@ -136,6 +136,8 @@ export function useContacts(filters: ContactFilters = {}) {
 
       return contacts
     },
+    staleTime: 2 * 60 * 1000,
+    placeholderData: (previousData: unknown) => previousData,
   })
 }
 
@@ -155,6 +157,8 @@ export function useContact(id: string) {
       return data as unknown as Contact
     },
     enabled: !!id,
+    staleTime: 5 * 60 * 1000,
+    placeholderData: (previousData: unknown) => previousData,
   })
 
   const assignmentsQuery = useQuery({
@@ -169,6 +173,8 @@ export function useContact(id: string) {
       return data as ContactAssignment[]
     },
     enabled: !!id,
+    staleTime: 5 * 60 * 1000,
+    placeholderData: (previousData: unknown) => previousData,
   })
 
   return {
@@ -269,12 +275,23 @@ export function useUpdateContact() {
 
       return id
     },
-    onSuccess: (id) => {
+    onMutate: async ({ id, updates }) => {
+      await queryClient.cancelQueries({ queryKey: keys.detail(id) })
+      const previous = queryClient.getQueryData(keys.detail(id))
+      queryClient.setQueryData(keys.detail(id), (old: Contact | undefined) =>
+        old ? { ...old, ...updates } : old
+      )
+      return { previous }
+    },
+    onError: (error, { id }, context) => {
+      console.error('Failed to update contact:', error)
+      if (context?.previous) {
+        queryClient.setQueryData(keys.detail(id), context.previous)
+      }
+    },
+    onSettled: (_data, _error, { id }) => {
       queryClient.invalidateQueries({ queryKey: keys.lists() })
       queryClient.invalidateQueries({ queryKey: keys.detail(id) })
-    },
-    onError: (error) => {
-      console.error('Failed to update contact:', error)
     },
   })
 }
@@ -304,5 +321,6 @@ export function useSearchContacts(query: string) {
     },
     enabled: query.length >= 2,
     staleTime: 30 * 1000,
+    placeholderData: (previousData: unknown) => previousData,
   })
 }

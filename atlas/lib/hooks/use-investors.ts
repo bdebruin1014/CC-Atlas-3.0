@@ -20,6 +20,8 @@ export function useInvestors(entityId: string) {
     queryKey: ["investors", entityId],
     queryFn: () => fetchInvestors(entityId),
     enabled: !!entityId,
+    staleTime: 2 * 60 * 1000,
+    placeholderData: (previousData: unknown) => previousData,
   })
 }
 
@@ -28,6 +30,8 @@ export function useCapitalCalls(entityId: string) {
     queryKey: ["capital-calls", entityId],
     queryFn: () => fetchCapitalCalls(entityId),
     enabled: !!entityId,
+    staleTime: 2 * 60 * 1000,
+    placeholderData: (previousData: unknown) => previousData,
   })
 }
 

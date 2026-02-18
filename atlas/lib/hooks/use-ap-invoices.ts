@@ -32,6 +32,8 @@ export function useAPInvoices(filters: APInvoiceFilters = {}) {
   return useQuery({
     queryKey: ["ap-invoices", filters],
     queryFn: () => fetchAPInvoices(filters),
+    staleTime: 2 * 60 * 1000,
+    placeholderData: (previousData: unknown) => previousData,
   })
 }
 

@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useMemo } from "react"
-import { useRouter } from "next/navigation"
+import Link from "next/link"
 import { ChevronRight, ChevronDown, Building2, Landmark, Briefcase, PiggyBank } from "lucide-react"
 import { cn } from "@/lib/utils/format"
 import { Badge } from "@/components/ui/badge"
@@ -88,15 +88,6 @@ function EntityNode({
 }) {
   const [expanded, setExpanded] = useState(true)
   const hasChildren = entity.children && entity.children.length > 0
-  const router = useRouter()
-
-  const handleClick = () => {
-    if (onEntityClick) {
-      onEntityClick(entity)
-    } else {
-      router.push(`/accounting/entities/${entity.id}`)
-    }
-  }
 
   return (
     <div>
@@ -130,36 +121,69 @@ function EntityNode({
         {getUseTypeIcon(entity.use_type)}
 
         {/* Name & Badges */}
-        <div className="flex flex-1 items-center gap-2 min-w-0" onClick={handleClick}>
-          <span className="font-medium text-sm truncate">{entity.name}</span>
-          <Badge
-            variant="secondary"
-            className={cn("text-[10px] px-1.5 py-0 shrink-0", getUseTypeBadgeClass(entity.use_type))}
-          >
-            {ENTITY_USE_TYPE_LABELS[entity.use_type]}
-          </Badge>
-          <Badge variant="outline" className="text-[10px] px-1.5 py-0 shrink-0">
-            {ENTITY_LEGAL_TYPE_LABELS[entity.legal_type]}
-          </Badge>
-          {entity.ein && (
-            <span className="text-xs text-muted-foreground shrink-0">
-              EIN: ***-**-{entity.ein.slice(-4)}
-            </span>
-          )}
-          <Badge
-            variant="secondary"
-            className={cn(
-              "text-[10px] px-1.5 py-0 shrink-0 ml-auto",
-              entity.status === "active"
-                ? "bg-green-100 text-green-800 hover:bg-green-100"
-                : entity.status === "dissolved"
-                ? "bg-red-100 text-red-800 hover:bg-red-100"
-                : "bg-gray-100 text-gray-600 hover:bg-gray-100"
+        {onEntityClick ? (
+          <div className="flex flex-1 items-center gap-2 min-w-0" onClick={() => onEntityClick(entity)}>
+            <span className="font-medium text-sm truncate">{entity.name}</span>
+            <Badge
+              variant="secondary"
+              className={cn("text-[10px] px-1.5 py-0 shrink-0", getUseTypeBadgeClass(entity.use_type))}
+            >
+              {ENTITY_USE_TYPE_LABELS[entity.use_type]}
+            </Badge>
+            <Badge variant="outline" className="text-[10px] px-1.5 py-0 shrink-0">
+              {ENTITY_LEGAL_TYPE_LABELS[entity.legal_type]}
+            </Badge>
+            {entity.ein && (
+              <span className="text-xs text-muted-foreground shrink-0">
+                EIN: ***-**-{entity.ein.slice(-4)}
+              </span>
             )}
-          >
-            {entity.status}
-          </Badge>
-        </div>
+            <Badge
+              variant="secondary"
+              className={cn(
+                "text-[10px] px-1.5 py-0 shrink-0 ml-auto",
+                entity.status === "active"
+                  ? "bg-green-100 text-green-800 hover:bg-green-100"
+                  : entity.status === "dissolved"
+                  ? "bg-red-100 text-red-800 hover:bg-red-100"
+                  : "bg-gray-100 text-gray-600 hover:bg-gray-100"
+              )}
+            >
+              {entity.status}
+            </Badge>
+          </div>
+        ) : (
+          <Link href={`/accounting/entities/${entity.id}`} className="flex flex-1 items-center gap-2 min-w-0">
+            <span className="font-medium text-sm truncate">{entity.name}</span>
+            <Badge
+              variant="secondary"
+              className={cn("text-[10px] px-1.5 py-0 shrink-0", getUseTypeBadgeClass(entity.use_type))}
+            >
+              {ENTITY_USE_TYPE_LABELS[entity.use_type]}
+            </Badge>
+            <Badge variant="outline" className="text-[10px] px-1.5 py-0 shrink-0">
+              {ENTITY_LEGAL_TYPE_LABELS[entity.legal_type]}
+            </Badge>
+            {entity.ein && (
+              <span className="text-xs text-muted-foreground shrink-0">
+                EIN: ***-**-{entity.ein.slice(-4)}
+              </span>
+            )}
+            <Badge
+              variant="secondary"
+              className={cn(
+                "text-[10px] px-1.5 py-0 shrink-0 ml-auto",
+                entity.status === "active"
+                  ? "bg-green-100 text-green-800 hover:bg-green-100"
+                  : entity.status === "dissolved"
+                  ? "bg-red-100 text-red-800 hover:bg-red-100"
+                  : "bg-gray-100 text-gray-600 hover:bg-gray-100"
+              )}
+            >
+              {entity.status}
+            </Badge>
+          </Link>
+        )}
       </div>
 
       {/* Children */}

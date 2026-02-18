@@ -13,6 +13,10 @@ if (typeof window !== 'undefined') {
   }
 }
 
+let client: ReturnType<typeof createBrowserClient<Database>> | null = null
+
 export function createClient() {
-  return createBrowserClient<Database>(supabaseUrl, supabaseAnonKey)
+  if (client) return client
+  client = createBrowserClient<Database>(supabaseUrl, supabaseAnonKey)
+  return client
 }

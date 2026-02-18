@@ -1,6 +1,6 @@
 'use client'
 
-import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { cn, formatCurrency } from '@/lib/utils/format'
@@ -45,7 +45,6 @@ function getInitials(name: string | undefined | null): string {
 // ---------------------------------------------------------------------------
 
 export function OpportunityCard({ opportunity, onClick }: OpportunityCardProps) {
-  const router = useRouter()
   const days = daysInStage(opportunity.updated_at)
   const typeLabel = OPPORTUNITY_TYPE_LABELS[opportunity.type] ?? opportunity.type
   const typeColor = OPPORTUNITY_TYPE_COLORS[opportunity.type] ?? '#6b7280'
@@ -58,21 +57,15 @@ export function OpportunityCard({ opportunity, onClick }: OpportunityCardProps) 
   const shortAddress =
     address.length > 35 ? address.slice(0, 35) + '...' : address
 
-  const handleClick = () => {
-    if (onClick) {
-      onClick()
-    } else {
-      router.push(`/opportunities/${opportunity.id}`)
-    }
-  }
+  const Wrapper = onClick ? 'div' : Link
+
+  const wrapperProps = onClick
+    ? { onClick, className: cn('cursor-pointer rounded-md p-3 transition-all hover:shadow-md', 'space-y-2') }
+    : { href: `/opportunities/${opportunity.id}`, className: cn('block cursor-pointer rounded-md p-3 transition-all hover:shadow-md', 'space-y-2') }
 
   return (
-    <div
-      className={cn(
-        'cursor-pointer rounded-md p-3 transition-all hover:shadow-md',
-        'space-y-2'
-      )}
-      onClick={handleClick}
+    <Wrapper
+      {...(wrapperProps as any)}
     >
       {/* Top row: address + type badge */}
       <div className="flex items-start justify-between gap-2">
@@ -127,6 +120,6 @@ export function OpportunityCard({ opportunity, onClick }: OpportunityCardProps) 
           )}
         </div>
       </div>
-    </div>
+    </Wrapper>
   )
 }

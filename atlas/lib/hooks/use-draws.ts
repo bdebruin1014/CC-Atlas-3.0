@@ -14,6 +14,8 @@ export function useDrawSchedule(jobId: string) {
     queryKey: ["draw-schedule", jobId],
     queryFn: () => fetchDrawSchedule(jobId),
     enabled: !!jobId,
+    staleTime: 2 * 60 * 1000,
+    placeholderData: (previousData: unknown) => previousData,
   })
 }
 

@@ -111,6 +111,8 @@ export function useJobs(filters?: JobFilters) {
       if (error) throw error
       return (data ?? []) as unknown as Job[]
     },
+    staleTime: 2 * 60 * 1000,
+    placeholderData: (previousData: unknown) => previousData,
   })
 }
 
@@ -130,6 +132,8 @@ export function useJob(id: string) {
       return data as unknown as Job
     },
     enabled: !!id,
+    staleTime: 5 * 60 * 1000,
+    placeholderData: (previousData: unknown) => previousData,
   })
 }
 
@@ -186,18 +190,28 @@ export function useUpdateJob() {
       if (error) throw error
       return data as unknown as Job
     },
-    onSuccess: (data) => {
+    onMutate: async ({ id, ...updates }) => {
+      await queryClient.cancelQueries({ queryKey: keys.detail(id) })
+      const previous = queryClient.getQueryData(keys.detail(id))
+      queryClient.setQueryData(keys.detail(id), (old: Job | undefined) =>
+        old ? { ...old, ...updates } : old
+      )
+      return { previous }
+    },
+    onError: (error, { id }, context) => {
+      console.error('Failed to update job:', error)
+      if (context?.previous) {
+        queryClient.setQueryData(keys.detail(id), context.previous)
+      }
+    },
+    onSettled: (data, _error, { id }) => {
       queryClient.invalidateQueries({ queryKey: keys.lists() })
-      queryClient.invalidateQueries({ queryKey: keys.detail(data.id) })
-      // Also invalidate parent project
-      if (data.linked_project_id) {
+      queryClient.invalidateQueries({ queryKey: keys.detail(id) })
+      if (data?.linked_project_id) {
         queryClient.invalidateQueries({
           queryKey: ['projects', 'detail', data.linked_project_id],
         })
       }
-    },
-    onError: (error) => {
-      console.error('Failed to update job:', error)
     },
   })
 }

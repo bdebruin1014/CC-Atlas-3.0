@@ -36,6 +36,8 @@ export function useDailyLogs(jobId: string, year?: number, month?: number) {
       return (data ?? []) as unknown as DailyLog[]
     },
     enabled: !!jobId,
+    staleTime: 2 * 60 * 1000,
+    placeholderData: (previousData: unknown) => previousData,
   })
 }
 
@@ -56,6 +58,8 @@ export function useDailyLog(jobId: string, date: string) {
       return data as unknown as DailyLog | null
     },
     enabled: !!jobId && !!date,
+    staleTime: 5 * 60 * 1000,
+    placeholderData: (previousData: unknown) => previousData,
   })
 }
 
@@ -149,6 +153,8 @@ export function useComplianceSummary(jobIds: string[], year: number, month: numb
       return (data ?? []) as { job_id: string; log_date: string }[]
     },
     enabled: jobIds.length > 0,
+    staleTime: 2 * 60 * 1000,
+    placeholderData: (previousData: unknown) => previousData,
   })
 }
 
@@ -175,5 +181,7 @@ export function usePhotoCountsByJob(jobIds: string[], year: number, month: numbe
       return (data ?? []) as { job_id: string; id: string }[]
     },
     enabled: jobIds.length > 0,
+    staleTime: 2 * 60 * 1000,
+    placeholderData: (previousData: unknown) => previousData,
   })
 }

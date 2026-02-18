@@ -25,6 +25,8 @@ export function useRetainage(filters: RetainageFilters = {}) {
   return useQuery({
     queryKey: ["retainage", filters],
     queryFn: () => fetchRetainage(filters),
+    staleTime: 2 * 60 * 1000,
+    placeholderData: (previousData: unknown) => previousData,
   })
 }
 

@@ -14,5 +14,7 @@ export function useJobCostReport(jobId: string) {
     queryKey: ["job-cost", jobId],
     queryFn: () => fetchJobCostReport(jobId),
     enabled: !!jobId,
+    staleTime: 5 * 60 * 1000,
+    placeholderData: (previousData: unknown) => previousData,
   })
 }

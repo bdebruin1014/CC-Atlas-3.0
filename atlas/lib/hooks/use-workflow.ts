@@ -205,6 +205,8 @@ export function useWorkflowInstance(recordType: string, recordId: string) {
       return result as WorkflowInstance
     },
     enabled: !!recordType && !!recordId,
+    staleTime: 5 * 60 * 1000,
+    placeholderData: (previousData: unknown) => previousData,
   })
 }
 
@@ -235,6 +237,8 @@ export function useTaskInstances(milestoneInstanceId: string) {
       return (data ?? []) as any as TaskInstance[]
     },
     enabled: !!milestoneInstanceId,
+    staleTime: 2 * 60 * 1000,
+    placeholderData: (previousData: unknown) => previousData,
   })
 }
 
@@ -269,6 +273,8 @@ export function useOrgProfiles() {
       if (error) throw error
       return (data ?? []) as OrgProfile[]
     },
+    staleTime: 10 * 60 * 1000,
+    placeholderData: (previousData: unknown) => previousData,
   })
 }
 
@@ -297,6 +303,8 @@ export function useWorkflowTemplates(workflowType?: string) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       return ((data ?? []) as any) as WorkflowTemplate[]
     },
+    staleTime: 10 * 60 * 1000,
+    placeholderData: (previousData: unknown) => previousData,
   })
 }
 
