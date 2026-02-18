@@ -385,3 +385,76 @@ export const UPGRADE_PACKAGES = {
 } as const
 
 export type UpgradePackage = keyof typeof UPGRADE_PACKAGES
+
+// ---------------------------------------------------------------------------
+// Sub-Acquisitions (v4 spec §1.3) — multi-property support
+// ---------------------------------------------------------------------------
+
+export type SubAcquisitionStatus =
+  | 'identified'
+  | 'under_contract'
+  | 'due_diligence'
+  | 'clear_to_close'
+  | 'closed'
+  | 'dropped'
+
+export const SUB_ACQUISITION_STATUS_CONFIG: Record<
+  SubAcquisitionStatus,
+  { label: string; bgColor: string; order: number }
+> = {
+  identified: { label: 'Identified', bgColor: 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200', order: 0 },
+  under_contract: { label: 'Under Contract', bgColor: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200', order: 1 },
+  due_diligence: { label: 'Due Diligence', bgColor: 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200', order: 2 },
+  clear_to_close: { label: 'Clear to Close', bgColor: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200', order: 3 },
+  closed: { label: 'Closed', bgColor: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200', order: 4 },
+  dropped: { label: 'Dropped', bgColor: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200', order: 5 },
+}
+
+export interface SubAcquisition {
+  id: string
+  opportunity_id: string
+  label: string                   // short label, e.g. "Parcel A" or "123 Main St"
+  address_street: string | null
+  address_city: string | null
+  address_state: string | null
+  address_zip: string | null
+  parcel_tms_number: string | null
+  acreage: number | null
+  lot_count: number | null
+
+  // Per-property financials
+  purchase_price: number | null
+  projected_sale_price: number | null
+  projected_profit: number | null
+  projected_margin_pct: number | null
+  earnest_money: number | null
+  due_diligence_fee: number | null
+
+  // Per-property dates
+  date_under_contract: string | null
+  due_diligence_deadline: string | null
+  projected_close_date: string | null
+
+  // Per-property status
+  status: SubAcquisitionStatus
+  floor_plan_id: string | null
+  zoning: string | null
+  notes: string | null
+
+  created_at: string
+  updated_at: string
+}
+
+// Aggregate financials computed from sub-acquisitions
+export interface SubAcquisitionAggregates {
+  total_properties: number
+  total_purchase_price: number
+  total_sale_price: number
+  total_projected_profit: number
+  weighted_avg_margin: number
+  total_acreage: number
+  total_lots: number
+  total_earnest_money: number
+  total_dd_fees: number
+  status_breakdown: Record<SubAcquisitionStatus, number>
+}
