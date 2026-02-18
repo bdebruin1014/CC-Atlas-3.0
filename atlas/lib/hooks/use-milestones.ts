@@ -2,8 +2,8 @@ import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { createClient } from "@/lib/supabase/client"
 import type { UnitMilestone } from "@/lib/supabase/types"
 
-// Phases that require a passed inspection before completion
-export const INSPECTION_GATED_PHASES = [3, 4, 6, 7, 8, 9, 15]
+// Milestones that require a passed inspection before completion (v4: 6-milestone system)
+export const INSPECTION_GATED_PHASES = [2, 3, 5]
 
 const milestoneKeys = {
   milestones: (unitId: string) => ["units", "milestones", unitId] as const,

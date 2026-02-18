@@ -93,10 +93,10 @@ export default function JobDetailLayout({
     JOB_STATUS_CONFIG.active
 
   const unitsComplete = units.filter(
-    (u) => (u.current_milestone ?? 0) >= 16
+    (u) => (u.current_milestone ?? 0) >= 6
   ).length
   const unitsInProgress = units.filter(
-    (u) => (u.current_milestone ?? 0) > 0 && (u.current_milestone ?? 0) < 16
+    (u) => (u.current_milestone ?? 0) > 0 && (u.current_milestone ?? 0) < 6
   ).length
 
   return (

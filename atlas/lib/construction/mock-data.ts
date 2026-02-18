@@ -136,7 +136,8 @@ function generateUnitsForJob001(): Unit[] {
   return Array.from({ length: 24 }, (_, i) => {
     const num = i + 1
     const plan = plans[i % plans.length]
-    const phase = num <= 6 ? 16 : num <= 12 ? 9 + Math.floor((num - 6) / 2) : num <= 18 ? 4 + Math.floor((num - 12) / 2) : 1 + Math.floor((num - 18) / 3)
+    // 6-milestone system: Permit(1), Foundation(2), Frame(3), Sheetrock(4), CO(5), Complete(6)
+    const phase = num <= 6 ? 6 : num <= 12 ? 3 + Math.floor((num - 6) / 3) : num <= 18 ? 2 + Math.floor((num - 12) / 4) : 1
     const isComplete = num <= 6
     const isNotStarted = num > 20
 
@@ -146,7 +147,7 @@ function generateUnitsForJob001(): Unit[] {
     else if (num === 8 || num === 14) scheduleStatus = "behind_1_7"
     else if (num === 10) scheduleStatus = "behind_8_plus"
 
-    const committed = isComplete ? plan.budget * 0.98 : plan.budget * (phase / 16) * 0.85
+    const committed = isComplete ? plan.budget * 0.98 : plan.budget * (phase / 6) * 0.85
     const actual = isComplete ? plan.budget * 0.96 : committed * 0.9
 
     return {
@@ -157,7 +158,7 @@ function generateUnitsForJob001(): Unit[] {
       floor_plan_name: plan.name,
       floor_plan_specs: plan.specs,
       upgrade_package: num % 3 === 0 ? "Premium Plus" : num % 2 === 0 ? "Standard Upgrade" : undefined,
-      current_phase: isComplete ? 16 : isNotStarted ? 0 : phase,
+      current_phase: isComplete ? 6 : isNotStarted ? 0 : phase,
       permit_date: isNotStarted ? undefined : "2025-04-10",
       construction_start: isNotStarted ? undefined : "2025-05-01",
       projected_completion: isNotStarted ? undefined : isComplete ? "2025-12-15" : "2026-06-30",
@@ -174,14 +175,19 @@ function generateUnitsForJob001(): Unit[] {
 
 export const MOCK_UNITS_JOB001 = generateUnitsForJob001()
 
-// ---- Milestones for a specific unit (MC2-007, in-progress at phase 10) ----
+// ---- Milestones for a specific unit ----
 export function generateMilestones(unitId: string, currentPhase: number): Milestone[] {
   const baseDate = new Date("2025-05-01")
-  return CONSTRUCTION_PHASES.map((phase) => {
+  // Duration per milestone in days: Permit(21), Foundation(21), Frame(28), Sheetrock(21), CO(42), Complete(14)
+  const MILESTONE_DURATIONS = [21, 21, 28, 21, 42, 14]
+  let cursor = 0
+  return CONSTRUCTION_PHASES.map((phase, idx) => {
     const plannedStart = new Date(baseDate)
-    plannedStart.setDate(baseDate.getDate() + (phase.number - 1) * 14)
+    plannedStart.setDate(baseDate.getDate() + cursor)
+    const duration = MILESTONE_DURATIONS[idx] ?? 21
+    cursor += duration
     const plannedEnd = new Date(plannedStart)
-    plannedEnd.setDate(plannedStart.getDate() + 12)
+    plannedEnd.setDate(plannedStart.getDate() + duration)
 
     let status: Milestone["status"] = "not_started"
     let actualStart: string | undefined
@@ -237,7 +243,7 @@ export function generateMilestones(unitId: string, currentPhase: number): Milest
       planned_end: plannedEnd.toISOString().split("T")[0],
       actual_start: actualStart,
       actual_end: actualEnd,
-      planned_duration: 12,
+      planned_duration: duration,
       actual_duration: actualDuration,
       inspections,
     }
@@ -980,7 +986,7 @@ export const MOCK_ACTIVITY_FEED: ActivityFeedItem[] = [
     id: "act-001",
     timestamp: "2026-02-17T09:30:00Z",
     type: "milestone",
-    message: "MC2-007 advanced to Phase 10: Interior Trim",
+    message: "MC2-007 advanced to Milestone 4: Sheetrock",
     user: "Mike Thompson",
     unit_number: "MC2-007",
   },
@@ -1020,7 +1026,7 @@ export const MOCK_ACTIVITY_FEED: ActivityFeedItem[] = [
     id: "act-006",
     timestamp: "2026-02-13T15:30:00Z",
     type: "milestone",
-    message: "MC2-013 advanced to Phase 6: Roofing",
+    message: "MC2-013 advanced to Milestone 3: Frame",
     user: "Mike Thompson",
     unit_number: "MC2-013",
   },
@@ -1241,7 +1247,7 @@ export const MOCK_DRAW_SCHEDULE: DrawScheduleItem[] = [
     name: "Foundation",
     percentage: 20,
     amount: 1750000,
-    milestone_phase: 4,
+    milestone_phase: 2,
     status: "requested",
     requested_date: "2026-02-10",
     approved_date: null,
@@ -1258,7 +1264,7 @@ export const MOCK_DRAW_SCHEDULE: DrawScheduleItem[] = [
     name: "Framing / Dry-In",
     percentage: 25,
     amount: 2187500,
-    milestone_phase: 5,
+    milestone_phase: 3,
     status: "pending",
     requested_date: null,
     approved_date: null,
@@ -1272,10 +1278,10 @@ export const MOCK_DRAW_SCHEDULE: DrawScheduleItem[] = [
     id: "draw-004",
     job_id: "job-001",
     draw_number: 4,
-    name: "Drywall / Trim",
+    name: "Sheetrock / Trim",
     percentage: 25,
     amount: 2187500,
-    milestone_phase: 10,
+    milestone_phase: 4,
     status: "pending",
     requested_date: null,
     approved_date: null,
@@ -1292,7 +1298,7 @@ export const MOCK_DRAW_SCHEDULE: DrawScheduleItem[] = [
     name: "Final / CO",
     percentage: 10,
     amount: 875000,
-    milestone_phase: 16,
+    milestone_phase: 6,
     status: "pending",
     requested_date: null,
     approved_date: null,

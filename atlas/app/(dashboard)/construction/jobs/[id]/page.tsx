@@ -41,7 +41,7 @@ export default function JobDashboardPage() {
     unit_number: u.unit_number,
     address: u.lot_address ?? "",
     status:
-      (u.current_milestone ?? 0) >= 16
+      (u.current_milestone ?? 0) >= 6
         ? ("complete" as const)
         : (u.current_milestone ?? 0) > 0
         ? ("in_progress" as const)

@@ -3,37 +3,32 @@
 // Red Cedar Homes ATLAS Platform
 // ============================================================================
 
-// ---- 16 Construction Phases (Milestones) ----
+// ---- 6 Vertical Construction Milestones (per v4 spec §3.6) ----
 export const CONSTRUCTION_PHASES = [
-  { number: 1, name: "Pre-Construction", shortName: "Pre-Con" },
-  { number: 2, name: "Permitting", shortName: "Permit" },
-  { number: 3, name: "Site Work", shortName: "Site" },
-  { number: 4, name: "Foundation", shortName: "Found." },
-  { number: 5, name: "Framing", shortName: "Frame" },
-  { number: 6, name: "Roofing", shortName: "Roof" },
-  { number: 7, name: "MEP Rough-In", shortName: "MEP-R" },
-  { number: 8, name: "Insulation", shortName: "Insul." },
-  { number: 9, name: "Drywall", shortName: "Drywall" },
-  { number: 10, name: "Interior Trim", shortName: "Trim" },
-  { number: 11, name: "Cabinets & Countertops", shortName: "Cab/Cnt" },
-  { number: 12, name: "MEP Finish", shortName: "MEP-F" },
-  { number: 13, name: "Paint & Flooring", shortName: "Paint/Flr" },
-  { number: 14, name: "Exterior Finish", shortName: "Ext. Fin" },
-  { number: 15, name: "Final Punch & Clean", shortName: "Punch" },
-  { number: 16, name: "Certificate of Occupancy", shortName: "CO" },
+  { number: 1, name: "Permit", shortName: "Permit" },
+  { number: 2, name: "Foundation", shortName: "Found." },
+  { number: 3, name: "Frame", shortName: "Frame" },
+  { number: 4, name: "Sheetrock", shortName: "Shtrock" },
+  { number: 5, name: "CO", shortName: "CO" },
+  { number: 6, name: "Complete", shortName: "Done" },
 ] as const
 
-// ---- Phase Required Inspections ----
+// ---- Milestone Required Inspections ----
 export const PHASE_INSPECTIONS: Record<number, string[]> = {
-  3: ["Erosion Control"],
-  4: ["Footer", "Foundation Wall", "Waterproofing"],
-  5: ["Framing"],
-  7: ["Plumbing Rough", "Electrical Rough", "HVAC Rough"],
-  8: ["Insulation"],
-  12: ["Plumbing Final", "Electrical Final", "HVAC Final"],
-  14: ["Grading/Drainage"],
-  16: ["Final/CO"],
+  2: ["Footer", "Foundation"],
+  3: ["Framing", "Plumbing Rough", "Electrical Rough", "HVAC Rough", "Insulation"],
+  5: ["Final Building", "Certificate of Occupancy"],
 }
+
+// ---- Post-CO Warranty Timeline (days after CO date) ----
+export const WARRANTY_TIMELINE = [
+  { name: "30-Day Walkthrough", offsetDays: 30 },
+  { name: "6-Month Check", offsetDays: 180 },
+  { name: "11-Month Walkthrough", offsetDays: 330 },
+  { name: "1-Year Workmanship Expiration", offsetDays: 365 },
+  { name: "2-Year Systems Warranty", offsetDays: 730 },
+  { name: "5-Year Structural Warranty", offsetDays: 1825 },
+] as const
 
 // ---- Milestone Status ----
 export type MilestoneStatus =
