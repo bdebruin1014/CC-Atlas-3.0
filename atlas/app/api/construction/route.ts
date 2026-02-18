@@ -190,7 +190,7 @@ export async function POST(request: Request) {
     const jobNumber = `J${year}-${seq}`
 
     // Create job
-    const { data: job, error: createError } = await supabase
+    const { data: rawJob, error: createError } = await supabase
       .from("jobs")
       .insert({
         organization_id: orgId,
@@ -210,9 +210,10 @@ export async function POST(request: Request) {
         start_date: input.start_date || null,
         projected_completion: input.projected_completion || null,
         status: "pre_construction",
-      })
+      } as any)
       .select("*")
       .single()
+    const job = rawJob as any
 
     if (createError) {
       console.error("Create job error:", createError)
@@ -248,10 +249,11 @@ export async function POST(request: Request) {
       }
     }
 
-    const { data: units, error: unitError } = await supabase
+    const { data: rawUnits, error: unitError } = await supabase
       .from("units")
-      .insert(unitPayloads)
+      .insert(unitPayloads as any)
       .select("*")
+    const units = rawUnits as any[]
 
     if (unitError) {
       console.error("Create units error:", unitError)
@@ -292,7 +294,7 @@ export async function POST(request: Request) {
         }
       }
 
-      await supabase.from("unit_milestones").insert(milestonePayloads)
+      await supabase.from("unit_milestones").insert(milestonePayloads as any)
     }
 
     // Activity log
@@ -311,7 +313,7 @@ export async function POST(request: Request) {
     })
 
     return NextResponse.json(
-      { data: { ...job, units: units || [] } },
+      { data: { ...(job as any), units: units || [] } },
       { status: 201 }
     )
   } catch (err) {

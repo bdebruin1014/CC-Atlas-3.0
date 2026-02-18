@@ -113,8 +113,8 @@ export async function GET(request: NextRequest) {
     const status = params.get("status")
     if (status) {
       const vals = status.split(",")
-      query = query.in("status", vals)
-      countQuery = countQuery.in("status", vals)
+      query = query.in("status", vals as any)
+      countQuery = countQuery.in("status", vals as any)
     }
 
     const projectId = params.get("project_id")
@@ -131,8 +131,8 @@ export async function GET(request: NextRequest) {
 
     const propertyType = params.get("property_type")
     if (propertyType) {
-      query = query.eq("property_type", propertyType)
-      countQuery = countQuery.eq("property_type", propertyType)
+      query = query.eq("property_type", propertyType as any)
+      countQuery = countQuery.eq("property_type", propertyType as any)
     }
 
     const search = params.get("search")

@@ -65,12 +65,13 @@ export async function POST(request: Request) {
     const input = parsed.data
 
     // Fetch waterfall structure
-    const { data: structure, error: structError } = await supabase
+    const { data: rawStructure, error: structError } = await supabase
       .from("waterfall_structures")
       .select("*")
       .eq("id", input.waterfall_structure_id)
       .eq("entity_id", input.entity_id)
       .single()
+    const structure = rawStructure as any
 
     if (structError || !structure) {
       return NextResponse.json(
@@ -82,7 +83,7 @@ export async function POST(request: Request) {
     const tiers = (structure.tiers || []) as WaterfallTier[]
 
     // Fetch investors
-    const { data: investors } = await supabase
+    const { data: rawInvestors } = await supabase
       .from("investors")
       .select(
         `
@@ -97,6 +98,7 @@ export async function POST(request: Request) {
       )
       .eq("entity_id", input.entity_id)
       .order("ownership_pct", { ascending: false })
+    const investors = rawInvestors as any[]
 
     if (!investors || investors.length === 0) {
       return NextResponse.json(

@@ -125,7 +125,7 @@ export async function GET(request: Request) {
 
     // Apply filters
     if (filters.type) {
-      query = query.eq("type", filters.type)
+      query = query.eq("type", filters.type as any)
     }
     if (filters.stage) {
       query = query.eq("current_stage", filters.stage)
@@ -211,11 +211,12 @@ export async function POST(request: Request) {
       status: "active" as const,
     }
 
-    const { data: opportunity, error: createError } = await supabase
+    const { data: rawOpportunity, error: createError } = await supabase
       .from("opportunities")
       .insert(payload)
       .select("*")
       .single()
+    const opportunity = rawOpportunity as any
 
     if (createError) {
       console.error("Create opportunity error:", createError)

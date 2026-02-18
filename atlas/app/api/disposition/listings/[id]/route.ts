@@ -92,7 +92,7 @@ export async function GET(
 
     return NextResponse.json({
       data: {
-        ...listing,
+        ...(listing as any),
         showings_count: showingsRes.count ?? 0,
         offers_count: offersRes.count ?? 0,
         active_contracts_count: contractRes.count ?? 0,

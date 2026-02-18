@@ -93,7 +93,7 @@ export async function GET(request: Request) {
     const yearStart = `${params.tax_year}-01-01`
     const yearEnd = `${params.tax_year}-12-31`
 
-    const { data: payments, error: payError } = await supabase
+    const { data: rawPayments, error: payError } = await supabase
       .from("ap_payments")
       .select(
         `
@@ -107,6 +107,7 @@ export async function GET(request: Request) {
       .in("status", ["processed", "cleared"])
       .gte("payment_date", yearStart)
       .lte("payment_date", yearEnd)
+    const payments = rawPayments as any[]
 
     if (payError) {
       return NextResponse.json({ error: payError.message }, { status: 500 })
@@ -118,10 +119,11 @@ export async function GET(request: Request) {
     let totalsByVendor = new Map<string, number>()
 
     if (paymentIds.length > 0) {
-      const { data: applications, error: appError } = await supabase
+      const { data: rawApplications, error: appError } = await supabase
         .from("ap_payment_applications")
         .select("payment_id, amount_applied")
         .in("payment_id", paymentIds)
+      const applications = rawApplications as any[]
 
       if (appError) {
         return NextResponse.json({ error: appError.message }, { status: 500 })
@@ -146,7 +148,7 @@ export async function GET(request: Request) {
 
     // Build response
     const result = vendors.map((v) => {
-      const contact = v.contact as { id: string; first_name: string; last_name: string; company: string | null } | null
+      const contact = v.contact as unknown as { id: string; first_name: string; last_name: string; company: string | null } | null
       const totalPayments = totalsByVendor.get(v.contact_id) ?? 0
       return {
         vendor_contact_id: v.contact_id,
@@ -165,7 +167,7 @@ export async function GET(request: Request) {
   } catch (err) {
     if (err instanceof z.ZodError) {
       return NextResponse.json(
-        { error: "Validation error", details: err.errors },
+        { error: "Validation error", details: err.issues },
         { status: 400 }
       )
     }

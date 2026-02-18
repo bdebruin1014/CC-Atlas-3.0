@@ -40,7 +40,7 @@ async function findAccount(
     .from("chart_of_accounts")
     .select("id")
     .eq("entity_id", entityId)
-    .eq("account_type", accountType)
+    .eq("account_type", accountType as any)
     .ilike("account_name", `%${namePattern}%`)
     .eq("is_active", true)
     .limit(1)
@@ -254,7 +254,7 @@ export async function POST(request: Request) {
           unit_id: event_data.unit_id || null,
           reference_number: event_data.reference_number || null,
         },
-      ])
+      ] as any)
       .select("id")
 
     if (txError) {

@@ -233,7 +233,7 @@ export async function PATCH(
       .eq("id", settlementId)
       .eq("listing_id", listingId)
       .select("*")
-      .single() as Promise<{ data: Record<string, any> | null; error: any }>)
+      .single() as unknown as Promise<{ data: Record<string, any> | null; error: any }>)
 
     if (error) throw error
 

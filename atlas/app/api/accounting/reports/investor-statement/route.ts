@@ -46,7 +46,7 @@ export async function GET(request: Request) {
     const filters = parsed.data
 
     // Fetch investor details
-    const { data: investor, error: investorError } = await supabase
+    const { data: rawInvestor, error: investorError } = await supabase
       .from("investors")
       .select(
         `
@@ -57,6 +57,7 @@ export async function GET(request: Request) {
       .eq("id", filters.investor_id)
       .eq("entity_id", filters.entity_id)
       .single()
+    const investor = rawInvestor as any
 
     if (investorError || !investor) {
       return NextResponse.json(
@@ -92,7 +93,7 @@ export async function GET(request: Request) {
 
       if (priorContributions) {
         for (const resp of priorContributions) {
-          const capitalCall = resp.capital_call as { entity_id: string } | null
+          const capitalCall = resp.capital_call as unknown as { entity_id: string } | null
           if (capitalCall && capitalCall.entity_id === filters.entity_id) {
             beginningContributions += resp.amount_received || 0
           }
@@ -112,7 +113,7 @@ export async function GET(request: Request) {
 
       if (priorDistributions) {
         for (const alloc of priorDistributions) {
-          const dist = alloc.distribution as {
+          const dist = alloc.distribution as unknown as {
             entity_id: string
             status: string
             distribution_date: string
@@ -157,11 +158,11 @@ export async function GET(request: Request) {
     // Filter contributions to this entity
     const contributions = (periodContributions || [])
       .filter((resp) => {
-        const capitalCall = resp.capital_call as { entity_id: string } | null
+        const capitalCall = resp.capital_call as unknown as { entity_id: string } | null
         return capitalCall && capitalCall.entity_id === filters.entity_id
       })
       .map((resp) => {
-        const capitalCall = resp.capital_call as {
+        const capitalCall = resp.capital_call as unknown as {
           id: string
           call_date: string
           description: string
@@ -191,7 +192,7 @@ export async function GET(request: Request) {
 
     const distributions = (periodAllocations || [])
       .filter((alloc) => {
-        const dist = alloc.distribution as {
+        const dist = alloc.distribution as unknown as {
           entity_id: string
           status: string
           distribution_date: string
@@ -208,7 +209,7 @@ export async function GET(request: Request) {
         return true
       })
       .map((alloc) => {
-        const dist = alloc.distribution as {
+        const dist = alloc.distribution as unknown as {
           id: string
           distribution_date: string
           distribution_type: string
