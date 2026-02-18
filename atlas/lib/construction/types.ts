@@ -388,6 +388,92 @@ export const TRADE_CATEGORIES = [
   "Final Grade & Seed/Sod",
 ] as const
 
+// ---- Permit Types (v4 spec §3.10) ----
+export type PermitType =
+  | "building"
+  | "electrical"
+  | "plumbing"
+  | "mechanical"
+  | "land_disturbance"
+  | "driveway"
+  | "other"
+
+export const PERMIT_TYPE_LABELS: Record<PermitType, string> = {
+  building: "Building",
+  electrical: "Electrical",
+  plumbing: "Plumbing",
+  mechanical: "Mechanical",
+  land_disturbance: "Land Disturbance",
+  driveway: "Driveway",
+  other: "Other",
+}
+
+export type PermitStatus =
+  | "applied"
+  | "in_review"
+  | "revisions_requested"
+  | "resubmitted"
+  | "approved"
+  | "issued"
+  | "active"
+  | "expired"
+  | "closed"
+
+export const PERMIT_STATUS_CONFIG: Record<
+  PermitStatus,
+  { label: string; bgColor: string; order: number }
+> = {
+  applied: { label: "Applied", bgColor: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200", order: 0 },
+  in_review: { label: "In Review", bgColor: "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200", order: 1 },
+  revisions_requested: { label: "Revisions Requested", bgColor: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200", order: 2 },
+  resubmitted: { label: "Resubmitted", bgColor: "bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200", order: 3 },
+  approved: { label: "Approved", bgColor: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200", order: 4 },
+  issued: { label: "Issued", bgColor: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200", order: 5 },
+  active: { label: "Active", bgColor: "bg-teal-100 text-teal-800 dark:bg-teal-900 dark:text-teal-200", order: 6 },
+  expired: { label: "Expired", bgColor: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200", order: 7 },
+  closed: { label: "Closed", bgColor: "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200", order: 8 },
+}
+
+export const PERMIT_STATUS_FLOW: Record<PermitStatus, PermitStatus[]> = {
+  applied: ["in_review"],
+  in_review: ["revisions_requested", "approved"],
+  revisions_requested: ["resubmitted"],
+  resubmitted: ["in_review"],
+  approved: ["issued"],
+  issued: ["active"],
+  active: ["expired", "closed"],
+  expired: [],
+  closed: [],
+}
+
+export interface Permit {
+  id: string
+  job_id: string
+  unit_id?: string
+  permit_type: PermitType
+  jurisdiction: string
+  application_date: string
+  permit_number?: string
+  issued_date?: string
+  expiration_date?: string
+  fee_amount: number
+  fee_paid: boolean
+  status: PermitStatus
+  notes?: string
+  documents: PermitDocument[]
+  created_at: string
+  updated_at: string
+}
+
+export interface PermitDocument {
+  id: string
+  permit_id: string
+  name: string
+  category: "application" | "plans" | "comments" | "resubmittal" | "approved_plans" | "permit_card"
+  url?: string
+  uploaded_date: string
+}
+
 // ---- Data Interfaces ----
 export interface Job {
   id: string

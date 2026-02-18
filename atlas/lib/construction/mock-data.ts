@@ -14,6 +14,7 @@ import type {
   Vendor,
   WarrantyClaim,
   ActivityFeedItem,
+  Permit,
 } from "./types"
 import { CONSTRUCTION_PHASES, PHASE_INSPECTIONS } from "./types"
 
@@ -1395,4 +1396,125 @@ export const MOCK_1099_SUMMARIES: Vendor1099Summary[] = [
   { contact_id: "vendor-003", company_name: "All-Site Services Inc", w9_on_file: false, tax_year: 2026, total_payments: 37000, is_1099_eligible: true },
   { contact_id: "vendor-004", company_name: "Upstate Electric LLC", w9_on_file: true, tax_year: 2026, total_payments: 89000, is_1099_eligible: true },
   { contact_id: "vendor-005", company_name: "Low Country Plumbing", w9_on_file: true, tax_year: 2026, total_payments: 420, is_1099_eligible: false },
+]
+
+// ---- Permits (v4 spec §3.10) ----
+export const MOCK_PERMITS: Permit[] = [
+  {
+    id: "permit-001", job_id: "job-001", unit_id: undefined,
+    permit_type: "land_disturbance", jurisdiction: "Greenville County",
+    application_date: "2025-02-15", permit_number: "LD-2025-0341",
+    issued_date: "2025-03-01", expiration_date: "2026-03-01",
+    fee_amount: 2500, fee_paid: true, status: "active",
+    notes: "Covers entire Phase 2 site. SWPPP on file.",
+    documents: [
+      { id: "pd-001", permit_id: "permit-001", name: "Land Disturbance Application", category: "application", uploaded_date: "2025-02-15" },
+      { id: "pd-002", permit_id: "permit-001", name: "SWPPP Plan", category: "plans", uploaded_date: "2025-02-15" },
+      { id: "pd-003", permit_id: "permit-001", name: "Approved Permit", category: "permit_card", uploaded_date: "2025-03-01" },
+    ],
+    created_at: "2025-02-15T10:00:00Z", updated_at: "2025-03-01T10:00:00Z",
+  },
+  {
+    id: "permit-002", job_id: "job-001", unit_id: "unit-001-001",
+    permit_type: "building", jurisdiction: "City of Greenville",
+    application_date: "2025-03-10", permit_number: "BP-2025-1247",
+    issued_date: "2025-04-10", expiration_date: "2026-04-10",
+    fee_amount: 3200, fee_paid: true, status: "active",
+    notes: "The Ashford - 2,450 SF. Plans approved with minor conditions.",
+    documents: [
+      { id: "pd-004", permit_id: "permit-002", name: "Building Permit Application", category: "application", uploaded_date: "2025-03-10" },
+      { id: "pd-005", permit_id: "permit-002", name: "Construction Plans (Set A)", category: "plans", uploaded_date: "2025-03-10" },
+      { id: "pd-006", permit_id: "permit-002", name: "Reviewer Comments - Round 1", category: "comments", uploaded_date: "2025-03-25" },
+      { id: "pd-007", permit_id: "permit-002", name: "Revised Plans (Set B)", category: "resubmittal", uploaded_date: "2025-03-28" },
+      { id: "pd-008", permit_id: "permit-002", name: "Approved Stamped Plans", category: "approved_plans", uploaded_date: "2025-04-10" },
+      { id: "pd-009", permit_id: "permit-002", name: "Permit Card Scan", category: "permit_card", uploaded_date: "2025-04-10" },
+    ],
+    created_at: "2025-03-10T10:00:00Z", updated_at: "2025-04-10T10:00:00Z",
+  },
+  {
+    id: "permit-003", job_id: "job-001", unit_id: "unit-001-001",
+    permit_type: "electrical", jurisdiction: "City of Greenville",
+    application_date: "2025-04-15", permit_number: "EP-2025-0892",
+    issued_date: "2025-04-20", expiration_date: "2026-04-20",
+    fee_amount: 450, fee_paid: true, status: "active",
+    documents: [
+      { id: "pd-010", permit_id: "permit-003", name: "Electrical Permit App", category: "application", uploaded_date: "2025-04-15" },
+    ],
+    created_at: "2025-04-15T10:00:00Z", updated_at: "2025-04-20T10:00:00Z",
+  },
+  {
+    id: "permit-004", job_id: "job-001", unit_id: "unit-001-001",
+    permit_type: "plumbing", jurisdiction: "City of Greenville",
+    application_date: "2025-04-15", permit_number: "PP-2025-0641",
+    issued_date: "2025-04-22", expiration_date: "2026-04-22",
+    fee_amount: 375, fee_paid: true, status: "active",
+    documents: [],
+    created_at: "2025-04-15T10:00:00Z", updated_at: "2025-04-22T10:00:00Z",
+  },
+  {
+    id: "permit-005", job_id: "job-001", unit_id: "unit-001-001",
+    permit_type: "mechanical", jurisdiction: "City of Greenville",
+    application_date: "2025-04-15", permit_number: "MP-2025-0483",
+    issued_date: "2025-04-21", expiration_date: "2026-04-21",
+    fee_amount: 350, fee_paid: true, status: "active",
+    documents: [],
+    created_at: "2025-04-15T10:00:00Z", updated_at: "2025-04-21T10:00:00Z",
+  },
+  {
+    id: "permit-006", job_id: "job-001", unit_id: "unit-001-007",
+    permit_type: "building", jurisdiction: "City of Greenville",
+    application_date: "2025-05-20", permit_number: "BP-2025-1583",
+    issued_date: "2025-06-18",
+    expiration_date: "2026-06-18",
+    fee_amount: 3200, fee_paid: true, status: "active",
+    documents: [
+      { id: "pd-011", permit_id: "permit-006", name: "Building Permit Application", category: "application", uploaded_date: "2025-05-20" },
+      { id: "pd-012", permit_id: "permit-006", name: "Approved Stamped Plans", category: "approved_plans", uploaded_date: "2025-06-18" },
+    ],
+    created_at: "2025-05-20T10:00:00Z", updated_at: "2025-06-18T10:00:00Z",
+  },
+  {
+    id: "permit-007", job_id: "job-001", unit_id: "unit-001-013",
+    permit_type: "building", jurisdiction: "City of Greenville",
+    application_date: "2025-08-05",
+    fee_amount: 2800, fee_paid: true, status: "in_review",
+    notes: "Under review since Aug 12. Plan reviewer: J. Mitchell.",
+    documents: [
+      { id: "pd-013", permit_id: "permit-007", name: "Building Permit Application", category: "application", uploaded_date: "2025-08-05" },
+      { id: "pd-014", permit_id: "permit-007", name: "Construction Plans", category: "plans", uploaded_date: "2025-08-05" },
+    ],
+    created_at: "2025-08-05T10:00:00Z", updated_at: "2025-08-12T10:00:00Z",
+  },
+  {
+    id: "permit-008", job_id: "job-001", unit_id: "unit-001-014",
+    permit_type: "building", jurisdiction: "City of Greenville",
+    application_date: "2025-09-01",
+    fee_amount: 3400, fee_paid: false, status: "revisions_requested",
+    notes: "Reviewer requested stormwater calcs revision. Due by Sep 20.",
+    documents: [
+      { id: "pd-015", permit_id: "permit-008", name: "Building Permit Application", category: "application", uploaded_date: "2025-09-01" },
+      { id: "pd-016", permit_id: "permit-008", name: "Reviewer Comments", category: "comments", uploaded_date: "2025-09-12" },
+    ],
+    created_at: "2025-09-01T10:00:00Z", updated_at: "2025-09-12T10:00:00Z",
+  },
+  {
+    id: "permit-009", job_id: "job-001", unit_id: "unit-001-015",
+    permit_type: "building", jurisdiction: "City of Greenville",
+    application_date: "2025-10-15",
+    fee_amount: 2800, fee_paid: true, status: "applied",
+    documents: [
+      { id: "pd-017", permit_id: "permit-009", name: "Building Permit Application", category: "application", uploaded_date: "2025-10-15" },
+    ],
+    created_at: "2025-10-15T10:00:00Z", updated_at: "2025-10-15T10:00:00Z",
+  },
+  {
+    id: "permit-010", job_id: "job-001", unit_id: "unit-001-002",
+    permit_type: "driveway", jurisdiction: "Greenville County",
+    application_date: "2025-04-01", permit_number: "DW-2025-0127",
+    issued_date: "2025-04-08", expiration_date: "2025-10-08",
+    fee_amount: 150, fee_paid: true, status: "expired",
+    notes: "Expired — driveway complete. No renewal needed.",
+    documents: [],
+    created_at: "2025-04-01T10:00:00Z", updated_at: "2025-10-08T10:00:00Z",
+  },
 ]

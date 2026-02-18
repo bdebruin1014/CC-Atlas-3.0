@@ -189,6 +189,7 @@ function getConstructionDetailSidebar(id: string): SidebarConfig {
           { label: "Units", href: `${base}/units`, icon: Layers },
           { label: "Schedule", href: `${base}/schedule`, icon: CalendarDays },
           { label: "Budget", href: `${base}/budget`, icon: Calculator },
+          { label: "Permitting", href: `${base}/permitting`, icon: ShieldCheck },
           { label: "Purchase Orders", href: `${base}/pos`, icon: Package },
           { label: "Change Orders", href: `${base}/change-orders`, icon: ClipboardList },
           { label: "Inspections", href: `${base}/inspections`, icon: Eye },
