@@ -139,7 +139,7 @@ export default function DistributionsPage({ params }: { params: Promise<{ id: st
         .eq("entity_id", entityId)
         .eq("status", "active")
         .order("ownership_percent", { ascending: false })
-      if (invData) setInvestors(invData as Investor[])
+      if (invData) setInvestors(invData as unknown as Investor[])
 
       // Load waterfall structures
       const { data: wsData } = await supabase

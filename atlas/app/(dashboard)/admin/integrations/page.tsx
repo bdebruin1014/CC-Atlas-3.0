@@ -125,7 +125,7 @@ export default function IntegrationsPage() {
         .select("*")
 
       const configs: IntegrationConfig[] = INTEGRATION_DEFINITIONS.map((def) => {
-        const saved = settings?.find((s: { provider: string }) => s.provider === def.provider)
+        const saved = (settings as any)?.find((s: { provider: string }) => s.provider === def.provider)
         return {
           ...def,
           id: saved?.id || undefined,

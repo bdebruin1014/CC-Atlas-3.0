@@ -112,7 +112,7 @@ export default function FloorPlansPage() {
       const { data, error: fetchError } = await query
 
       if (fetchError) throw fetchError
-      setFloorPlans((data as FloorPlan[]) || [])
+      setFloorPlans((data as unknown as FloorPlan[]) || [])
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to fetch floor plans")
     } finally {

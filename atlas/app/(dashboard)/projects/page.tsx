@@ -325,12 +325,12 @@ export default function ProjectsPage() {
             <TableBody>
               {projects.map((project) => {
                 const budgetPct =
-                  project.total_budget > 0
-                    ? (project.current_spend / project.total_budget) * 100
+                  (project.budget_total ?? 0) > 0
+                    ? ((project.actual_total_cost ?? 0) / (project.budget_total ?? 1)) * 100
                     : 0
                 const barColor = getBudgetHealthColor(
-                  project.current_spend,
-                  project.total_budget
+                  project.actual_total_cost ?? 0,
+                  project.budget_total ?? 0
                 )
 
                 return (
@@ -345,10 +345,10 @@ export default function ProjectsPage() {
                     <TableCell>
                       <div>
                         <div className="font-medium text-sm">{project.name}</div>
-                        {project.address && (
+                        {project.address_street && (
                           <div className="text-xs text-muted-foreground">
-                            {project.address}
-                            {project.city ? `, ${project.city}` : ""}
+                            {project.address_street}
+                            {project.address_city ? `, ${project.address_city}` : ""}
                           </div>
                         )}
                       </div>
@@ -373,7 +373,7 @@ export default function ProjectsPage() {
                       {project.owner_entity_name ?? "\u2014"}
                     </TableCell>
                     <TableCell className="text-right text-xs">
-                      {formatCurrency(project.total_budget, { compact: true })}
+                      {formatCurrency(project.budget_total, { compact: true })}
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">

@@ -185,7 +185,7 @@ export default function AccountingDashboardPage() {
         .order("name")
 
       if (data && data.length > 0) {
-        setEntities(data as Entity[])
+        setEntities(data as unknown as Entity[])
       }
       setLoading(false)
     }

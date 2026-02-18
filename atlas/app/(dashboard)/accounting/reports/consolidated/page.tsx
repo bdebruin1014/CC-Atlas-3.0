@@ -131,7 +131,7 @@ export default function ConsolidatedReportsPage() {
         .select("*")
         .order("name")
       if (data && data.length > 0) {
-        setEntities(data as Entity[])
+        setEntities(data as unknown as Entity[])
       }
     }
     loadEntities()

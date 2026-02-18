@@ -199,7 +199,7 @@ export default function TransactionsPage({ params }: { params: Promise<{ id: str
         period,
         supporting_document_url: null,
         created_by: user?.id || "",
-      })
+      } as any)
       .select()
       .single()
 
@@ -211,7 +211,7 @@ export default function TransactionsPage({ params }: { params: Promise<{ id: str
 
     // Insert line items
     const lineItems = data.line_items.map((li) => ({
-      transaction_id: txnData.id,
+      transaction_id: (txnData as any).id,
       account_id: li.account_id,
       debit_amount: parseFloat(li.debit_amount) || 0,
       credit_amount: parseFloat(li.credit_amount) || 0,
@@ -232,7 +232,7 @@ export default function TransactionsPage({ params }: { params: Promise<{ id: str
 
     // Add to state
     const newTxn: Transaction = {
-      ...txnData,
+      ...(txnData as any),
       line_items: lineItems.map((li, idx) => ({
         ...li,
         id: `temp_${idx}`,

@@ -129,7 +129,7 @@ export default function OpportunityDetailPage() {
         .single()
 
       if (error) throw error
-      setOpportunity(data as Opportunity)
+      setOpportunity(data as unknown as Opportunity)
     } catch {
       toast({
         title: 'Error',
@@ -152,7 +152,7 @@ export default function OpportunityDetailPage() {
       const supabase = createClient()
       const { error } = await supabase
         .from('opportunities')
-        .update({ archived: true })
+        .update({ archived: true } as any)
         .eq('id', id)
 
       if (error) throw error
@@ -958,7 +958,7 @@ function ContactsTab({ opportunityId }: { opportunityId: string }) {
         .eq('record_type', 'opportunity')
         .eq('record_id', opportunityId)
 
-      setContacts((data as typeof contacts) ?? [])
+      setContacts((data as unknown as typeof contacts) ?? [])
       setLoading(false)
     }
     fetch()
@@ -1093,7 +1093,7 @@ function ActivityTab({ opportunityId }: { opportunityId: string }) {
         .order('created_at', { ascending: false })
         .limit(50)
 
-      setActivities((data as typeof activities) ?? [])
+      setActivities((data as unknown as typeof activities) ?? [])
       setLoading(false)
     }
     fetch()

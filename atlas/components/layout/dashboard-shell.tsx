@@ -22,20 +22,23 @@ interface UserProfile {
   avatar_url: string | null
 }
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 5 * 60 * 1000,
-      retry: 1,
+function makeQueryClient() {
+  return new QueryClient({
+    defaultOptions: {
+      queries: {
+        staleTime: 5 * 60 * 1000,
+        retry: 1,
+      },
     },
-  },
-})
+  })
+}
 
 export function DashboardShell({
   children,
 }: {
   children: React.ReactNode
 }) {
+  const [queryClient] = React.useState(makeQueryClient)
   const router = useRouter()
   const supabase = createClient()
   const [user, setUser] = React.useState<UserProfile | null>(null)

@@ -419,10 +419,14 @@ export default function ProjectDetailPage() {
       const supabase = createClient()
       supabase
         .from("jobs")
-        .select("id, job_number, name, status, type")
-        .eq("project_id", projectId)
+        .select("id, job_number, name, status, client_type")
+        .eq("linked_project_id", projectId)
         .then(({ data }) => {
-          setLinkedJobs((data ?? []) as LinkedJob[])
+          setLinkedJobs(
+            ((data ?? []) as unknown as { id: string; job_number: string; name: string; status: string; client_type: string }[]).map(
+              (j) => ({ id: j.id, job_number: j.job_number, name: j.name, status: j.status, type: j.client_type })
+            )
+          )
         })
     })
   })
@@ -449,7 +453,7 @@ export default function ProjectDetailPage() {
     )
   }
 
-  const variance = project.total_budget - project.projected_final
+  const variance = (project.budget_total ?? 0) - (project.actual_total_cost ?? 0)
   const varianceIsPositive = variance >= 0
 
   const handleStatusChange = async () => {
@@ -474,7 +478,7 @@ export default function ProjectDetailPage() {
 
   const handleNoteSave = async (notes: string) => {
     try {
-      await updateMutation.mutateAsync({ id: projectId, notes })
+      await updateMutation.mutateAsync({ id: projectId, ...({ notes } as Record<string, unknown>) } as { id: string } & Partial<Project>)
     } catch {
       // handled by mutation
     }
@@ -583,7 +587,7 @@ export default function ProjectDetailPage() {
                   Total Budget
                 </div>
                 <div className="text-2xl font-bold">
-                  {formatCurrency(project.total_budget)}
+                  {formatCurrency(project.budget_total)}
                 </div>
               </CardContent>
             </Card>
@@ -594,7 +598,7 @@ export default function ProjectDetailPage() {
                   Current Spend
                 </div>
                 <div className="text-2xl font-bold">
-                  {formatCurrency(project.current_spend)}
+                  {formatCurrency(project.actual_total_cost)}
                 </div>
               </CardContent>
             </Card>
@@ -605,7 +609,7 @@ export default function ProjectDetailPage() {
                   Projected Final
                 </div>
                 <div className="text-2xl font-bold">
-                  {formatCurrency(project.projected_final)}
+                  {formatCurrency(project.actual_total_cost)}
                 </div>
               </CardContent>
             </Card>
@@ -645,8 +649,8 @@ export default function ProjectDetailPage() {
                   <div>
                     <dt className="text-muted-foreground">Address</dt>
                     <dd className="font-medium">
-                      {project.address
-                        ? `${project.address}${project.city ? `, ${project.city}` : ""}${project.state ? `, ${project.state}` : ""} ${project.zip ?? ""}`
+                      {project.address_street
+                        ? `${project.address_street}${project.address_city ? `, ${project.address_city}` : ""}${project.address_state ? `, ${project.address_state}` : ""} ${project.address_zip ?? ""}`
                         : "\u2014"}
                     </dd>
                   </div>
@@ -663,10 +667,10 @@ export default function ProjectDetailPage() {
                     <dd className="font-medium">{project.builder_entity_name ?? "\u2014"}</dd>
                   </div>
                   <div>
-                    <dt className="text-muted-foreground">Contract Type</dt>
+                    <dt className="text-muted-foreground">Contract Signed</dt>
                     <dd className="font-medium">
-                      {project.contract_type
-                        ? project.contract_type.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())
+                      {project.contract_signed_date
+                        ? formatDate(project.contract_signed_date)
                         : "\u2014"}
                     </dd>
                   </div>
@@ -686,10 +690,10 @@ export default function ProjectDetailPage() {
                       </dd>
                     </div>
                   )}
-                  {project.acreage != null && (
+                  {project.total_acreage != null && (
                     <div>
                       <dt className="text-muted-foreground">Acreage</dt>
-                      <dd className="font-medium">{project.acreage} acres</dd>
+                      <dd className="font-medium">{project.total_acreage} acres</dd>
                     </div>
                   )}
                   {project.total_lots != null && (
@@ -732,7 +736,7 @@ export default function ProjectDetailPage() {
                   </div>
                   <div>
                     <dt className="text-muted-foreground">Permit Issued</dt>
-                    <dd className="font-medium">{formatDate(project.permit_date)}</dd>
+                    <dd className="font-medium">{formatDate(project.permit_approved_date)}</dd>
                   </div>
                   <div>
                     <dt className="text-muted-foreground">Construction Start</dt>
@@ -752,7 +756,7 @@ export default function ProjectDetailPage() {
                   </div>
                   <div>
                     <dt className="text-muted-foreground">Warranty Expiration</dt>
-                    <dd className="font-medium">{formatDate(project.warranty_expiration_date)}</dd>
+                    <dd className="font-medium">{formatDate(project.warranty_end_date)}</dd>
                   </div>
                 </dl>
               </CardContent>
@@ -807,8 +811,8 @@ export default function ProjectDetailPage() {
                 <div>
                   <dt className="text-muted-foreground">Purchase Price</dt>
                   <dd className="text-lg font-bold">
-                    {project.purchase_price != null
-                      ? formatCurrency(project.purchase_price)
+                    {project.budget_land_acquisition != null
+                      ? formatCurrency(project.budget_land_acquisition)
                       : "\u2014"}
                   </dd>
                 </div>
@@ -995,7 +999,7 @@ export default function ProjectDetailPage() {
 
         {/* ---- Notes Tab ---- */}
         <TabsContent value="notes" className="mt-6">
-          <NotesTab notes={project.notes} onSave={handleNoteSave} />
+          <NotesTab notes={(project as unknown as { notes?: string | null }).notes ?? null} onSave={handleNoteSave} />
         </TabsContent>
 
         {/* ---- Activity Tab ---- */}

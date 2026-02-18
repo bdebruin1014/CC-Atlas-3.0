@@ -109,7 +109,7 @@ export default function PeriodClosePage() {
         .select("*")
         .eq("status", "active")
         .order("name")
-      if (entityData) setEntities(entityData as Entity[])
+      if (entityData) setEntities(entityData as unknown as Entity[])
 
       const { data: periodData } = await supabase
         .from("accounting_periods")

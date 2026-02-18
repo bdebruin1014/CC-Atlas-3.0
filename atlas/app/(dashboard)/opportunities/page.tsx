@@ -112,10 +112,10 @@ export default function OpportunitiesPage() {
         .order('updated_at', { ascending: false })
 
       if (filterType !== 'all') {
-        query = query.eq('type', filterType)
+        query = query.eq('type', filterType as OpportunityType)
       }
       if (filterStage !== 'all') {
-        query = query.eq('stage', filterStage)
+        query = query.eq('current_stage', filterStage)
       }
       if (filterAssigned !== 'all') {
         query = query.eq('assigned_to', filterAssigned)
@@ -125,14 +125,14 @@ export default function OpportunitiesPage() {
       }
       if (searchQuery.trim()) {
         query = query.or(
-          `name.ilike.%${searchQuery}%,address_line1.ilike.%${searchQuery}%,address_city.ilike.%${searchQuery}%`
+          `name.ilike.%${searchQuery}%,address_street.ilike.%${searchQuery}%,address_city.ilike.%${searchQuery}%`
         )
       }
 
       const { data, error } = await query
 
       if (error) throw error
-      setOpportunities((data as Opportunity[]) ?? [])
+      setOpportunities((data as unknown as Opportunity[]) ?? [])
     } catch {
       toast({
         title: 'Error',
@@ -148,11 +148,17 @@ export default function OpportunitiesPage() {
   useEffect(() => {
     const supabase = createClient()
     Promise.all([
-      supabase.from('profiles').select('id, full_name').order('full_name'),
+      supabase.from('profiles').select('id, first_name, last_name').order('last_name'),
       supabase.from('entities').select('id, name').order('name'),
     ]).then(([usersRes, entitiesRes]) => {
-      if (usersRes.data) setUsers(usersRes.data as { id: string; full_name: string }[])
-      if (entitiesRes.data) setEntities(entitiesRes.data as { id: string; name: string }[])
+      if (usersRes.data) {
+        setUsers(
+          (usersRes.data as unknown as { id: string; first_name: string | null; last_name: string | null }[]).map(
+            (u) => ({ id: u.id, full_name: [u.first_name, u.last_name].filter(Boolean).join(' ') || 'Unknown' })
+          )
+        )
+      }
+      if (entitiesRes.data) setEntities(entitiesRes.data as unknown as { id: string; name: string }[])
     })
   }, [])
 
@@ -165,14 +171,14 @@ export default function OpportunitiesPage() {
     async (oppId: string, _fromStage: string, toStage: string) => {
       // Optimistic update
       setOpportunities((prev) =>
-        prev.map((o) => (o.id === oppId ? { ...o, stage: toStage } : o))
+        prev.map((o) => (o.id === oppId ? { ...o, current_stage: toStage } : o))
       )
 
       try {
         const supabase = createClient()
         const { error } = await supabase
           .from('opportunities')
-          .update({ stage: toStage, updated_at: new Date().toISOString() })
+          .update({ current_stage: toStage, updated_at: new Date().toISOString() })
           .eq('id', oppId)
 
         if (error) throw error
@@ -211,16 +217,16 @@ export default function OpportunitiesPage() {
         header: 'Name',
         sortable: true,
         cell: (row) => (
-          <span className="font-medium">{row.name || row.address_line1 || 'Untitled'}</span>
+          <span className="font-medium">{row.name || row.address_street || 'Untitled'}</span>
         ),
       },
       {
-        key: 'address_line1',
+        key: 'address_street',
         header: 'Address',
         sortable: true,
         cell: (row) => (
           <span className="text-sm">
-            {row.address_line1}
+            {row.address_street}
             {row.address_city ? `, ${row.address_city}` : ''}
           </span>
         ),
@@ -246,11 +252,11 @@ export default function OpportunitiesPage() {
         },
       },
       {
-        key: 'stage',
+        key: 'current_stage',
         header: 'Stage',
         sortable: true,
         cell: (row) => {
-          const stage = getStageDefinition(row.type, row.stage)
+          const stage = getStageDefinition(row.type, row.current_stage)
           return (
             <Badge
               variant="outline"
@@ -265,7 +271,7 @@ export default function OpportunitiesPage() {
                   : {}
               }
             >
-              {stage?.label ?? row.stage}
+              {stage?.label ?? row.current_stage}
             </Badge>
           )
         },
@@ -330,7 +336,7 @@ export default function OpportunitiesPage() {
   const analyticsData = useMemo(() => {
     // Pipeline value by stage
     const byStage = activeStages.map((stage) => {
-      const stageOpps = opportunities.filter((o) => o.stage === stage.id)
+      const stageOpps = opportunities.filter((o) => o.current_stage === stage.id)
       return {
         name: stage.label,
         value: stageOpps.reduce(
@@ -357,7 +363,7 @@ export default function OpportunitiesPage() {
     // Conversion rate
     const total = opportunities.length
     const closedWon = opportunities.filter(
-      (o) => o.stage === 'closed_won'
+      (o) => o.current_stage === 'closed_won'
     ).length
     const conversionRate = total > 0 ? (closedWon / total) * 100 : 0
 
@@ -555,10 +561,10 @@ export default function OpportunitiesPage() {
       {/* LIST VIEW                                                          */}
       {/* ================================================================== */}
       {view === 'list' && (
-        <DataTable<Opportunity>
-          columns={listColumns}
-          data={opportunities as (Opportunity & Record<string, unknown>)[]}
-          onRowClick={(row) => router.push(`/opportunities/${row.id}`)}
+        <DataTable
+          columns={listColumns as unknown as ColumnDef<Record<string, unknown>>[]}
+          data={opportunities as unknown as Record<string, unknown>[]}
+          onRowClick={(row) => router.push(`/opportunities/${(row as unknown as Opportunity).id}`)}
           isLoading={loading}
           emptyMessage="No opportunities found."
           pageSize={20}
@@ -654,7 +660,7 @@ export default function OpportunitiesPage() {
                   ) : (
                     opportunities.filter(
                       (o) =>
-                        o.stage !== 'closed_won' && o.stage !== 'closed_lost'
+                        o.current_stage !== 'closed_won' && o.current_stage !== 'closed_lost'
                     ).length
                   )}
                 </p>
@@ -696,9 +702,8 @@ export default function OpportunitiesPage() {
                         className="text-muted-foreground"
                       />
                       <Tooltip
-                        formatter={(value: number) =>
-                          formatCurrency(value)
-                        }
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                        formatter={((value: number) => formatCurrency(value)) as any}
                         contentStyle={{
                           backgroundColor: 'hsl(var(--card))',
                           border: '1px solid hsl(var(--border))',

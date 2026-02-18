@@ -121,7 +121,7 @@ export default function MunicipalitiesPage() {
 
       const { data, error: fetchError } = await query
       if (fetchError) throw fetchError
-      setMunicipalities((data as Municipality[]) || [])
+      setMunicipalities((data as unknown as Municipality[]) || [])
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to fetch municipalities")
     } finally {
@@ -327,7 +327,7 @@ export default function MunicipalitiesPage() {
               .insert({
                 ...data,
                 organization_id: user?.user_metadata?.organization_id || "",
-              })
+              } as any)
 
             if (insertError) throw insertError
             toast({ title: "Municipality added" })
