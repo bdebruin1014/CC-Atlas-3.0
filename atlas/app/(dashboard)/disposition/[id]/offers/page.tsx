@@ -1,17 +1,17 @@
 "use client"
 
-import { useListingContext } from "./layout"
-import { ListingOverviewTab } from "@/components/disposition/listing-overview-tab"
+import { useListingContext } from "../layout"
+import { ListingOffersTab } from "@/components/disposition/listing-offers-tab"
 import { Skeleton } from "@/components/ui/skeleton"
 
-export default function ListingOverviewPage() {
+export default function ListingOffersPage() {
   const { listing, loading } = useListingContext()
 
   if (loading) {
     return (
       <div className="space-y-4">
-        <Skeleton className="h-8 w-64" />
-        <Skeleton className="h-[400px] w-full" />
+        <Skeleton className="h-8 w-48" />
+        <Skeleton className="h-[300px] w-full" />
       </div>
     )
   }
@@ -24,5 +24,5 @@ export default function ListingOverviewPage() {
     )
   }
 
-  return <ListingOverviewTab listing={listing} />
+  return <ListingOffersTab listingId={listing.id} />
 }

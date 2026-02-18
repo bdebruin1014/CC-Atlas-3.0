@@ -534,11 +534,11 @@ function SidebarLinkItem({
         <button
           onClick={() => setExpanded(!expanded)}
           className={cn(
-            "flex w-full items-center gap-2 rounded px-2 py-1.5 text-[13px] transition-colors",
+            "flex w-full items-center gap-2 rounded-r px-2 py-1.5 text-[13px] transition-colors",
             "hover:bg-[var(--sidebar-accent)]",
             isActive
-              ? "font-medium text-[#1a5632]"
-              : "text-[#1F2937]",
+              ? "border-l-2 border-[#1a5632] font-medium text-[#1a5632] bg-[#1a5632]/5"
+              : "border-l-2 border-transparent text-[#1F2937]",
             depth > 0 && "pl-6"
           )}
         >
@@ -575,11 +575,11 @@ function SidebarLinkItem({
     <Link
       href={link.href}
       className={cn(
-        "flex items-center gap-2 rounded px-2 py-1.5 text-[13px] transition-colors",
+        "flex items-center gap-2 rounded-r px-2 py-1.5 text-[13px] transition-colors",
         "hover:bg-[var(--sidebar-accent)]",
         isActive
-          ? "font-medium text-[#1a5632]"
-          : "text-[#1F2937]",
+          ? "border-l-2 border-[#1a5632] font-medium text-[#1a5632] bg-[#1a5632]/5"
+          : "border-l-2 border-transparent text-[#1F2937]",
         depth > 0 && "pl-6"
       )}
     >
@@ -591,6 +591,78 @@ function SidebarLinkItem({
         </Badge>
       )}
     </Link>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Collapsible section component
+// ---------------------------------------------------------------------------
+
+function CollapsibleSection({
+  section,
+  pathname,
+  isFirst,
+}: {
+  section: SidebarSection
+  pathname: string
+  isFirst: boolean
+}) {
+  // Check if any link in this section is active
+  const hasActiveChild = section.links.some(
+    (link) =>
+      pathname === link.href ||
+      (pathname.startsWith(`${link.href}/`) && !link.children) ||
+      link.children?.some(
+        (child) => pathname === child.href || pathname.startsWith(`${child.href}/`)
+      )
+  )
+
+  const [expanded, setExpanded] = React.useState(true)
+
+  // Sections without a title are always expanded (bottom utility links)
+  if (!section.title) {
+    return (
+      <div className={cn(!isFirst && "mt-4")}>
+        <div className="flex flex-col gap-0.5">
+          {section.links.map((link) => (
+            <SidebarLinkItem
+              key={link.href}
+              link={link}
+              pathname={pathname}
+            />
+          ))}
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className={cn(!isFirst && "mt-3")}>
+      <button
+        onClick={() => setExpanded(!expanded)}
+        className="mb-1 flex w-full items-center gap-1 px-2 py-1 text-left"
+      >
+        {expanded ? (
+          <ChevronDown className="h-2.5 w-2.5 text-[#5A6B75]" />
+        ) : (
+          <ChevronRight className="h-2.5 w-2.5 text-[#5A6B75]" />
+        )}
+        <span className="text-[11px] font-semibold uppercase tracking-[0.5px] text-[#5A6B75]">
+          {section.title}
+        </span>
+      </button>
+      {expanded && (
+        <div className="flex flex-col gap-0.5">
+          {section.links.map((link) => (
+            <SidebarLinkItem
+              key={link.href}
+              link={link}
+              pathname={pathname}
+            />
+          ))}
+        </div>
+      )}
+    </div>
   )
 }
 
@@ -636,22 +708,12 @@ export function ContextSidebar() {
       <ScrollArea className="flex-1">
         <nav className="px-3 py-2">
           {config.sections.map((section, sIdx) => (
-            <div key={sIdx} className={cn(sIdx > 0 && "mt-4")}>
-              {section.title && (
-                <div className="mb-1.5 px-2 text-[11px] font-medium uppercase tracking-[0.5px] text-[#5A6B75]">
-                  {section.title}
-                </div>
-              )}
-              <div className="flex flex-col gap-0.5">
-                {section.links.map((link) => (
-                  <SidebarLinkItem
-                    key={link.href}
-                    link={link}
-                    pathname={pathname}
-                  />
-                ))}
-              </div>
-            </div>
+            <CollapsibleSection
+              key={sIdx}
+              section={section}
+              pathname={pathname}
+              isFirst={sIdx === 0}
+            />
           ))}
         </nav>
       </ScrollArea>
