@@ -34,7 +34,7 @@ export type StateCode = 'SC' | 'NC'
 export type MilestoneStatus = 'not_started' | 'in_progress' | 'complete' | 'blocked'
 export type POStatus = 'draft' | 'submitted' | 'approved' | 'in_progress' | 'complete' | 'invoiced' | 'paid'
 export type LienWaiverStatus = 'not_required' | 'pending' | 'conditional' | 'unconditional'
-export type COReasonCategory = 'owner_request' | 'field_condition' | 'design_error' | 'code_requirement' | 'other'
+export type COReasonCategory = 'owner_request' | 'field_condition' | 'design_error' | 'code_requirement' | 'scope_clarification' | 'other'
 export type ApprovalStatus = 'pending' | 'approved' | 'rejected' | 'revised'
 export type SelectionStatus = 'pending' | 'selected' | 'ordered' | 'received' | 'installed'
 export type InspectionResult = 'pass' | 'fail' | 'conditional'
@@ -461,6 +461,8 @@ export interface PurchaseOrder {
   updated_at: string
 }
 
+export type ApprovalThreshold = 'cm' | 'cm_principal' | 'principal'
+
 export interface ChangeOrder {
   id: string
   co_number: string | null
@@ -474,9 +476,12 @@ export interface ChangeOrder {
   total_with_markup: number | null
   schedule_impact_days: number
   approval_status: ApprovalStatus
+  approval_threshold: ApprovalThreshold | null
+  approval_notes: string | null
   approved_by: string | null
   approved_at: string | null
   created_at: string
+  updated_at: string
 }
 
 export interface FloorPlan {
