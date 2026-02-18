@@ -260,25 +260,15 @@ export async function POST(request: Request) {
       // Job was created but units failed - don't fail the whole request
     }
 
-    // Create 16-phase milestones for each unit
+    // Create 6-milestone construction milestones for each unit (v4 spec §3.6)
     if (units && units.length > 0) {
       const PHASES = [
-        { number: 1, name: "Pre-Construction", duration: 14 },
-        { number: 2, name: "Permitting", duration: 21 },
-        { number: 3, name: "Site Work", duration: 7 },
-        { number: 4, name: "Foundation", duration: 10 },
-        { number: 5, name: "Framing", duration: 14 },
-        { number: 6, name: "Roofing", duration: 5 },
-        { number: 7, name: "MEP Rough-In", duration: 10 },
-        { number: 8, name: "Insulation", duration: 3 },
-        { number: 9, name: "Drywall", duration: 10 },
-        { number: 10, name: "Interior Trim", duration: 10 },
-        { number: 11, name: "Cabinets & Countertops", duration: 7 },
-        { number: 12, name: "MEP Finish", duration: 5 },
-        { number: 13, name: "Paint & Flooring", duration: 10 },
-        { number: 14, name: "Exterior Finish", duration: 7 },
-        { number: 15, name: "Final Punch & Clean", duration: 5 },
-        { number: 16, name: "Certificate of Occupancy", duration: 3 },
+        { number: 1, name: "Permit", duration: 21 },
+        { number: 2, name: "Foundation", duration: 21 },
+        { number: 3, name: "Frame", duration: 28 },
+        { number: 4, name: "Sheetrock", duration: 21 },
+        { number: 5, name: "CO", duration: 42 },
+        { number: 6, name: "Complete", duration: 14 },
       ]
 
       const milestonePayloads: Record<string, unknown>[] = []

@@ -176,24 +176,14 @@ export async function POST(
         }
       }
 
-      // Default 16-phase fallback (used when no construction workflow template exists)
+      // Default 6-milestone fallback (per v4 spec §3.6)
       const DEFAULT_PHASES = [
-        { phase_number: 1, phase_name: "Pre-Construction", duration_days: 15 },
-        { phase_number: 2, phase_name: "Site Work", duration_days: 10 },
-        { phase_number: 3, phase_name: "Foundation", duration_days: 12 },
-        { phase_number: 4, phase_name: "Framing", duration_days: 14 },
-        { phase_number: 5, phase_name: "Dry-In", duration_days: 7 },
-        { phase_number: 6, phase_name: "MEP Plumbing", duration_days: 5 },
-        { phase_number: 7, phase_name: "MEP Electrical", duration_days: 5 },
-        { phase_number: 8, phase_name: "MEP HVAC", duration_days: 5 },
-        { phase_number: 9, phase_name: "Insulation", duration_days: 3 },
-        { phase_number: 10, phase_name: "Drywall", duration_days: 10 },
-        { phase_number: 11, phase_name: "Trim & Interior", duration_days: 12 },
-        { phase_number: 12, phase_name: "Paint", duration_days: 5 },
-        { phase_number: 13, phase_name: "Flooring", duration_days: 5 },
-        { phase_number: 14, phase_name: "Final MEP", duration_days: 5 },
-        { phase_number: 15, phase_name: "Punch/Final", duration_days: 7 },
-        { phase_number: 16, phase_name: "Close-Out", duration_days: 5 },
+        { phase_number: 1, phase_name: "Permit", duration_days: 21 },
+        { phase_number: 2, phase_name: "Foundation", duration_days: 21 },
+        { phase_number: 3, phase_name: "Frame", duration_days: 28 },
+        { phase_number: 4, phase_name: "Sheetrock", duration_days: 21 },
+        { phase_number: 5, phase_name: "CO", duration_days: 42 },
+        { phase_number: 6, phase_name: "Complete", duration_days: 14 },
       ]
 
       const phases = workflowPhases || DEFAULT_PHASES

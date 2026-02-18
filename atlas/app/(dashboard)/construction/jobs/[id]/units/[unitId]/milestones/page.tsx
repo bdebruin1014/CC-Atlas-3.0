@@ -90,7 +90,7 @@ export default function MilestonesPage() {
       <Card>
         <CardHeader>
           <CardTitle className="text-base">
-            16-Phase Construction Progress
+            Construction Milestones
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -105,7 +105,7 @@ export default function MilestonesPage() {
 
       {/* Detailed Phase List */}
       <div className="space-y-3">
-        <h2 className="text-lg font-semibold">Phase Details</h2>
+        <h2 className="text-lg font-semibold">Milestone Details</h2>
         {milestones.map((ms) => {
           const phase = CONSTRUCTION_PHASES.find(
             (p) => p.number === ms.phase_number

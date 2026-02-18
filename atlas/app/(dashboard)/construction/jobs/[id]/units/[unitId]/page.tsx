@@ -43,6 +43,7 @@ import { RecordTasksPanel, useRecordTaskCount } from "@/components/shared/record
 import { PhotoGallery } from "@/components/construction/photo-gallery"
 import { PunchListTab } from "@/components/construction/punch-list-tab"
 import { PreCOChecklist } from "@/components/construction/pre-co-checklist"
+import { WarrantyTimeline } from "@/components/construction/warranty-timeline"
 import { useUnit, useUnitMilestones } from "@/lib/hooks/use-units"
 import { useCompleteMilestone } from "@/lib/hooks/use-milestones"
 
@@ -71,7 +72,7 @@ export default function UnitDetailPage() {
         floor_plan_name: "",
         floor_plan_specs: "",
         upgrade_package: dbUnit.upgrade_package,
-        status: (dbUnit.current_milestone ?? 0) >= 16 ? "complete" as const : (dbUnit.current_milestone ?? 0) > 0 ? "in_progress" as const : "not_started" as const,
+        status: (dbUnit.current_milestone ?? 0) >= 6 ? "complete" as const : (dbUnit.current_milestone ?? 0) > 0 ? "in_progress" as const : "not_started" as const,
         current_phase: dbUnit.current_milestone ?? 0,
         total_budget: dbUnit.total_budget ?? 0,
         committed: dbUnit.total_committed ?? 0,
@@ -313,7 +314,7 @@ export default function UnitDetailPage() {
       </div>
 
       {/* Disposition prompt — shown when unit reaches final milestone (CO) */}
-      {unit.current_phase >= 16 && (
+      {unit.current_phase >= 6 && (
         <div className="flex items-center justify-between rounded-lg border border-green-200 bg-green-50 px-4 py-3">
           <div className="flex items-center gap-2">
             <CheckCircle2 className="h-5 w-5 text-green-600" />
@@ -348,7 +349,7 @@ export default function UnitDetailPage() {
         <TabsContent value="milestones" className="space-y-4">
           <div className="flex items-center justify-between">
             <p className="text-sm text-muted-foreground">
-              16-phase construction milestones
+              6-milestone construction progress
             </p>
             <Button
               variant="outline"
@@ -673,30 +674,18 @@ export default function UnitDetailPage() {
 
         {/* ---- Warranty Tab ---- */}
         <TabsContent value="warranty" className="space-y-4">
-          <Card>
-            <CardContent className="flex flex-col items-center justify-center py-16">
-              <Shield className="mb-4 h-12 w-12 text-muted-foreground" />
-              <h3 className="mb-1 text-lg font-semibold">
-                {unit.status === "complete"
-                  ? "Warranty period active"
-                  : "Warranty starts after CO"}
-              </h3>
-              <p className="text-sm text-muted-foreground">
-                {unit.status === "complete"
-                  ? "View warranty claims in the Warranty module."
-                  : "Warranty tracking begins once Certificate of Occupancy is issued."}
-              </p>
-              {unit.status === "complete" && (
-                <Button
-                  variant="outline"
-                  className="mt-4"
-                  onClick={() => router.push("/construction/warranty")}
-                >
-                  View Warranty Claims
-                </Button>
-              )}
-            </CardContent>
-          </Card>
+          <WarrantyTimeline coDate={unit.co_date ?? null} unitId={unitId} />
+          {unit.status === "complete" && (
+            <div className="flex justify-end">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => router.push("/construction/warranty")}
+              >
+                View Warranty Claims
+              </Button>
+            </div>
+          )}
         </TabsContent>
       </Tabs>
     </div>

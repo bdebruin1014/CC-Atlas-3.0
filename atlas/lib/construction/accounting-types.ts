@@ -200,10 +200,10 @@ export const DRAW_STATUS_CONFIG: Record<
 
 export const DEFAULT_DRAW_SCHEDULE = [
   { draw_number: 1, name: 'Deposit', percentage: 20, milestone_phase: null },
-  { draw_number: 2, name: 'Foundation', percentage: 20, milestone_phase: 4 },
-  { draw_number: 3, name: 'Framing / Dry-In', percentage: 25, milestone_phase: 5 },
-  { draw_number: 4, name: 'Drywall / Trim', percentage: 25, milestone_phase: 10 },
-  { draw_number: 5, name: 'Final / CO', percentage: 10, milestone_phase: 16 },
+  { draw_number: 2, name: 'Foundation', percentage: 20, milestone_phase: 2 },
+  { draw_number: 3, name: 'Frame', percentage: 25, milestone_phase: 3 },
+  { draw_number: 4, name: 'Sheetrock / Trim', percentage: 25, milestone_phase: 4 },
+  { draw_number: 5, name: 'Final / CO', percentage: 10, milestone_phase: 6 },
 ] as const
 
 export interface DrawScheduleItem {
