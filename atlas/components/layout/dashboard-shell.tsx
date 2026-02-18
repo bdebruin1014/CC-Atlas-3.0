@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider, QueryCache, MutationCache } from "@ta
 
 import { createClient } from "@/lib/supabase/client"
 import { TopNav } from "@/components/layout/top-nav"
+import { OpenTabsBar } from "@/components/layout/open-tabs-bar"
 import { ContextSidebar } from "@/components/layout/context-sidebar"
 import { RightPanel } from "@/components/layout/right-panel"
 import { SearchCommand } from "@/components/shared/search-command"
@@ -129,6 +130,7 @@ export function DashboardShell({
     <QueryClientProvider client={queryClient}>
       <div className="flex h-screen flex-col overflow-hidden">
         <TopNav user={user} />
+        <OpenTabsBar />
         <div className="flex flex-1 overflow-hidden">
           <ContextSidebar />
           <main className="flex-1 overflow-y-auto bg-[var(--background)] p-6">

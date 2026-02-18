@@ -40,6 +40,7 @@ import {
   CheckCircle2,
   ExternalLink,
 } from "lucide-react"
+import { useTabNavigation } from "@/lib/hooks/use-tab-navigation"
 
 // ---------------------------------------------------------------------------
 // Context for sharing opportunity data across sub-routes
@@ -115,6 +116,13 @@ export default function OpportunityDetailLayout({
   useEffect(() => {
     fetchOpportunity()
   }, [fetchOpportunity])
+
+  // Register open-records tab
+  useTabNavigation({
+    id,
+    label: opportunity?.name || opportunity?.address_street || "Loading...",
+    module: "opportunity",
+  })
 
   // ---- Actions ----
 

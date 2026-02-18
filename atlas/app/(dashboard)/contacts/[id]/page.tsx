@@ -36,6 +36,7 @@ import {
 } from "@/lib/hooks/use-contacts"
 import type { Contact, ContactAssignment } from "@/lib/hooks/use-contacts"
 import { createClient } from "@/lib/supabase/client"
+import { useTabNavigation } from "@/lib/hooks/use-tab-navigation"
 
 interface ActivityEntry {
   id: string
@@ -64,6 +65,15 @@ export default function ContactDetailPage() {
   const { contact, assignments, loading, error, refetch } =
     useContact(contactId)
   const updateContactMutation = useUpdateContact()
+
+  // Register open-records tab
+  useTabNavigation({
+    id: contactId,
+    label: contact
+      ? `${contact.first_name} ${contact.last_name}`
+      : "Loading...",
+    module: "contact",
+  })
 
   const [isEditing, setIsEditing] = useState(false)
   const [editData, setEditData] = useState<Partial<Contact>>({})

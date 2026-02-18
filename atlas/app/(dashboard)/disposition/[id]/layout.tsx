@@ -9,6 +9,7 @@ import { ArrowLeft } from "lucide-react"
 import { useListing, useContract, type ListingDetail } from "@/lib/hooks/use-disposition"
 import type { ContractDetail } from "@/lib/hooks/use-disposition"
 import { formatCurrency } from "@/lib/utils/format"
+import { useTabNavigation } from "@/lib/hooks/use-tab-navigation"
 
 // ---------------------------------------------------------------------------
 // Context for sharing listing data across sub-routes
@@ -77,6 +78,13 @@ export default function ListingDetailLayout({
   const handleRefetch = useCallback(() => {
     refetch()
   }, [refetch])
+
+  // Register open-records tab
+  useTabNavigation({
+    id,
+    label: listing?.property_address || "Loading...",
+    module: "listing",
+  })
 
   // ---- Loading ----
   if (isLoading) {
