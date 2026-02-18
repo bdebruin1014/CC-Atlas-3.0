@@ -122,7 +122,7 @@ export default function WorkflowTemplatesPage() {
         .order("name", { ascending: true })
 
       if (fetchError) throw fetchError
-      setTemplates((data as WorkflowTemplate[]) || [])
+      setTemplates((data as unknown as WorkflowTemplate[]) || [])
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Failed to fetch workflow templates"

@@ -133,7 +133,7 @@ export default function InvestorStatementsPage() {
         .select("*")
         .order("name")
       if (data && data.length > 0) {
-        setEntities(data as Entity[])
+        setEntities(data as unknown as Entity[])
       }
     }
     loadEntities()

@@ -155,8 +155,8 @@ export default function ProjectTimelinePage() {
     {
       key: "permit",
       label: "Permit Issued",
-      date: project.permit_date,
-      status: getTimelineStatus(project.permit_date),
+      date: project.permit_approved_date,
+      status: getTimelineStatus(project.permit_approved_date),
     },
     {
       key: "construction_start",
@@ -185,8 +185,8 @@ export default function ProjectTimelinePage() {
     {
       key: "warranty",
       label: "Warranty Expiration",
-      date: project.warranty_expiration_date,
-      status: getTimelineStatus(project.warranty_expiration_date),
+      date: project.warranty_end_date,
+      status: getTimelineStatus(project.warranty_end_date),
     },
   ]
 

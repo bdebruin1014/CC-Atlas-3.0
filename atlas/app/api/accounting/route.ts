@@ -107,10 +107,10 @@ export async function GET(request: Request) {
       query = query.eq("unit_id", filters.unit_id)
     }
     if (filters.transaction_type) {
-      query = query.eq("transaction_type", filters.transaction_type)
+      query = query.eq("transaction_type", filters.transaction_type as any)
     }
     if (filters.status) {
-      query = query.eq("status", filters.status)
+      query = query.eq("status", filters.status as any)
     }
     if (filters.period) {
       query = query.eq("period", filters.period)

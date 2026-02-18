@@ -159,7 +159,8 @@ export async function GET(request: Request) {
       )
     }
 
-    const { data, error, count } = await query
+    const { data: rawData, error, count } = await query
+    const data = rawData as any
 
     if (error) {
       // Retry without inner join on fiscal_periods (entity may have none)
@@ -194,7 +195,8 @@ export async function GET(request: Request) {
         )
       }
 
-      const { data: retryData, error: retryError, count: retryCount } = await retryQuery
+      const { data: rawRetryData, error: retryError, count: retryCount } = await retryQuery
+      const retryData = rawRetryData as any
 
       if (retryError) {
         console.error("Entities fetch error:", retryError)
@@ -284,7 +286,7 @@ export async function POST(request: Request) {
     const input = parsed.data
 
     // Create the entity
-    const { data: entity, error: createError } = await supabase
+    const { data: rawEntity, error: createError } = await supabase
       .from("entities")
       .insert({
         organization_id: orgId,
@@ -300,6 +302,7 @@ export async function POST(request: Request) {
       })
       .select("*")
       .single()
+    const entity = rawEntity as any
 
     if (createError) {
       console.error("Create entity error:", createError)
@@ -348,7 +351,7 @@ export async function POST(request: Request) {
 
           const { error: coaError } = await supabase
             .from("chart_of_accounts")
-            .insert(coaPayloads)
+            .insert(coaPayloads as any)
 
           if (!coaError) {
             coaSeeded = true
@@ -374,7 +377,7 @@ export async function POST(request: Request) {
 
       const { error: coaError } = await supabase
         .from("chart_of_accounts")
-        .insert(coaPayloads)
+        .insert(coaPayloads as any)
 
       if (coaError) {
         console.error("Seed COA error:", coaError)

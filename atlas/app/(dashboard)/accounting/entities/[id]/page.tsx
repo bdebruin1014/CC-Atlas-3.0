@@ -104,6 +104,14 @@ export default function EntityDetailPage({ params }: { params: Promise<{ id: str
   const [parentEntity, setParentEntity] = useState<Entity | null>(null)
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState("overview")
+  const [financials, setFinancials] = useState({
+    totalAssets: 0,
+    cashBalance: 0,
+    totalLiabilities: 0,
+    netEquity: 0,
+    pendingTransactions: 0,
+    investorCount: 0,
+  })
 
   useEffect(() => {
     async function loadEntity() {
@@ -129,10 +137,53 @@ export default function EntityDetailPage({ params }: { params: Promise<{ id: str
             .single()
           if (parentData) setParentEntity(mapDbEntity(parentData as unknown as Record<string, unknown>))
         }
-      } else {
-        // Use mock data for demo
-        setEntity(MOCK_ENTITY)
-        setParentEntity(MOCK_PARENT)
+
+        // Load financials summary
+        const { data: accounts } = await supabase
+          .from("accounts")
+          .select("account_type, normal_balance, balance")
+          .eq("entity_id", entityId)
+          .eq("is_active", true)
+
+        let totalAssets = 0
+        let cashBalance = 0
+        let totalLiabilities = 0
+        let totalEquity = 0
+
+        if (accounts) {
+          for (const acct of accounts as any[]) {
+            const bal = acct.balance ?? 0
+            if (acct.account_type === "asset") {
+              totalAssets += bal
+              if (acct.normal_balance === "debit") cashBalance += bal
+            } else if (acct.account_type === "liability") {
+              totalLiabilities += bal
+            } else if (acct.account_type === "equity") {
+              totalEquity += bal
+            }
+          }
+        }
+
+        const { count: pendingCount } = await supabase
+          .from("transactions")
+          .select("id", { count: "exact", head: true })
+          .eq("entity_id", entityId)
+          .eq("status", "pending")
+
+        const { count: investorCount } = await supabase
+          .from("investors")
+          .select("id", { count: "exact", head: true })
+          .eq("entity_id", entityId)
+          .eq("status", "active")
+
+        setFinancials({
+          totalAssets,
+          cashBalance,
+          totalLiabilities,
+          netEquity: totalAssets - totalLiabilities,
+          pendingTransactions: pendingCount ?? 0,
+          investorCount: investorCount ?? 0,
+        })
       }
       setLoading(false)
     }
@@ -298,22 +349,22 @@ export default function EntityDetailPage({ params }: { params: Promise<{ id: str
             <Card>
               <CardContent className="pt-6">
                 <p className="text-xs text-muted-foreground mb-1">Total Assets</p>
-                <p className="text-2xl font-bold">{formatCurrency(MOCK_FINANCIALS.totalAssets, { decimals: 2 })}</p>
+                <p className="text-2xl font-bold">{formatCurrency(financials.totalAssets, { decimals: 2 })}</p>
                 <p className="text-xs text-muted-foreground mt-1">
-                  Cash: {formatCurrency(MOCK_FINANCIALS.cashBalance, { decimals: 2 })}
+                  Cash: {formatCurrency(financials.cashBalance, { decimals: 2 })}
                 </p>
               </CardContent>
             </Card>
             <Card>
               <CardContent className="pt-6">
                 <p className="text-xs text-muted-foreground mb-1">Total Liabilities</p>
-                <p className="text-2xl font-bold">{formatCurrency(MOCK_FINANCIALS.totalLiabilities, { decimals: 2 })}</p>
+                <p className="text-2xl font-bold">{formatCurrency(financials.totalLiabilities, { decimals: 2 })}</p>
               </CardContent>
             </Card>
             <Card>
               <CardContent className="pt-6">
                 <p className="text-xs text-muted-foreground mb-1">Net Equity</p>
-                <p className="text-2xl font-bold text-green-600">{formatCurrency(MOCK_FINANCIALS.netEquity, { decimals: 2 })}</p>
+                <p className="text-2xl font-bold text-green-600">{formatCurrency(financials.netEquity, { decimals: 2 })}</p>
               </CardContent>
             </Card>
           </div>
@@ -323,14 +374,14 @@ export default function EntityDetailPage({ params }: { params: Promise<{ id: str
             <Card>
               <CardContent className="pt-6">
                 <p className="text-xs text-muted-foreground mb-1">Pending Transactions</p>
-                <p className="text-2xl font-bold text-amber-600">{MOCK_FINANCIALS.pendingTransactions}</p>
+                <p className="text-2xl font-bold text-amber-600">{financials.pendingTransactions}</p>
                 <p className="text-xs text-muted-foreground mt-1">Awaiting approval</p>
               </CardContent>
             </Card>
             <Card>
               <CardContent className="pt-6">
                 <p className="text-xs text-muted-foreground mb-1">Investors</p>
-                <p className="text-2xl font-bold">{MOCK_FINANCIALS.investorCount}</p>
+                <p className="text-2xl font-bold">{financials.investorCount}</p>
                 <p className="text-xs text-muted-foreground mt-1">Active investors</p>
               </CardContent>
             </Card>

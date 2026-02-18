@@ -84,10 +84,10 @@ export async function GET(request: Request) {
       query = query.eq("project_id", filters.project_id)
     }
     if (filters.status) {
-      query = query.eq("status", filters.status)
+      query = query.eq("status", filters.status as any)
     }
     if (filters.loan_type) {
-      query = query.eq("loan_type", filters.loan_type)
+      query = query.eq("loan_type", filters.loan_type as any)
     }
     if (filters.search) {
       query = query.or(
@@ -106,7 +106,7 @@ export async function GET(request: Request) {
     }
 
     // Compute available_amount and utilization
-    const enriched = (data || []).map((loan) => {
+    const enriched = (data || []).map((loan: any) => {
       const originalAmount = loan.original_amount || 0
       const amountDrawn = loan.amount_drawn || 0
       const availableAmount = Math.max(0, originalAmount - amountDrawn)
@@ -162,7 +162,7 @@ export async function POST(request: Request) {
 
     const input = parsed.data
 
-    const { data: loan, error: createError } = await supabase
+    const { data: rawLoan, error: createError } = await supabase
       .from("loans")
       .insert({
         entity_id: input.entity_id,
@@ -180,9 +180,10 @@ export async function POST(request: Request) {
         covenants: input.covenants || null,
         accrued_interest: 0,
         status: "pending",
-      })
+      } as any)
       .select("*")
       .single()
+    const loan = rawLoan as any
 
     if (createError) {
       console.error("Create loan error:", createError)

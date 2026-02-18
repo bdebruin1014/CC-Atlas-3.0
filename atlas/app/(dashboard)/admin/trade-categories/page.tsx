@@ -72,7 +72,7 @@ export default function TradeCategoriesPage() {
         .order("code", { ascending: true })
 
       if (fetchError) throw fetchError
-      setCategories((data as TradeCategory[]) || [])
+      setCategories((data as unknown as TradeCategory[]) || [])
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to fetch trade categories")
     } finally {
@@ -142,7 +142,7 @@ export default function TradeCategoriesPage() {
           .insert({
             ...data,
             organization_id: user?.user_metadata?.organization_id || "",
-          })
+          } as any)
 
         if (insertError) throw insertError
         toast({ title: "Trade category added" })

@@ -52,7 +52,7 @@ export default function ProjectBudgetPage() {
   const showDrawSchedule =
     project.type === "scattered_lot" ||
     project.type === "lot_purchase" ||
-    project.type === "spec_build"
+    project.type === "other"
 
   const showLotTable =
     project.type === "lot_development" || project.type === "community_development"
@@ -80,10 +80,10 @@ export default function ProjectBudgetPage() {
       {/* Budget Tracker */}
       <BudgetTracker
         projectId={projectId}
-        totalBudget={project.total_budget}
-        currentSpend={project.current_spend}
-        committedAmount={project.committed_amount}
-        projectedFinal={project.projected_final}
+        totalBudget={project.budget_total ?? 0}
+        currentSpend={project.actual_total_cost ?? 0}
+        committedAmount={project.contract_amount ?? 0}
+        projectedFinal={project.actual_total_cost ?? 0}
       />
 
       {/* Draw Schedule */}

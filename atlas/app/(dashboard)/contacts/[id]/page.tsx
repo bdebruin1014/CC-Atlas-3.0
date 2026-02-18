@@ -117,7 +117,7 @@ export default function ContactDetailPage() {
         .limit(50)
 
       if (fetchError) throw fetchError
-      setActivities((data as ActivityEntry[]) || [])
+      setActivities((data as unknown as ActivityEntry[]) || [])
     } catch {
       setActivities([])
     } finally {
@@ -138,7 +138,7 @@ export default function ContactDetailPage() {
         .order("created_at", { ascending: false })
 
       if (fetchError) throw fetchError
-      setNotes((data as NoteEntry[]) || [])
+      setNotes((data as unknown as NoteEntry[]) || [])
     } catch {
       setNotes([])
     } finally {

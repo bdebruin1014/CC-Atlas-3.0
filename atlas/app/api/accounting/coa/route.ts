@@ -119,7 +119,7 @@ export async function GET(request: Request) {
       }
     }
 
-    const enrichedAccounts = (accounts || []).map((acct) => {
+    const enrichedAccounts = (accounts || []).map((acct: any) => {
       const bal = balanceMap[acct.id] || { total_debit: 0, total_credit: 0 }
       // Current balance based on normal_balance side
       const currentBalance =

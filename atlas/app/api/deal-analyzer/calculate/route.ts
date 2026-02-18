@@ -73,11 +73,12 @@ export async function POST(request: Request) {
     }
 
     // Fetch municipality soft costs - sum all fee columns
-    const { data: municipality, error: munError } = await supabase
+    const { data: rawMunicipality, error: munError } = await supabase
       .from("municipalities")
       .select("*")
       .eq("id", input.municipality_id)
       .single()
+    const municipality = rawMunicipality as any
 
     if (munError || !municipality) {
       return NextResponse.json(

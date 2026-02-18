@@ -67,12 +67,13 @@ export async function GET(request: Request) {
     }
 
     // Fetch chart of accounts for this entity
-    const { data: accounts, error: coaError } = await supabase
+    const { data: rawAccounts, error: coaError } = await supabase
       .from("chart_of_accounts")
       .select("*")
       .eq("entity_id", entityId)
       .eq("is_active", true)
       .order("account_number", { ascending: true })
+    const accounts = rawAccounts as unknown as Account[] | null
 
     if (coaError) {
       return NextResponse.json(

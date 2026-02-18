@@ -22,7 +22,7 @@ export default function ProfilePage() {
         .select("*")
         .eq("id", user.id)
         .single()
-      return { ...data, email: user.email }
+      return { ...(data as any), email: user.email }
     },
   })
 

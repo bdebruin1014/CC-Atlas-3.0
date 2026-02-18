@@ -124,7 +124,7 @@ export function useContacts(filters: ContactFilters = {}) {
 
       if (error) throw error
 
-      let contacts = data as Contact[]
+      let contacts = data as unknown as Contact[]
 
       // Client-side filter by contact types (Supabase doesn't easily support
       // filtering by values inside a joined relation)
@@ -152,7 +152,7 @@ export function useContact(id: string) {
         .single()
 
       if (error) throw error
-      return data as Contact
+      return data as unknown as Contact
     },
     enabled: !!id,
   })
@@ -205,7 +205,7 @@ export function useCreateContact() {
 
       if (types.length > 0) {
         const typeRecords = types.map((type) => ({
-          contact_id: newContact.id,
+          contact_id: (newContact as any).id,
           type,
         }))
 
@@ -216,7 +216,7 @@ export function useCreateContact() {
         if (typeError) throw typeError
       }
 
-      return newContact as Contact
+      return newContact as unknown as Contact
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: keys.lists() })
@@ -297,7 +297,7 @@ export function useSearchContacts(query: string) {
         .limit(20)
 
       if (error) throw error
-      return (data ?? []) as Pick<
+      return (data ?? []) as unknown as Pick<
         Contact,
         'id' | 'first_name' | 'last_name' | 'company' | 'email' | 'phone' | 'contact_types'
       >[]

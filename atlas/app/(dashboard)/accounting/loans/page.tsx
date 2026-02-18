@@ -114,7 +114,7 @@ export default function LoansPage() {
       const supabase = createClient()
 
       const { data: entityData } = await supabase.from("entities").select("*").order("name")
-      if (entityData) setEntities(entityData as Entity[])
+      if (entityData) setEntities(entityData as unknown as Entity[])
 
       const { data: loanData } = await supabase
         .from("loans")
@@ -426,7 +426,7 @@ function AddLoanDialog({
     entity_id: "",
     project_id: "",
     lender_name: "",
-    loan_type: "construction_loan" as LoanType,
+    loan_type: "construction" as any as LoanType,
     original_amount: "",
     interest_rate: "",
     rate_type: "fixed" as RateType,
@@ -446,7 +446,7 @@ function AddLoanDialog({
       entity_id: "",
       project_id: "",
       lender_name: "",
-      loan_type: "construction_loan",
+      loan_type: "construction" as any,
       original_amount: "",
       interest_rate: "",
       rate_type: "fixed",
@@ -501,7 +501,7 @@ function AddLoanDialog({
         interest_only: formData.interest_only,
         covenants: formData.covenants.trim() || null,
         status: "active" as LoanStatus,
-      })
+      } as any)
       .select()
       .single()
 
@@ -513,7 +513,7 @@ function AddLoanDialog({
 
     if (data) {
       resetForm()
-      onSuccess({ ...data, draws: [] } as Loan)
+      onSuccess({ ...(data as any), draws: [] } as Loan)
     }
     setSaving(false)
   }

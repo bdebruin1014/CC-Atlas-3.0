@@ -89,14 +89,14 @@ export default function TeamsPage() {
       if (teamsError) throw teamsError
 
       const teamsWithCounts: Team[] = []
-      for (const team of teamsData || []) {
+      for (const team of (teamsData as unknown as Team[]) || []) {
         const { count } = await supabase
           .from("team_members")
           .select("id", { count: "exact", head: true })
           .eq("team_id", team.id)
 
         teamsWithCounts.push({
-          ...team,
+          ...(team as any),
           member_count: count ?? 0,
         })
       }
@@ -346,7 +346,7 @@ function ManageTeamDialog({
 
       setMembers((memberData as unknown as TeamMember[]) || [])
 
-      const memberUserIds = (memberData || []).map((m: { user_id: string }) => m.user_id)
+      const memberUserIds = ((memberData || []) as unknown as { user_id: string }[]).map((m) => m.user_id)
 
       const { data: allUsers } = await supabase
         .from("profiles")

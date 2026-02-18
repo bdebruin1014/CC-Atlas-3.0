@@ -63,11 +63,12 @@ export async function POST(request: Request) {
     }
 
     // Manual interest accrual calculation
-    const { data: loans } = await supabase
+    const { data: rawLoans } = await supabase
       .from("loans")
       .select("*")
       .eq("entity_id", input.entity_id)
       .in("status", ["active", "drawn_in_full"])
+    const loans = rawLoans as any[]
 
     if (!loans || loans.length === 0) {
       return NextResponse.json({

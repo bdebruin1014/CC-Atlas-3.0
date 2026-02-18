@@ -118,7 +118,7 @@ export async function GET(
 
     if (financialData) {
       for (const tx of financialData) {
-        const acct = tx.account as { account_type: string } | null
+        const acct = (tx as any).account as { account_type: string } | null
         if (!acct) continue
         const netAmount = (tx.debit || 0) - (tx.credit || 0)
         switch (acct.account_type) {
@@ -143,7 +143,7 @@ export async function GET(
 
     return NextResponse.json({
       data: {
-        ...entity,
+        ...(entity as any),
         coa_summary: coaSummary,
         financial_snapshot: {
           total_assets: Math.round(totalAssets * 100) / 100,
@@ -300,7 +300,7 @@ export async function DELETE(
         record_type: "entity",
         record_id: id,
         action: "dissolved",
-        description: `Dissolved entity: ${entity.name}`,
+        description: `Dissolved entity: ${(entity as any).name}`,
       })
     }
 

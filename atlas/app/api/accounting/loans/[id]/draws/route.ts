@@ -86,11 +86,12 @@ export async function POST(
     const input = parsed.data
 
     // Fetch the loan
-    const { data: loan, error: loanError } = await supabase
+    const { data: rawLoan, error: loanError } = await supabase
       .from("loans")
       .select("*")
       .eq("id", id)
       .single()
+    const loan = rawLoan as any
 
     if (loanError || !loan) {
       return NextResponse.json(

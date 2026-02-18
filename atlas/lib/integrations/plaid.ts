@@ -279,7 +279,7 @@ export class PlaidService {
         reconciled: true,
         reconciled_at: new Date().toISOString(),
         plaid_transaction_id: plaidTxn.transactionId,
-      })
+      } as any)
       .eq('id', atlasTransactionId)
 
     return {

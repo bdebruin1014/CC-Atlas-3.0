@@ -944,7 +944,8 @@ interface ProjectRef {
   name: string
 }
 
-type ListingWithAgent = DispositionListing & {
+interface ListingWithAgent extends DispositionListing {
+  [key: string]: unknown
   project?: ProjectRef | null
   entity?: { id: string; name: string } | null
   listing_agent?: AgentRef | null

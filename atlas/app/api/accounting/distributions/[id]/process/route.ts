@@ -95,18 +95,19 @@ export async function POST(
 
     if (allocations) {
       for (const alloc of allocations) {
-        const { data: investor } = await supabase
+        const { data: rawInvestor } = await supabase
           .from("investors")
           .select("distributions_to_date")
           .eq("id", alloc.investor_id)
           .single()
+        const investor = rawInvestor as any
 
         if (investor) {
           await supabase
             .from("investors")
             .update({
               distributions_to_date: (investor.distributions_to_date || 0) + alloc.amount,
-            })
+            } as any)
             .eq("id", alloc.investor_id)
         }
       }

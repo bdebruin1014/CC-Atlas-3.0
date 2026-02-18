@@ -120,7 +120,7 @@ export default function InvestorsPage({ params }: { params: Promise<{ id: string
         .select("*")
         .eq("entity_id", entityId)
         .order("ownership_percent", { ascending: false })
-      if (invData) setInvestors(invData as Investor[])
+      if (invData) setInvestors(invData as unknown as Investor[])
 
       const { data: callData } = await supabase
         .from("capital_calls")
@@ -569,7 +569,7 @@ function AddInvestorDialog({
         subscription_agreement_url: null,
         w9_url: null,
         status: "active",
-      })
+      } as any)
       .select()
       .single()
 
@@ -581,7 +581,7 @@ function AddInvestorDialog({
 
     if (data) {
       resetForm()
-      onSuccess(data as Investor)
+      onSuccess(data as unknown as Investor)
     }
     setSaving(false)
   }
@@ -836,7 +836,7 @@ function CapitalCallWizard({
     }
 
     const result: CapitalCall = {
-      ...ccData,
+      ...(ccData as any),
       responses: (respData || []) as CapitalCallResponse[],
     }
 

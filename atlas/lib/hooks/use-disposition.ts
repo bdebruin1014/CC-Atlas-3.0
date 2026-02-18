@@ -416,7 +416,7 @@ export function useUpdateContract() {
       const res = await mutateJson<{ data: DispositionContract }>(
         `/api/disposition/listings/${listingId}/contract`,
         "PATCH",
-        { id: updates.id, ...updates },
+        { ...updates },
         "Failed to update contract"
       )
       return res.data
@@ -490,7 +490,7 @@ export function useUpdateSettlement() {
       const res = await mutateJson<{ data: DispositionSettlement }>(
         `/api/disposition/listings/${listingId}/settlement`,
         "PATCH",
-        { id: updates.id, ...updates },
+        { ...updates },
         "Failed to update settlement"
       )
       return res.data
@@ -564,7 +564,7 @@ export function useUpdateCost() {
       const res = await mutateJson<{ data: DispositionCost }>(
         `/api/disposition/listings/${listingId}/costs`,
         "PATCH",
-        { id: updates.id, ...updates },
+        { ...updates },
         "Failed to update cost"
       )
       return res.data

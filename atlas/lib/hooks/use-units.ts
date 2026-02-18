@@ -119,7 +119,7 @@ export function useUnits(jobId: string) {
         .order('unit_number', { ascending: true })
 
       if (error) throw error
-      return (data ?? []) as Unit[]
+      return (data ?? []) as unknown as Unit[]
     },
     enabled: !!jobId,
   })
@@ -138,7 +138,7 @@ export function useUnit(id: string) {
         .single()
 
       if (error) throw error
-      return data as Unit
+      return data as unknown as Unit
     },
     enabled: !!id,
   })
@@ -161,7 +161,7 @@ export function useCreateUnit() {
         .single()
 
       if (error) throw error
-      return data as Unit
+      return data as unknown as Unit
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: keys.listByJob(data.job_id) })
@@ -190,7 +190,7 @@ export function useUpdateUnit() {
         .single()
 
       if (error) throw error
-      return data as Unit
+      return data as unknown as Unit
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: keys.listByJob(data.job_id) })
@@ -218,7 +218,7 @@ export function useUnitMilestones(unitId: string) {
         .order('order', { ascending: true })
 
       if (error) throw error
-      return (data ?? []) as UnitMilestone[]
+      return (data ?? []) as unknown as UnitMilestone[]
     },
     enabled: !!unitId,
   })
@@ -251,7 +251,7 @@ export function useUpdateMilestone() {
         .single()
 
       if (error) throw error
-      return data as UnitMilestone
+      return data as unknown as UnitMilestone
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({

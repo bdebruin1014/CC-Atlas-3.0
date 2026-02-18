@@ -89,11 +89,11 @@ export function LoanTracker({ loanId, className }: LoanTrackerProps) {
 
       if (loanData) {
         setLoan({
-          ...loanData,
-          draws: (loanData.loan_draws || []).sort(
+          ...(loanData as any),
+          draws: ((loanData as any).loan_draws || []).sort(
             (a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime()
           ),
-          lender_name: loanData.lender_name || "Unknown Lender",
+          lender_name: (loanData as any).lender_name || "Unknown Lender",
         } as Loan)
       }
       setLoading(false)

@@ -201,7 +201,8 @@ export async function POST(request: Request) {
       txQuery = txQuery.eq("entity_id", input.entity_id)
     }
 
-    const { data: transactions, error: txError } = await txQuery
+    const { data: rawTransactions, error: txError } = await txQuery
+    const transactions = rawTransactions as any[]
 
     if (txError) {
       return NextResponse.json(

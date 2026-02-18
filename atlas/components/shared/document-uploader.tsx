@@ -157,7 +157,7 @@ export function DocumentUploader({
           file_size: rawFile.size,
           file_type: rawFile.type,
           url: publicUrl,
-        })
+        } as any)
 
         setFiles((prev) =>
           prev.map((f) =>

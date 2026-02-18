@@ -202,8 +202,8 @@ export class DocuSealService {
     // Log activity
     if (sigRecord) {
       await supabase.from('activity_log').insert({
-        record_type: sigRecord.record_type,
-        record_id: sigRecord.record_id,
+        record_type: (sigRecord as any).record_type,
+        record_id: (sigRecord as any).record_id,
         action: 'document_signed',
         description: 'Document signature completed',
         metadata: { submission_id: submissionId },

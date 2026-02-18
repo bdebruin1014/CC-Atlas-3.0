@@ -48,11 +48,12 @@ export async function GET(request: Request) {
 
     if (filters.project_id) {
       // Fetch project to get entity association
-      const { data: project, error: projError } = await supabase
+      const { data: rawProject, error: projError } = await supabase
         .from("projects")
         .select("id, name, entity_id")
         .eq("id", filters.project_id)
         .single()
+      const project = rawProject as any
 
       if (projError || !project) {
         return NextResponse.json(

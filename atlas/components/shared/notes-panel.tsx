@@ -112,7 +112,7 @@ export function NotesPanel({ recordType, recordId }: NotesPanelProps) {
         .order("created_at", { ascending: false })
 
       if (error) throw error
-      setNotes((data as Note[]) ?? [])
+      setNotes((data as unknown as Note[]) ?? [])
     } catch (err) {
       console.error("Failed to fetch notes:", err)
     } finally {

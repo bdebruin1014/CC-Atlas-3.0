@@ -60,13 +60,14 @@ export async function PATCH(
     }
 
     // Update the offer
-    const { data: offer, error } = await supabase
+    const { data: rawOffer, error } = await supabase
       .from("disposition_offers")
       .update(parsed.data)
       .eq("id", offerId)
       .eq("listing_id", listingId)
       .select("*")
       .single()
+    const offer = rawOffer as any
 
     if (error) throw error
 

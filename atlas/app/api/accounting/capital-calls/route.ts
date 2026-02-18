@@ -90,7 +90,7 @@ export async function GET(request: Request) {
 
     // Enrich with totals
     const enriched = (data || []).map((call) => {
-      const responses = (call.responses || []) as {
+      const responses = (call.responses || []) as unknown as {
         amount_called: number
         amount_received: number
       }[]

@@ -94,11 +94,12 @@ export async function POST(
       }
 
       // Fetch the loan to update amounts
-      const { data: loan } = await supabase
+      const { data: rawLoan } = await supabase
         .from("loans")
         .select("*")
         .eq("id", id)
         .single()
+      const loan = rawLoan as any
 
       if (!loan) {
         return NextResponse.json(

@@ -34,11 +34,12 @@ export async function POST(
     const input = VoidPaymentSchema.parse(body)
 
     // Fetch the payment
-    const { data: payment, error: fetchError } = await supabase
+    const { data: rawPayment, error: fetchError } = await supabase
       .from("ap_payments")
       .select("id, status, total_amount, vendor_contact_id")
       .eq("id", paymentId)
       .single()
+    const payment = rawPayment as any
 
     if (fetchError || !payment) {
       return NextResponse.json(
@@ -55,10 +56,11 @@ export async function POST(
     }
 
     // Fetch all payment applications for this payment
-    const { data: applications, error: appError } = await supabase
+    const { data: rawApplications, error: appError } = await supabase
       .from("ap_payment_applications")
       .select("id, invoice_id, amount_applied")
       .eq("payment_id", paymentId)
+    const applications = rawApplications as any[]
 
     if (appError) {
       return NextResponse.json({ error: appError.message }, { status: 500 })
@@ -66,11 +68,12 @@ export async function POST(
 
     // Reverse each payment application: restore invoice balances
     for (const app of applications ?? []) {
-      const { data: invoice } = await supabase
+      const { data: rawInvoice } = await supabase
         .from("ap_invoices")
         .select("id, amount_paid, net_amount, balance_due, status")
         .eq("id", app.invoice_id)
         .single()
+      const invoice = rawInvoice as any
 
       if (!invoice) continue
 
@@ -128,7 +131,7 @@ export async function POST(
   } catch (err) {
     if (err instanceof z.ZodError) {
       return NextResponse.json(
-        { error: "Validation error", details: err.errors },
+        { error: "Validation error", details: err.issues },
         { status: 400 }
       )
     }

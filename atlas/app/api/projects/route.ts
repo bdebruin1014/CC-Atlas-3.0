@@ -114,10 +114,10 @@ export async function GET(request: Request) {
       .range(filters.offset, filters.offset + filters.limit - 1)
 
     if (filters.type) {
-      query = query.eq("type", filters.type)
+      query = query.eq("type", filters.type as any)
     }
     if (filters.status) {
-      query = query.eq("status", filters.status)
+      query = query.eq("status", filters.status as any)
     }
     if (filters.entity) {
       query = query.or(
@@ -199,7 +199,7 @@ export async function POST(request: Request) {
         .single()
 
       if (opp) {
-        opportunityData = opp
+        opportunityData = opp as any
       }
     }
 
@@ -282,11 +282,12 @@ export async function POST(request: Request) {
       source_opportunity_id: input.source_opportunity_id || null,
     }
 
-    const { data: project, error: createError } = await supabase
+    const { data: rawProject, error: createError } = await supabase
       .from("projects")
-      .insert(payload)
+      .insert(payload as any)
       .select("*")
       .single()
+    const project = rawProject as any
 
     if (createError) {
       console.error("Create project error:", createError)

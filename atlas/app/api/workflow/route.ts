@@ -11,7 +11,7 @@ const InstantiateWorkflowSchema = z.object({
   record_id: z.string().uuid(),
   name: z.string().optional(),
   start_date: z.string().optional().nullable(),
-  role_user_mapping: z.record(z.string()).optional(),
+  role_user_mapping: z.record(z.string(), z.string()).optional(),
 })
 
 const UpdateTaskSchema = z.object({
@@ -74,12 +74,13 @@ export async function POST(request: Request) {
     }
 
     // Fetch template with milestones, task lists, and tasks
-    const { data: template, error: tplError } = await supabase
+    const { data: rawTemplate, error: tplError } = await supabase
       .from("workflow_templates")
       .select("*")
       .eq("id", input.workflow_template_id)
       .eq("is_active", true)
       .single()
+    const template = rawTemplate as any
 
     if (tplError || !template) {
       return NextResponse.json(
@@ -103,7 +104,7 @@ export async function POST(request: Request) {
 
     // Create workflow instance
     const workflowName = input.name || template.name
-    const { data: workflowInstance, error: wiError } = await supabase
+    const { data: rawWorkflowInstance, error: wiError } = await supabase
       .from("workflow_instances")
       .insert({
         workflow_template_id: template.id,
@@ -116,6 +117,7 @@ export async function POST(request: Request) {
       })
       .select("*")
       .single()
+    const workflowInstance = rawWorkflowInstance as any
 
     if (wiError) {
       console.error("Create workflow instance error:", wiError)
@@ -210,7 +212,7 @@ export async function POST(request: Request) {
                 input.role_user_mapping[tt.default_assignee_role]
               ) {
                 assignedTo =
-                  input.role_user_mapping[tt.default_assignee_role]
+                  input.role_user_mapping[tt.default_assignee_role] as string
               }
 
               allTaskPayloads.push({
@@ -231,7 +233,7 @@ export async function POST(request: Request) {
     }
 
     if (allTaskPayloads.length > 0) {
-      await supabase.from("task_instances").insert(allTaskPayloads)
+      await supabase.from("task_instances").insert(allTaskPayloads as any)
     }
 
     // Activity log
@@ -328,12 +330,13 @@ export async function PATCH(request: Request) {
           : updates.notes
       }
 
-      const { data: task, error: updateError } = await supabase
+      const { data: rawTask, error: updateError } = await supabase
         .from("task_instances")
         .update(updates)
         .eq("id", input.task_instance_id)
         .select("*, milestone_instance_id")
         .single()
+      const task = rawTask as any
 
       if (updateError) {
         return NextResponse.json(
