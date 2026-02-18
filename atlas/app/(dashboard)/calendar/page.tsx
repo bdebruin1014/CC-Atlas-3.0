@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback, useMemo } from "react"
+import { useState, useEffect, useCallback, useMemo, useRef } from "react"
 import { useRouter } from "next/navigation"
 import {
   CalendarDays,
@@ -214,10 +214,18 @@ export default function CalendarPage() {
   const [isMyCalendar, setIsMyCalendar] = useState(false)
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
   const [selectedDate, setSelectedDate] = useState(new Date())
+
+  // Use a ref for dateRange to break the useCallback dependency cycle.
+  // The ref always holds the latest value; the state is only used for triggering fetches.
   const [dateRange, setDateRange] = useState<{ start: Date; end: Date }>({
     start: new Date(new Date().getFullYear(), new Date().getMonth(), 1),
     end: new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0),
   })
+  const dateRangeRef = useRef(dateRange)
+  dateRangeRef.current = dateRange
+
+  // Track whether initial fetch has happened so we can distinguish first-load from refetches
+  const hasFetched = useRef(false)
 
   // Module toggles — all on by default
   const [enabledModules, setEnabledModules] = useState<Record<string, boolean>>(
@@ -257,7 +265,7 @@ export default function CalendarPage() {
       }
     }
     loadUser()
-  }, [supabase])
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Load team members for assignment
   useEffect(() => {
@@ -277,12 +285,13 @@ export default function CalendarPage() {
       }
     }
     loadUsers()
-  }, [supabase])
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   // ---------------------------------------------------------------------------
   // Fetch calendar_events (direct events)
   // ---------------------------------------------------------------------------
   const fetchCalendarEvents = useCallback(async () => {
+    const range = dateRangeRef.current
     try {
       let query = supabase
         .from("calendar_events")
@@ -303,8 +312,8 @@ export default function CalendarPage() {
           )
         `
         )
-        .gte("start_date", dateRange.start.toISOString())
-        .lte("start_date", dateRange.end.toISOString())
+        .gte("start_date", range.start.toISOString())
+        .lte("start_date", range.end.toISOString())
         .order("start_date", { ascending: true })
 
       if (isMyCalendar && currentUserId) {
@@ -348,15 +357,16 @@ export default function CalendarPage() {
     } catch (err) {
       console.error("Failed to fetch calendar events:", err)
     }
-  }, [supabase, dateRange, isMyCalendar, currentUserId])
+  }, [isMyCalendar, currentUserId]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // ---------------------------------------------------------------------------
   // Fetch aggregated module events
   // ---------------------------------------------------------------------------
   const fetchModuleEvents = useCallback(async () => {
+    const range = dateRangeRef.current
     const aggregated: CalendarEvent[] = []
-    const rangeStart = dateRange.start.toISOString().slice(0, 10)
-    const rangeEnd = dateRange.end.toISOString().slice(0, 10)
+    const rangeStart = range.start.toISOString().slice(0, 10)
+    const rangeEnd = range.end.toISOString().slice(0, 10)
 
     // 1. Construction Milestones
     try {
@@ -542,20 +552,24 @@ export default function CalendarPage() {
     }
 
     setModuleEvents(aggregated)
-  }, [supabase, dateRange])
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   // ---------------------------------------------------------------------------
-  // Combined fetch
+  // Combined fetch — only show full loading state on first load
   // ---------------------------------------------------------------------------
   const fetchAllEvents = useCallback(async () => {
-    setLoading(true)
+    if (!hasFetched.current) {
+      setLoading(true)
+    }
     await Promise.all([fetchCalendarEvents(), fetchModuleEvents()])
     setLoading(false)
+    hasFetched.current = true
   }, [fetchCalendarEvents, fetchModuleEvents])
 
+  // Fetch when dateRange, calendar mode, or user changes
   useEffect(() => {
     fetchAllEvents()
-  }, [fetchAllEvents])
+  }, [dateRange, isMyCalendar, isCompanyCalendar, currentUserId]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // ---------------------------------------------------------------------------
   // Filter events by enabled modules
@@ -577,8 +591,16 @@ export default function CalendarPage() {
     return [...direct, ...filtered]
   }, [calendarEvents, moduleEvents, enabledEventTypes, isCompanyCalendar, isMyCalendar])
 
-  // Handle date range change from calendar navigation
+  // Handle date range change from FullCalendar's own navigation (prev/next)
   function handleDatesChange(start: Date, end: Date) {
+    // Only update if range actually changed to prevent re-render loops
+    const current = dateRangeRef.current
+    if (
+      current.start.getTime() === start.getTime() &&
+      current.end.getTime() === end.getTime()
+    ) {
+      return
+    }
     setDateRange({ start, end })
   }
 

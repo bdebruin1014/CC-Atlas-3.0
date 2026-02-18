@@ -332,7 +332,6 @@ function getAdminSidebar(): SidebarConfig {
           { label: "Floor Plans", href: "/admin/floor-plans", icon: Map },
           { label: "Municipalities", href: "/admin/municipalities", icon: Landmark },
           { label: "Trade Categories", href: "/admin/trade-categories", icon: HardHat },
-          { label: "Schedule Templates", href: "/admin/schedule-templates", icon: CalendarDays },
           { label: "Integrations", href: "/admin/integrations", icon: Package },
           { label: "Reports", href: "/admin/reports", icon: PieChart },
         ],

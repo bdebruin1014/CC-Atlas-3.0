@@ -148,38 +148,35 @@ export async function POST(
 
     // Create milestones for each unit
     if (units && units.length > 0) {
-      // Try to load schedule templates from floor plans
-      const floorPlanIds = [
-        ...new Set(
-          input.units
-            .map((u) => u.floor_plan_id)
-            .filter((id): id is string => !!id)
-        ),
-      ]
+      // Try to load phases from a construction workflow template
+      let workflowPhases: { phase_number: number; phase_name: string; duration_days: number }[] | null = null
 
-      // Build a map of floor_plan_id -> template phases
-      const templateMap = new Map<
-        string,
-        { phase_number: number; phase_name: string; duration_days: number }[]
-      >()
+      const { data: constructionWorkflow } = await supabase
+        .from("workflow_templates")
+        .select("id")
+        .eq("workflow_type", "construction")
+        .eq("is_active", true)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle()
 
-      if (floorPlanIds.length > 0) {
-        const { data: templates } = await supabase
-          .from("schedule_templates")
-          .select("floor_plan_id, phase_number, phase_name, duration_days")
-          .in("floor_plan_id", floorPlanIds)
-          .order("phase_number", { ascending: true })
+      if (constructionWorkflow) {
+        const { data: milestoneTemplates } = await supabase
+          .from("milestone_templates")
+          .select("sequence, name, duration_days")
+          .eq("workflow_template_id", constructionWorkflow.id)
+          .order("sequence", { ascending: true })
 
-        if (templates) {
-          for (const t of templates) {
-            const fpId = t.floor_plan_id as string
-            if (!templateMap.has(fpId)) templateMap.set(fpId, [])
-            templateMap.get(fpId)!.push(t as { phase_number: number; phase_name: string; duration_days: number })
-          }
+        if (milestoneTemplates && milestoneTemplates.length > 0) {
+          workflowPhases = milestoneTemplates.map((m) => ({
+            phase_number: m.sequence as number,
+            phase_name: m.name as string,
+            duration_days: (m.duration_days as number) || 7,
+          }))
         }
       }
 
-      // Default 16-phase fallback
+      // Default 16-phase fallback (used when no construction workflow template exists)
       const DEFAULT_PHASES = [
         { phase_number: 1, phase_name: "Pre-Construction", duration_days: 15 },
         { phase_number: 2, phase_name: "Site Work", duration_days: 10 },
@@ -199,16 +196,13 @@ export async function POST(
         { phase_number: 16, phase_name: "Close-Out", duration_days: 5 },
       ]
 
+      const phases = workflowPhases || DEFAULT_PHASES
+
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const milestonePayloads: any[] = []
 
       for (let i = 0; i < units.length; i++) {
         const unit = units[i]
-        const fpId = input.units[i]?.floor_plan_id
-        const phases =
-          fpId && templateMap.has(fpId)
-            ? templateMap.get(fpId)!
-            : DEFAULT_PHASES
 
         // Compute planned dates from start_date
         const startDate = input.start_date
