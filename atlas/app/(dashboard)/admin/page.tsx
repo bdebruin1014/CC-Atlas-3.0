@@ -1,220 +1,226 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import React, { useState, useMemo } from "react"
 import { useRouter } from "next/navigation"
+import { useQuery } from "@tanstack/react-query"
 import {
   Building2,
-  MapPin,
-  Wrench,
-  Clock,
+  CreditCard,
+  Lock,
+  Settings,
   GitBranch,
   FileText,
-  Folder,
-  Calculator,
-  Plug,
-  Users,
-  Shield,
-  Settings,
+  Map,
+  Landmark,
+  HardHat,
+  CalendarDays,
+  Package,
+  PieChart,
+  Search,
   ChevronRight,
-  Loader2,
+  type LucideIcon,
 } from "lucide-react"
-import { Card, CardContent } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
 import { createClient } from "@/lib/supabase/client"
 
-interface AdminSection {
+// ---------------------------------------------------------------------------
+// Admin cards config (12 items per spec)
+// ---------------------------------------------------------------------------
+
+interface AdminCard {
   title: string
   description: string
   href: string
-  icon: React.ReactNode
-  countKey: string | null
+  icon: LucideIcon
 }
 
-const adminSections: AdminSection[] = [
+const ADMIN_CARDS: AdminCard[] = [
   {
-    title: "Floor Plan Library",
-    description: "Manage home floor plans with pricing, specs, and upgrade packages",
-    href: "/admin/floor-plans",
-    icon: <Building2 className="h-6 w-6" />,
-    countKey: "floor_plans",
+    title: "Organization",
+    description: "Manage company profile, users, teams, and roles",
+    href: "/admin/organization",
+    icon: Building2,
   },
   {
-    title: "Municipalities & Jurisdictions",
+    title: "Billing",
+    description: "View invoices, manage subscription, and payment methods",
+    href: "/admin/billing",
+    icon: CreditCard,
+  },
+  {
+    title: "Security",
+    description: "Configure authentication, SSO, and security policies",
+    href: "/admin/security",
+    icon: Lock,
+  },
+  {
+    title: "Preferences",
+    description: "Set timezone, date format, fiscal year, and display defaults",
+    href: "/admin/preferences",
+    icon: Settings,
+  },
+  {
+    title: "Workflows",
+    description: "Design milestone and task workflow templates for all modules",
+    href: "/admin/workflow-templates",
+    icon: GitBranch,
+  },
+  {
+    title: "Documents",
+    description: "Manage contract templates, folder structures, and merge fields",
+    href: "/admin/documents",
+    icon: FileText,
+  },
+  {
+    title: "Floor Plans",
+    description: "Manage home floor plans with pricing, specs, and packages",
+    href: "/admin/floor-plans",
+    icon: Map,
+  },
+  {
+    title: "Municipalities",
     description: "Configure permit fees, tap fees, and jurisdiction-specific costs",
     href: "/admin/municipalities",
-    icon: <MapPin className="h-6 w-6" />,
-    countKey: "municipalities",
+    icon: Landmark,
   },
   {
     title: "Trade Categories",
     description: "Define trade categories with cost ranges and default vendors",
     href: "/admin/trade-categories",
-    icon: <Wrench className="h-6 w-6" />,
-    countKey: "trade_categories",
+    icon: HardHat,
   },
   {
     title: "Schedule Templates",
     description: "Configure construction phase schedules by floor plan",
     href: "/admin/schedule-templates",
-    icon: <Clock className="h-6 w-6" />,
-    countKey: "schedule_templates",
-  },
-  {
-    title: "Workflow Templates",
-    description: "Design milestone and task workflows for opportunities and projects",
-    href: "/admin/workflow-templates",
-    icon: <GitBranch className="h-6 w-6" />,
-    countKey: "workflow_templates",
-  },
-  {
-    title: "Contract Templates",
-    description: "Manage contract templates with merge fields and versioning",
-    href: "/admin/contract-templates",
-    icon: <FileText className="h-6 w-6" />,
-    countKey: "contract_templates",
-  },
-  {
-    title: "SharePoint Folders",
-    description: "Configure default folder structures for project file management",
-    href: "/admin/sharepoint-folders",
-    icon: <Folder className="h-6 w-6" />,
-    countKey: "sharepoint_folder_templates",
-  },
-  {
-    title: "Deal Analyzer Config",
-    description: "Set margin thresholds, financing defaults, and cost parameters",
-    href: "/admin/deal-analyzer-config",
-    icon: <Calculator className="h-6 w-6" />,
-    countKey: null,
+    icon: CalendarDays,
   },
   {
     title: "Integrations",
-    description: "Configure SharePoint, Outlook, DocuSeal, and other integrations",
+    description: "Configure SharePoint, Outlook, DocuSeal, and other connections",
     href: "/admin/integrations",
-    icon: <Plug className="h-6 w-6" />,
-    countKey: "integration_settings",
+    icon: Package,
   },
   {
-    title: "Teams",
-    description: "Manage teams and assign team members",
-    href: "/admin/teams",
-    icon: <Users className="h-6 w-6" />,
-    countKey: "teams",
-  },
-  {
-    title: "Permissions",
-    description: "Configure module access permissions for each team",
-    href: "/admin/permissions",
-    icon: <Shield className="h-6 w-6" />,
-    countKey: "module_access",
-  },
-  {
-    title: "Organization Settings",
-    description: "Manage organization name, timezone, fiscal year, and defaults",
-    href: "/admin/deal-analyzer-config",
-    icon: <Settings className="h-6 w-6" />,
-    countKey: null,
+    title: "Reports",
+    description: "Manage report templates, scheduled reports, and export settings",
+    href: "/admin/reports",
+    icon: PieChart,
   },
 ]
 
+// ---------------------------------------------------------------------------
+// Admin Dashboard
+// ---------------------------------------------------------------------------
+
 export default function AdminDashboardPage() {
   const router = useRouter()
-  const [counts, setCounts] = useState<Record<string, number>>({})
-  const [loading, setLoading] = useState(true)
+  const [search, setSearch] = useState("")
 
-  useEffect(() => {
-    async function fetchCounts() {
-      try {
-        const supabase = createClient()
-        const tables = [
-          "floor_plans",
-          "municipalities",
-          "trade_categories",
-          "schedule_templates",
-          "workflow_templates",
-          "contract_templates",
-          "sharepoint_folder_templates",
-          "integration_settings",
-          "teams",
-          "module_access",
-        ]
+  // Fetch current user name for greeting
+  const supabase = createClient()
+  const { data: currentUser } = useQuery({
+    queryKey: ["admin", "current-user"],
+    queryFn: async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+      if (!user) return null
+      const { data } = await supabase
+        .from("profiles")
+        .select("first_name")
+        .eq("id", user.id)
+        .single()
+      return data
+    },
+  })
 
-        const results = await Promise.allSettled(
-          tables.map((table) =>
-            supabase
-              .from(table)
-              .select("id", { count: "exact", head: true })
-              .then((res) => ({
-                table,
-                count: res.count ?? 0,
-              }))
-          )
-        )
-
-        const newCounts: Record<string, number> = {}
-        for (const result of results) {
-          if (result.status === "fulfilled") {
-            newCounts[result.value.table] = result.value.count
-          }
-        }
-        setCounts(newCounts)
-      } catch {
-        // Counts are non-critical, fail silently
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    fetchCounts()
+  const greeting = useMemo(() => {
+    const hour = new Date().getHours()
+    if (hour < 12) return "Good Morning"
+    if (hour < 17) return "Good Afternoon"
+    return "Good Evening"
   }, [])
+
+  const filtered = useMemo(() => {
+    if (!search.trim()) return ADMIN_CARDS
+    const q = search.toLowerCase()
+    return ADMIN_CARDS.filter(
+      (c) =>
+        c.title.toLowerCase().includes(q) ||
+        c.description.toLowerCase().includes(q)
+    )
+  }, [search])
 
   return (
     <div className="space-y-6 p-6">
+      {/* Greeting */}
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">Administration</h1>
-        <p className="text-sm text-muted-foreground">
-          Configure platform settings, templates, and integrations
+        <h1
+          className="text-[24px] font-bold tracking-tight"
+          style={{ color: "#1a5632" }}
+        >
+          {greeting}
+          {currentUser?.first_name ? `, ${currentUser.first_name}` : ""}
+        </h1>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Configure platform settings, templates, and integrations.
         </p>
       </div>
 
+      {/* Heading + Search */}
+      <div className="space-y-3">
+        <h2 className="text-lg font-semibold text-[#1F2937]">
+          What Would You Like to Do?
+        </h2>
+        <div className="relative max-w-md">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search admin settings..."
+            className="h-9 border-[#E5E7EB] pl-9 focus:ring-[#1a5632]"
+          />
+        </div>
+      </div>
+
+      {/* 3-column card grid */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {adminSections.map((section) => (
-          <Card
-            key={section.href}
-            className="cursor-pointer transition-all hover:shadow-md hover:border-primary/30"
-            onClick={() => router.push(section.href)}
-          >
-            <CardContent className="p-6">
-              <div className="flex items-start justify-between">
-                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                  {section.icon}
-                </div>
-                <ChevronRight className="h-5 w-5 text-muted-foreground" />
+        {filtered.map((card) => {
+          const Icon = card.icon
+          return (
+            <button
+              key={card.href}
+              type="button"
+              onClick={() => router.push(card.href)}
+              className="group flex items-start gap-4 rounded-[6px] border border-[#E5E7EB] bg-white p-6 text-left transition-colors hover:bg-[#f9fafb]"
+              style={{ boxShadow: "none" }}
+            >
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[#1a5632]/10">
+                <Icon className="h-5 w-5 text-[#1a5632]" />
               </div>
-              <div className="mt-4">
-                <h3 className="font-semibold">{section.title}</h3>
-                <p className="mt-1 text-sm text-muted-foreground leading-relaxed">
-                  {section.description}
+              <div className="flex-1">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-sm font-semibold text-[#1F2937]">
+                    {card.title}
+                  </h3>
+                  <ChevronRight className="h-4 w-4 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
+                </div>
+                <p className="mt-1 text-xs leading-relaxed text-[#6B7280]">
+                  {card.description}
                 </p>
               </div>
-              {section.countKey && (
-                <div className="mt-3 pt-3 border-t">
-                  {loading ? (
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                      <Loader2 className="h-3 w-3 animate-spin" />
-                      Loading...
-                    </div>
-                  ) : (
-                    <p className="text-xs text-muted-foreground">
-                      {counts[section.countKey] ?? 0} item
-                      {(counts[section.countKey] ?? 0) !== 1 ? "s" : ""} configured
-                    </p>
-                  )}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        ))}
+            </button>
+          )
+        })}
       </div>
+
+      {/* Empty state for search */}
+      {filtered.length === 0 && (
+        <div className="flex h-40 items-center justify-center text-sm text-muted-foreground">
+          No settings found matching &quot;{search}&quot;
+        </div>
+      )}
     </div>
   )
 }
