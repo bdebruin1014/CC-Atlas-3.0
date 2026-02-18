@@ -2,7 +2,7 @@
 
 import React from "react"
 import { useRouter } from "next/navigation"
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
+import { QueryClient, QueryClientProvider, QueryCache, MutationCache } from "@tanstack/react-query"
 
 import { createClient } from "@/lib/supabase/client"
 import { TopNav } from "@/components/layout/top-nav"
@@ -24,6 +24,16 @@ interface UserProfile {
 
 function makeQueryClient() {
   return new QueryClient({
+    queryCache: new QueryCache({
+      onError: (error) => {
+        console.error('[ATLAS] Query error:', error.message ?? error)
+      },
+    }),
+    mutationCache: new MutationCache({
+      onError: (error) => {
+        console.error('[ATLAS] Mutation error:', error.message ?? error)
+      },
+    }),
     defaultOptions: {
       queries: {
         staleTime: 5 * 60 * 1000,
