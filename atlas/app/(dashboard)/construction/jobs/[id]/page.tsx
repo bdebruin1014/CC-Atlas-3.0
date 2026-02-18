@@ -46,6 +46,11 @@ import {
 import type { ChangeOrderStatus } from "@/lib/construction/types"
 import { RecordTasksPanel, useRecordTaskCount } from "@/components/shared/record-tasks-panel"
 import { PhotoGallery } from "@/components/construction/photo-gallery"
+import {
+  usePunchItemsByJob,
+  PUNCH_ROOM_CONFIG,
+  PUNCH_STATUS_CONFIG,
+} from "@/lib/hooks/use-punch-items"
 
 export default function JobDetailPage() {
   const router = useRouter()
@@ -136,6 +141,41 @@ export default function JobDetailPage() {
         ?.name,
       due: "TBD",
     }))
+
+  // Punch items summary
+  const { data: punchItems = [] } = usePunchItemsByJob(jobId)
+  const punchSummary = (() => {
+    const open = punchItems.filter((i) => i.status === "open").length
+    const inProgress = punchItems.filter((i) => i.status === "in_progress").length
+    const complete = punchItems.filter((i) => i.status === "complete").length
+    const verified = punchItems.filter((i) => i.status === "verified").length
+    return { total: punchItems.length, open, inProgress, complete, verified }
+  })()
+
+  // Units with open punch items
+  const unitsWithOpenPunch = (() => {
+    const openItems = punchItems.filter(
+      (i) => i.status === "open" || i.status === "in_progress" || i.status === "disputed"
+    )
+    const byUnit = new Map<string, { unitId: string; rooms: Set<string>; count: number; lastActivity: string }>()
+    for (const item of openItems) {
+      if (!byUnit.has(item.unit_id)) {
+        byUnit.set(item.unit_id, {
+          unitId: item.unit_id,
+          rooms: new Set(),
+          count: 0,
+          lastActivity: item.updated_at,
+        })
+      }
+      const entry = byUnit.get(item.unit_id)!
+      entry.rooms.add(item.room)
+      entry.count++
+      if (item.updated_at > entry.lastActivity) {
+        entry.lastActivity = item.updated_at
+      }
+    }
+    return Array.from(byUnit.values()).sort((a, b) => b.count - a.count)
+  })()
 
   return (
     <div className="flex flex-col gap-6 p-6">
@@ -439,6 +479,95 @@ export default function JobDetailPage() {
               </CardContent>
             </Card>
           </div>
+
+          {/* Punch List Summary */}
+          {punchSummary.total > 0 && (
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <CardTitle className="text-base">Punch List Summary</CardTitle>
+                <div className="flex items-center gap-2 text-xs">
+                  <Badge variant="outline" className="bg-red-50 text-red-700">
+                    {punchSummary.open} Open
+                  </Badge>
+                  <Badge variant="outline" className="bg-blue-50 text-blue-700">
+                    {punchSummary.inProgress} In Progress
+                  </Badge>
+                  <Badge variant="outline" className="bg-green-50 text-green-700">
+                    {punchSummary.complete} Complete
+                  </Badge>
+                  <Badge variant="outline" className="bg-emerald-50 text-emerald-800">
+                    {punchSummary.verified} Verified
+                  </Badge>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {unitsWithOpenPunch.length === 0 ? (
+                  <p className="text-sm text-muted-foreground py-4 text-center">
+                    All punch items resolved
+                  </p>
+                ) : (
+                  <div className="overflow-hidden rounded-lg border border-border">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b bg-muted/50">
+                          <th className="px-4 py-2 text-left font-medium text-muted-foreground">
+                            Unit
+                          </th>
+                          <th className="px-4 py-2 text-left font-medium text-muted-foreground">
+                            Rooms
+                          </th>
+                          <th className="px-4 py-2 text-center font-medium text-muted-foreground">
+                            Open Items
+                          </th>
+                          <th className="px-4 py-2 text-left font-medium text-muted-foreground">
+                            Last Activity
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {unitsWithOpenPunch.slice(0, 10).map((entry) => {
+                          const unit = units.find((u) => u.id === entry.unitId)
+                          return (
+                            <tr
+                              key={entry.unitId}
+                              className="border-b last:border-0 cursor-pointer hover:bg-muted/30"
+                              onClick={() =>
+                                router.push(
+                                  `/construction/jobs/${jobId}/units/${entry.unitId}`
+                                )
+                              }
+                            >
+                              <td className="px-4 py-2 font-medium">
+                                {unit?.unit_number ?? entry.unitId.slice(0, 8)}
+                              </td>
+                              <td className="px-4 py-2 text-xs text-muted-foreground">
+                                {Array.from(entry.rooms)
+                                  .map(
+                                    (r) =>
+                                      PUNCH_ROOM_CONFIG[
+                                        r as keyof typeof PUNCH_ROOM_CONFIG
+                                      ]?.label ?? r
+                                  )
+                                  .join(", ")}
+                              </td>
+                              <td className="px-4 py-2 text-center">
+                                <span className="font-medium text-red-600">
+                                  {entry.count}
+                                </span>
+                              </td>
+                              <td className="px-4 py-2 text-xs text-muted-foreground">
+                                {formatDate(entry.lastActivity)}
+                              </td>
+                            </tr>
+                          )
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
         </TabsContent>
 
         {/* ============ UNITS TAB ============ */}

@@ -39,6 +39,8 @@ import {
 } from "@/lib/construction/types"
 import { RecordTasksPanel, useRecordTaskCount } from "@/components/shared/record-tasks-panel"
 import { PhotoGallery } from "@/components/construction/photo-gallery"
+import { PunchListTab } from "@/components/construction/punch-list-tab"
+import { PreCOChecklist } from "@/components/construction/pre-co-checklist"
 
 export default function UnitDetailPage() {
   const router = useRouter()
@@ -269,6 +271,7 @@ export default function UnitDetailPage() {
           <TabsTrigger value="inspections">Inspections</TabsTrigger>
           <TabsTrigger value="issues">Issues</TabsTrigger>
           <TabsTrigger value="photos">Photos</TabsTrigger>
+          <TabsTrigger value="punch-list">Punch List</TabsTrigger>
           <TabsTrigger value="tasks">
             Tasks{taskCount > 0 ? ` (${taskCount})` : ""}
           </TabsTrigger>
@@ -582,6 +585,14 @@ export default function UnitDetailPage() {
         {/* ---- Photos Tab ---- */}
         <TabsContent value="photos" className="space-y-4">
           <PhotoGallery jobId={jobId} unitId={unitId} />
+        </TabsContent>
+
+        {/* ---- Punch List Tab ---- */}
+        <TabsContent value="punch-list" className="space-y-4">
+          <div className="grid md:grid-cols-[1fr_300px] gap-4">
+            <PunchListTab jobId={jobId} unitId={unitId} />
+            <PreCOChecklist unitId={unitId} />
+          </div>
         </TabsContent>
 
         {/* ---- Tasks Tab ---- */}

@@ -742,6 +742,12 @@ export interface VendorProfile {
   updated_at: string
 }
 
+// Punch item enums
+export type PunchItemRoom = 'exterior' | 'garage' | 'kitchen' | 'living_room' | 'dining_room' | 'master_bedroom' | 'master_bath' | 'bedroom_2' | 'bedroom_3' | 'bathroom_2' | 'bathroom_3' | 'laundry' | 'hallway' | 'closet' | 'porch_patio' | 'other'
+export type PunchItemCategory = 'paint' | 'drywall' | 'trim' | 'flooring' | 'plumbing' | 'electrical' | 'hvac' | 'appliance' | 'door_window' | 'hardware' | 'cleaning' | 'landscaping' | 'concrete' | 'other'
+export type PunchItemPriority = 'low' | 'medium' | 'high' | 'critical'
+export type PunchItemStatus = 'open' | 'in_progress' | 'complete' | 'verified' | 'disputed'
+
 export type PhotoCategory = 'progress' | 'inspection' | 'issue' | 'completion' | 'before' | 'after' | 'aerial' | 'other'
 
 export interface ConstructionPhoto {
@@ -790,6 +796,32 @@ export interface DailyLog {
   visitor_log: string | null
   delays: string | null
   delay_reason: string | null
+  notes: string | null
+  created_by: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface PunchItem {
+  id: string
+  organization_id: string | null
+  job_id: string
+  unit_id: string
+  item_number: number
+  room: PunchItemRoom
+  category: PunchItemCategory
+  description: string
+  assigned_vendor_contact_id: string | null
+  priority: PunchItemPriority
+  status: PunchItemStatus
+  round: number
+  photos: string[] | null
+  back_charge_vendor_contact_id: string | null
+  back_charge_amount: number | null
+  completed_at: string | null
+  completed_by: string | null
+  verified_at: string | null
+  verified_by: string | null
   notes: string | null
   created_by: string | null
   created_at: string
@@ -1174,6 +1206,8 @@ export interface Database {
       disposition_price_changes: { Row: DispositionPriceChange; Insert: Partial<DispositionPriceChange> & { listing_id: string }; Update: Partial<DispositionPriceChange>; Relationships: [] }
       disposition_bulk_sale_agreements: { Row: DispositionBulkSaleAgreement; Insert: Partial<DispositionBulkSaleAgreement> & { project_id: string; organization_id: string }; Update: Partial<DispositionBulkSaleAgreement>; Relationships: [] }
       disposition_takedown_schedule: { Row: DispositionTakedownSchedule; Insert: Partial<DispositionTakedownSchedule> & { bulk_sale_agreement_id: string }; Update: Partial<DispositionTakedownSchedule>; Relationships: [] }
+      // Punch items
+      punch_items: { Row: PunchItem; Insert: Partial<PunchItem> & { job_id: string; unit_id: string; room: PunchItemRoom; category: PunchItemCategory; description: string }; Update: Partial<PunchItem>; Relationships: [] }
       // Construction photos & daily logs
       construction_photos: { Row: ConstructionPhoto; Insert: Partial<ConstructionPhoto> & { file_url: string }; Update: Partial<ConstructionPhoto>; Relationships: [] }
       milestone_photo_requirements: { Row: MilestonePhotoRequirement; Insert: Partial<MilestonePhotoRequirement> & { milestone_sequence: number }; Update: Partial<MilestonePhotoRequirement>; Relationships: [] }
