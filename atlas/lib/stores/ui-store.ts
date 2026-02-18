@@ -2,6 +2,16 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 
 type RightPanelTab = 'tasks' | 'notes' | 'activity'
+export type ViewMode = 'card' | 'list'
+
+interface ViewPreferences {
+  opportunities: ViewMode
+  projects: ViewMode
+  construction: ViewMode
+  disposition: ViewMode
+  contacts: ViewMode
+  tasks: ViewMode
+}
 
 interface UIState {
   sidebarCollapsed: boolean
@@ -9,6 +19,8 @@ interface UIState {
   notificationCount: number
   rightPanelOpen: boolean
   rightPanelTab: RightPanelTab
+  selectedEntityId: string | null
+  viewPreferences: ViewPreferences
   toggleSidebar: () => void
   setSidebarCollapsed: (collapsed: boolean) => void
   setSearchOpen: (open: boolean) => void
@@ -16,6 +28,8 @@ interface UIState {
   toggleRightPanel: () => void
   setRightPanelOpen: (open: boolean) => void
   setRightPanelTab: (tab: RightPanelTab) => void
+  setSelectedEntityId: (id: string | null) => void
+  setViewPreference: (module: keyof ViewPreferences, mode: ViewMode) => void
 }
 
 export const useUIStore = create<UIState>()(
@@ -26,6 +40,15 @@ export const useUIStore = create<UIState>()(
       notificationCount: 0,
       rightPanelOpen: false,
       rightPanelTab: 'tasks',
+      selectedEntityId: null,
+      viewPreferences: {
+        opportunities: 'card',
+        projects: 'card',
+        construction: 'card',
+        disposition: 'card',
+        contacts: 'list',
+        tasks: 'list',
+      },
       toggleSidebar: () =>
         set((state) => ({ sidebarCollapsed: !state.sidebarCollapsed })),
       setSidebarCollapsed: (collapsed) =>
@@ -37,6 +60,11 @@ export const useUIStore = create<UIState>()(
         set((state) => ({ rightPanelOpen: !state.rightPanelOpen })),
       setRightPanelOpen: (open) => set({ rightPanelOpen: open }),
       setRightPanelTab: (tab) => set({ rightPanelTab: tab }),
+      setSelectedEntityId: (id) => set({ selectedEntityId: id }),
+      setViewPreference: (module, mode) =>
+        set((state) => ({
+          viewPreferences: { ...state.viewPreferences, [module]: mode },
+        })),
     }),
     {
       name: 'atlas-ui-store',
@@ -44,6 +72,8 @@ export const useUIStore = create<UIState>()(
         sidebarCollapsed: state.sidebarCollapsed,
         rightPanelOpen: state.rightPanelOpen,
         rightPanelTab: state.rightPanelTab,
+        selectedEntityId: state.selectedEntityId,
+        viewPreferences: state.viewPreferences,
       }),
     }
   )

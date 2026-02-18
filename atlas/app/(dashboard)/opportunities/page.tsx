@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
@@ -33,6 +33,8 @@ import {
   type OpportunityType,
 } from '@/lib/types/opportunities'
 import { toast } from '@/lib/hooks/use-toast'
+import { useUIStore } from '@/lib/stores/ui-store'
+import { ViewToggle } from '@/components/shared/view-toggle'
 import {
   Plus,
   Search,
@@ -97,6 +99,16 @@ export default function OpportunitiesPage() {
   const [filterAssigned, setFilterAssigned] = useState<string>('all')
   const [filterEntity, setFilterEntity] = useState<string>('all')
   const [searchQuery, setSearchQuery] = useState('')
+  const { selectedEntityId } = useUIStore()
+
+  // Sync global entity selector → local filter
+  const prevGlobalEntity = useRef(selectedEntityId)
+  useEffect(() => {
+    if (selectedEntityId !== prevGlobalEntity.current) {
+      prevGlobalEntity.current = selectedEntityId
+      setFilterEntity(selectedEntityId ?? 'all')
+    }
+  }, [selectedEntityId])
 
   // ---- Fetch data ----
   const fetchOpportunities = useCallback(async () => {

@@ -20,6 +20,7 @@ import {
 import { cn } from "@/lib/utils/format"
 import { useUIStore } from "@/lib/stores/ui-store"
 import { createClient } from "@/lib/supabase/client"
+import { EntitySelector } from "@/components/layout/entity-selector"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
   DropdownMenu,
@@ -86,11 +87,16 @@ export function TopNav({ user }: TopNavProps) {
       style={{ minHeight: 48, maxHeight: 48 }}
     >
       {/* Left: ATLAS wordmark */}
-      <Link href="/" className="mr-6 flex items-center">
+      <Link href="/" className="mr-4 flex items-center">
         <span className="text-base font-bold tracking-widest text-white">
           ATLAS
         </span>
       </Link>
+
+      {/* Entity selector */}
+      <div className="mr-3 hidden sm:block">
+        <EntitySelector />
+      </div>
 
       {/* Center: Module tabs */}
       <nav className="flex flex-1 items-center gap-0.5 overflow-x-auto">

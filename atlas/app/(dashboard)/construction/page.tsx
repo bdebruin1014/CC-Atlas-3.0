@@ -18,6 +18,7 @@ import {
   Shield,
 } from "lucide-react"
 import { cn, formatCurrency, formatPercent, formatDate } from "@/lib/utils/format"
+import { ViewToggle } from "@/components/shared/view-toggle"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
@@ -305,6 +306,8 @@ export default function ConstructionDashboardPage() {
             <SelectItem value="third_party">Third-Party</SelectItem>
           </SelectContent>
         </Select>
+
+        <ViewToggle module="construction" className="ml-auto" />
 
         {hasFilters && (
           <Button
