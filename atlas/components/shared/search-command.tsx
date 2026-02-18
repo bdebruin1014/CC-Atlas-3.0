@@ -9,9 +9,11 @@ import {
   Users,
   Clock,
   FileText,
+  Building2,
+  Home,
+  Loader2,
 } from "lucide-react"
 
-import { createClient } from "@/lib/supabase/client"
 import { useUIStore } from "@/lib/stores/ui-store"
 import {
   CommandDialog,
@@ -58,13 +60,35 @@ function saveRecentSearch(result: SearchResult) {
   }
 }
 
+function formatLabel(s: string | null | undefined): string {
+  return (s ?? "")
+    .replace(/_/g, " ")
+    .replace(/\b\w/g, (c: string) => c.toUpperCase())
+}
+
+// ---------------------------------------------------------------------------
+// Module config
+// ---------------------------------------------------------------------------
+const MODULE_ICONS: Record<string, React.ElementType> = {
+  Opportunities: TrendingUp,
+  Projects: FolderKanban,
+  Construction: HardHat,
+  Disposition: Home,
+  Contacts: Users,
+  Entities: Building2,
+}
+
+// ---------------------------------------------------------------------------
+// SearchCommand
+// ---------------------------------------------------------------------------
 export function SearchCommand() {
   const router = useRouter()
   const { searchOpen, setSearchOpen } = useUIStore()
-  const supabase = createClient()
   const [query, setQuery] = React.useState("")
   const [results, setResults] = React.useState<SearchResult[]>([])
-  const [recentSearches, setRecentSearches] = React.useState<SearchResult[]>([])
+  const [recentSearches, setRecentSearches] = React.useState<SearchResult[]>(
+    []
+  )
   const [isSearching, setIsSearching] = React.useState(false)
 
   // Load recent searches on mount
@@ -89,7 +113,7 @@ export function SearchCommand() {
     return () => document.removeEventListener("keydown", handleKeyDown)
   }, [searchOpen, setSearchOpen])
 
-  // Debounced search
+  // Debounced search via API
   React.useEffect(() => {
     if (!query || query.length < 2) {
       setResults([])
@@ -101,83 +125,94 @@ export function SearchCommand() {
       const searchResults: SearchResult[] = []
 
       try {
-        // Search opportunities
-        const { data: opportunities } = await supabase
-          .from("opportunities")
-          .select("id, name, stage")
-          .ilike("name", `%${query}%`)
-          .limit(5)
+        const res = await fetch(
+          `/api/search?q=${encodeURIComponent(query)}`
+        )
+        if (!res.ok) throw new Error("Search failed")
 
-        opportunities?.forEach((opp) => {
+        const data = await res.json()
+
+        // Opportunities
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        data.opportunities?.forEach((o: any) => {
           searchResults.push({
-            id: `opp-${opp.id}`,
-            label: opp.name,
-            description: opp.stage
-              ?.replace(/_/g, " ")
-              .replace(/\b\w/g, (c: string) => c.toUpperCase()),
-            href: `/opportunities/${opp.id}`,
+            id: `opp-${o.id}`,
+            label: o.name || "Untitled",
+            description: [formatLabel(o.stage), o.address]
+              .filter(Boolean)
+              .join(" — "),
+            href: `/opportunities/${o.id}`,
             category: "Opportunities",
             icon: TrendingUp,
           })
         })
 
-        // Search projects
-        const { data: projects } = await supabase
-          .from("projects")
-          .select("id, name, status")
-          .ilike("name", `%${query}%`)
-          .limit(5)
-
-        projects?.forEach((proj) => {
+        // Projects
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        data.projects?.forEach((p: any) => {
           searchResults.push({
-            id: `proj-${proj.id}`,
-            label: proj.name,
-            description: proj.status
-              ?.replace(/_/g, " ")
-              .replace(/\b\w/g, (c: string) => c.toUpperCase()),
-            href: `/projects/${proj.id}`,
+            id: `proj-${p.id}`,
+            label: p.name,
+            description: [formatLabel(p.status), p.address]
+              .filter(Boolean)
+              .join(" — "),
+            href: `/projects/${p.id}`,
             category: "Projects",
             icon: FolderKanban,
           })
         })
 
-        // Search jobs
-        const { data: jobs } = await supabase
-          .from("jobs")
-          .select("id, name, status")
-          .ilike("name", `%${query}%`)
-          .limit(5)
-
-        jobs?.forEach((job) => {
+        // Construction (jobs)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        data.construction?.forEach((j: any) => {
           searchResults.push({
-            id: `job-${job.id}`,
-            label: job.name,
-            description: job.status
-              ?.replace(/_/g, " ")
-              .replace(/\b\w/g, (c: string) => c.toUpperCase()),
-            href: `/construction/${job.id}`,
+            id: `job-${j.id}`,
+            label: j.name,
+            description: formatLabel(j.status),
+            href: `/construction/jobs/${j.id}`,
             category: "Construction",
             icon: HardHat,
           })
         })
 
-        // Search contacts
-        const { data: contacts } = await supabase
-          .from("contacts")
-          .select("id, first_name, last_name, company")
-          .or(
-            `first_name.ilike.%${query}%,last_name.ilike.%${query}%,company.ilike.%${query}%`
-          )
-          .limit(5)
-
-        contacts?.forEach((contact) => {
+        // Disposition
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        data.disposition?.forEach((l: any) => {
           searchResults.push({
-            id: `contact-${contact.id}`,
-            label: `${contact.first_name} ${contact.last_name}`,
-            description: contact.company || undefined,
-            href: `/contacts/${contact.id}`,
+            id: `listing-${l.id}`,
+            label: l.address || l.listing_number || "Listing",
+            description: [l.listing_number, formatLabel(l.status)]
+              .filter(Boolean)
+              .join(" — "),
+            href: `/disposition/${l.id}`,
+            category: "Disposition",
+            icon: Home,
+          })
+        })
+
+        // Contacts
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        data.contacts?.forEach((c: any) => {
+          searchResults.push({
+            id: `contact-${c.id}`,
+            label: c.name || "Unknown",
+            description: c.company || undefined,
+            href: `/contacts/${c.id}`,
             category: "Contacts",
             icon: Users,
+          })
+        })
+
+        // Entities
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        data.entities?.forEach((e: any) => {
+          searchResults.push({
+            id: `entity-${e.id}`,
+            label: e.name,
+            description: formatLabel(e.type),
+            href: `/accounting/entities/${e.id}`,
+            category: "Entities",
+            icon: Building2,
           })
         })
       } catch (error) {
@@ -189,7 +224,7 @@ export function SearchCommand() {
     }, 300)
 
     return () => clearTimeout(timer)
-  }, [query, supabase])
+  }, [query])
 
   const handleSelect = (result: SearchResult) => {
     saveRecentSearch(result)
@@ -218,11 +253,16 @@ export function SearchCommand() {
       />
       <CommandList>
         <CommandEmpty>
-          {isSearching
-            ? "Searching..."
-            : query.length < 2
-              ? "Type at least 2 characters to search..."
-              : "No results found."}
+          {isSearching ? (
+            <div className="flex items-center justify-center gap-2 py-2">
+              <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+              <span>Searching...</span>
+            </div>
+          ) : query.length < 2 ? (
+            "Type at least 2 characters to search..."
+          ) : (
+            "No results found."
+          )}
         </CommandEmpty>
 
         {/* Recent Searches */}
@@ -250,83 +290,71 @@ export function SearchCommand() {
         {/* Quick Navigation (when no query) */}
         {!query && (
           <CommandGroup heading="Quick Navigation">
-            <CommandItem
-              value="nav-opportunities"
-              onSelect={() => {
-                setSearchOpen(false)
-                router.push("/opportunities")
-              }}
-              className="cursor-pointer"
-            >
-              <TrendingUp className="mr-2 h-4 w-4" />
-              Opportunities
-            </CommandItem>
-            <CommandItem
-              value="nav-projects"
-              onSelect={() => {
-                setSearchOpen(false)
-                router.push("/projects")
-              }}
-              className="cursor-pointer"
-            >
-              <FolderKanban className="mr-2 h-4 w-4" />
-              Projects
-            </CommandItem>
-            <CommandItem
-              value="nav-construction"
-              onSelect={() => {
-                setSearchOpen(false)
-                router.push("/construction")
-              }}
-              className="cursor-pointer"
-            >
-              <HardHat className="mr-2 h-4 w-4" />
-              Construction
-            </CommandItem>
-            <CommandItem
-              value="nav-contacts"
-              onSelect={() => {
-                setSearchOpen(false)
-                router.push("/contacts")
-              }}
-              className="cursor-pointer"
-            >
-              <Users className="mr-2 h-4 w-4" />
-              Contacts
-            </CommandItem>
+            {[
+              { label: "Opportunities", href: "/opportunities", icon: TrendingUp },
+              { label: "Projects", href: "/projects", icon: FolderKanban },
+              { label: "Construction", href: "/construction", icon: HardHat },
+              { label: "Disposition", href: "/disposition", icon: Home },
+              { label: "Contacts", href: "/contacts", icon: Users },
+              { label: "Entities", href: "/accounting/entities", icon: Building2 },
+            ].map((nav) => {
+              const NavIcon = nav.icon
+              return (
+                <CommandItem
+                  key={nav.href}
+                  value={`nav-${nav.label.toLowerCase()}`}
+                  onSelect={() => {
+                    setSearchOpen(false)
+                    router.push(nav.href)
+                  }}
+                  className="cursor-pointer"
+                >
+                  <NavIcon className="mr-2 h-4 w-4" />
+                  {nav.label}
+                </CommandItem>
+              )
+            })}
           </CommandGroup>
         )}
 
         {/* Search Results */}
-        {Object.entries(groupedResults).map(([category, categoryResults], idx) => (
-          <React.Fragment key={category}>
-            {idx > 0 && <CommandSeparator />}
-            <CommandGroup heading={category}>
-              {categoryResults.map((result) => {
-                const ResultIcon = result.icon
-                return (
-                  <CommandItem
-                    key={result.id}
-                    value={result.id}
-                    onSelect={() => handleSelect(result)}
-                    className="cursor-pointer"
-                  >
-                    <ResultIcon className="mr-2 h-4 w-4 text-muted-foreground" />
-                    <div className="flex flex-1 flex-col">
-                      <span>{result.label}</span>
-                      {result.description && (
-                        <span className="text-xs text-muted-foreground">
-                          {result.description}
-                        </span>
-                      )}
-                    </div>
-                    <FileText className="ml-2 h-3 w-3 text-muted-foreground/50" />
-                  </CommandItem>
-                )
-              })}
-            </CommandGroup>
-          </React.Fragment>
-        ))}
+        {Object.entries(groupedResults).map(
+          ([category, categoryResults], idx) => {
+            const CategoryIcon =
+              MODULE_ICONS[category] || FileText
+            return (
+              <React.Fragment key={category}>
+                {idx > 0 && <CommandSeparator />}
+                <CommandGroup heading={category}>
+                  {categoryResults.map((result) => {
+                    const ResultIcon = result.icon
+                    return (
+                      <CommandItem
+                        key={result.id}
+                        value={result.id}
+                        onSelect={() => handleSelect(result)}
+                        className="cursor-pointer"
+                      >
+                        <ResultIcon className="mr-2 h-4 w-4 text-muted-foreground" />
+                        <div className="flex flex-1 flex-col">
+                          <span>{result.label}</span>
+                          {result.description && (
+                            <span className="text-xs text-muted-foreground">
+                              {result.description}
+                            </span>
+                          )}
+                        </div>
+                        <kbd className="ml-2 hidden text-[10px] text-muted-foreground/50 sm:inline">
+                          ↵
+                        </kbd>
+                      </CommandItem>
+                    )
+                  })}
+                </CommandGroup>
+              </React.Fragment>
+            )
+          }
+        )}
       </CommandList>
     </CommandDialog>
   )

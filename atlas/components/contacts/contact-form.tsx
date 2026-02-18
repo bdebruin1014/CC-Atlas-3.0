@@ -5,13 +5,13 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { useState, useCallback } from "react"
-import { X, Plus, Loader2, Save } from "lucide-react"
+import { X, Loader2, Save } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils/format"
+import { FormSection, FormGrid, FormField } from "@/components/shared/form-section"
 
 // ---------------------------------------------------------------------------
 // Schema
@@ -181,47 +181,73 @@ export function ContactForm({
     [onSubmit, contactTypes, tags]
   )
 
+  const inputClass = "h-9 border-[#E5E7EB] focus:ring-[#1a5632]"
+
   return (
-    <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-6">
-      {/* Name */}
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div className="space-y-2">
-          <Label htmlFor="first_name">
-            First Name <span className="text-destructive">*</span>
-          </Label>
-          <Input
-            id="first_name"
-            {...register("first_name")}
-            className={cn(errors.first_name && "border-destructive")}
-          />
-          {errors.first_name && (
-            <p className="text-xs text-destructive">{errors.first_name.message}</p>
-          )}
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="last_name">
-            Last Name <span className="text-destructive">*</span>
-          </Label>
-          <Input
-            id="last_name"
-            {...register("last_name")}
-            className={cn(errors.last_name && "border-destructive")}
-          />
-          {errors.last_name && (
-            <p className="text-xs text-destructive">{errors.last_name.message}</p>
-          )}
-        </div>
-      </div>
+    <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-4">
+      {/* Basic Info */}
+      <FormSection title="Basic Info">
+        <FormGrid>
+          <FormField label="First Name" required>
+            <Input
+              {...register("first_name")}
+              className={cn(inputClass, errors.first_name && "border-destructive")}
+            />
+            {errors.first_name && (
+              <p className="text-xs text-destructive">{errors.first_name.message}</p>
+            )}
+          </FormField>
 
-      {/* Company */}
-      <div className="space-y-2">
-        <Label htmlFor="company">Company</Label>
-        <Input id="company" {...register("company")} />
-      </div>
+          <FormField label="Last Name" required>
+            <Input
+              {...register("last_name")}
+              className={cn(inputClass, errors.last_name && "border-destructive")}
+            />
+            {errors.last_name && (
+              <p className="text-xs text-destructive">{errors.last_name.message}</p>
+            )}
+          </FormField>
 
-      {/* Contact types (multi-select) */}
-      <div className="space-y-2">
-        <Label>Contact Types</Label>
+          <FormField label="Company">
+            <Input {...register("company")} className={inputClass} />
+          </FormField>
+
+          <FormField label="Status">
+            <select
+              {...register("status")}
+              className={cn(
+                "flex h-9 w-full rounded-md border border-[#E5E7EB] bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#1a5632]"
+              )}
+            >
+              <option value="active">Active</option>
+              <option value="inactive">Inactive</option>
+              <option value="archived">Archived</option>
+            </select>
+          </FormField>
+
+          <FormField label="Email">
+            <Input
+              type="email"
+              {...register("email")}
+              className={cn(inputClass, errors.email && "border-destructive")}
+            />
+            {errors.email && (
+              <p className="text-xs text-destructive">{errors.email.message}</p>
+            )}
+          </FormField>
+
+          <FormField label="Phone">
+            <Input type="tel" {...register("phone")} className={inputClass} />
+          </FormField>
+
+          <FormField label="Secondary Phone">
+            <Input type="tel" {...register("secondary_phone")} className={inputClass} />
+          </FormField>
+        </FormGrid>
+      </FormSection>
+
+      {/* Contact types */}
+      <FormSection title="Contact Types">
         <div className="flex flex-wrap gap-2">
           {CONTACT_TYPES.map((type) => {
             const isSelected = contactTypes.includes(type)
@@ -242,76 +268,36 @@ export function ContactForm({
             )
           })}
         </div>
-      </div>
-
-      {/* Email and Phone */}
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div className="space-y-2">
-          <Label htmlFor="email">Email</Label>
-          <Input
-            id="email"
-            type="email"
-            {...register("email")}
-            className={cn(errors.email && "border-destructive")}
-          />
-          {errors.email && (
-            <p className="text-xs text-destructive">{errors.email.message}</p>
-          )}
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="phone">Phone</Label>
-          <Input id="phone" type="tel" {...register("phone")} />
-        </div>
-      </div>
-
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div className="space-y-2">
-          <Label htmlFor="secondary_phone">Secondary Phone</Label>
-          <Input
-            id="secondary_phone"
-            type="tel"
-            {...register("secondary_phone")}
-          />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="status">Status</Label>
-          <select
-            id="status"
-            {...register("status")}
-            className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-          >
-            <option value="active">Active</option>
-            <option value="inactive">Inactive</option>
-            <option value="archived">Archived</option>
-          </select>
-        </div>
-      </div>
+      </FormSection>
 
       {/* Address */}
-      <div className="space-y-4">
-        <Label className="text-muted-foreground">Address</Label>
-        <div className="space-y-3">
-          <Input
-            placeholder="Address line 1"
-            {...register("address_line1")}
-          />
-          <Input
-            placeholder="Address line 2"
-            {...register("address_line2")}
-          />
-          <div className="grid gap-3 sm:grid-cols-3">
-            <Input placeholder="City" {...register("city")} />
-            <Input placeholder="State" {...register("state")} />
-            <Input placeholder="ZIP" {...register("zip")} />
-          </div>
-          <Input placeholder="Country" {...register("country")} />
-        </div>
-      </div>
+      <FormSection title="Address">
+        <FormGrid>
+          <FormField label="Address Line 1" className="md:col-span-2">
+            <Input placeholder="Address line 1" {...register("address_line1")} className={inputClass} />
+          </FormField>
+
+          <FormField label="Address Line 2" className="md:col-span-2">
+            <Input placeholder="Address line 2" {...register("address_line2")} className={inputClass} />
+          </FormField>
+        </FormGrid>
+
+        <FormGrid cols={3} className="mt-4">
+          <FormField label="City">
+            <Input placeholder="City" {...register("city")} className={inputClass} />
+          </FormField>
+          <FormField label="State">
+            <Input placeholder="State" {...register("state")} className={inputClass} />
+          </FormField>
+          <FormField label="ZIP">
+            <Input placeholder="ZIP" {...register("zip")} className={inputClass} />
+          </FormField>
+        </FormGrid>
+      </FormSection>
 
       {/* Tags */}
-      <div className="space-y-2">
-        <Label>Tags</Label>
-        <div className="flex flex-wrap items-center gap-2 rounded-md border border-input p-2">
+      <FormSection title="Tags">
+        <div className="flex flex-wrap items-center gap-2 rounded-md border border-[#E5E7EB] p-2">
           {tags.map((tag) => (
             <Badge key={tag} variant="secondary" className="gap-1">
               {tag}
@@ -333,22 +319,20 @@ export function ContactForm({
             className="h-7 min-w-[120px] flex-1 border-0 p-0 shadow-none focus-visible:ring-0"
           />
         </div>
-        <p className="text-xs text-muted-foreground">
+        <p className="mt-1 text-xs text-muted-foreground">
           Press Enter to add a tag
         </p>
-      </div>
+      </FormSection>
 
       {/* Notes */}
-      <div className="space-y-2">
-        <Label htmlFor="notes">Notes</Label>
+      <FormSection title="Notes">
         <Textarea
-          id="notes"
           {...register("notes")}
           rows={4}
           placeholder="Internal notes about this contact..."
           className="resize-none"
         />
-      </div>
+      </FormSection>
 
       {/* Actions */}
       <div className="flex items-center justify-end gap-3 border-t border-border pt-4">
