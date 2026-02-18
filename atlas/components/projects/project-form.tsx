@@ -6,7 +6,6 @@ import { z } from "zod"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import {
   Select,
   SelectContent,
@@ -14,8 +13,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Separator } from "@/components/ui/separator"
 import {
   type Project,
   type ProjectType,
@@ -25,6 +22,7 @@ import {
   useFloorPlans,
   generateProjectNumber,
 } from "@/lib/hooks/use-projects"
+import { FormSection, FormGrid, FormField } from "@/components/shared/form-section"
 
 // ---------------------------------------------------------------------------
 // Schema
@@ -131,297 +129,186 @@ export function ProjectForm({
   const showLotDev = selectedType === "lot_development" || selectedType === "community_development"
   const showFloorPlan = selectedType === "scattered_lot" || selectedType === "lot_purchase"
 
+  const inputClass = "h-9 border-[#E5E7EB] focus:ring-[#1a5632]"
+
   return (
-    <form onSubmit={handleSubmit(onSubmit as never)} className="space-y-6">
+    <form onSubmit={handleSubmit(onSubmit as never)} className="space-y-4">
       {/* Basic Information */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Basic Information</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="project_number">Project Number *</Label>
-              <Input
-                id="project_number"
-                {...register("project_number")}
-                placeholder={generatingNumber ? "Generating..." : "YY-XXX"}
-                disabled={generatingNumber}
-              />
-              {errors.project_number && (
-                <p className="text-xs text-destructive">{errors.project_number.message}</p>
-              )}
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="name">Project Name *</Label>
-              <Input
-                id="name"
-                {...register("name")}
-                placeholder="e.g. 123 Main St Build"
-              />
-              {errors.name && (
-                <p className="text-xs text-destructive">{errors.name.message}</p>
-              )}
-            </div>
-          </div>
+      <FormSection title="Basic Info">
+        <FormGrid>
+          <FormField label="Project Number" required>
+            <Input
+              {...register("project_number")}
+              placeholder={generatingNumber ? "Generating..." : "YY-XXX"}
+              disabled={generatingNumber}
+              className={inputClass}
+            />
+            {errors.project_number && (
+              <p className="text-xs text-destructive">{errors.project_number.message}</p>
+            )}
+          </FormField>
 
-          <Separator />
+          <FormField label="Project Name" required>
+            <Input
+              {...register("name")}
+              placeholder="e.g. 123 Main St Build"
+              className={inputClass}
+            />
+            {errors.name && (
+              <p className="text-xs text-destructive">{errors.name.message}</p>
+            )}
+          </FormField>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="address_street">Address</Label>
-              <Input id="address_street" {...register("address_street")} placeholder="Street address" />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="address_city">City</Label>
-              <Input id="address_city" {...register("address_city")} placeholder="City" />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="address_state">State</Label>
-              <Input id="address_state" {...register("address_state")} placeholder="SC" maxLength={2} />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="address_zip">Zip</Label>
-              <Input id="address_zip" {...register("address_zip")} placeholder="29401" />
-            </div>
-          </div>
-
-          <Separator />
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="space-y-2">
-              <Label>Project Type *</Label>
-              <Select
-                value={watch("type")}
-                onValueChange={(val) => setValue("type", val)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select type" />
-                </SelectTrigger>
-                <SelectContent>
-                  {PROJECT_TYPES.map((t) => (
-                    <SelectItem key={t.value} value={t.value}>
-                      {t.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {errors.type && (
-                <p className="text-xs text-destructive">{errors.type.message}</p>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <Label>Owner Entity</Label>
-              <Select
-                value={watch("owner_entity_id") ?? ""}
-                onValueChange={(val) => setValue("owner_entity_id", val || null)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select entity" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="">None</SelectItem>
-                  {entities.map((e) => (
-                    <SelectItem key={e.id} value={e.id}>
-                      {e.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label>Builder Entity</Label>
-              <Select
-                value={watch("builder_entity_id") ?? ""}
-                onValueChange={(val) => setValue("builder_entity_id", val || null)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select entity" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="">None</SelectItem>
-                  {entities.map((e) => (
-                    <SelectItem key={e.id} value={e.id}>
-                      {e.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
+          <FormField label="Project Type" required>
+            <Select
+              value={watch("type")}
+              onValueChange={(val) => setValue("type", val)}
+            >
+              <SelectTrigger className={inputClass}>
+                <SelectValue placeholder="Select type" />
+              </SelectTrigger>
+              <SelectContent>
+                {PROJECT_TYPES.map((t) => (
+                  <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {errors.type && (
+              <p className="text-xs text-destructive">{errors.type.message}</p>
+            )}
+          </FormField>
 
           {mode === "edit" && (
-            <div className="space-y-2">
-              <Label>Status</Label>
+            <FormField label="Status">
               <Select
                 value={watch("status")}
                 onValueChange={(val) => setValue("status", val)}
               >
-                <SelectTrigger className="w-60">
+                <SelectTrigger className={inputClass}>
                   <SelectValue placeholder="Select status" />
                 </SelectTrigger>
                 <SelectContent>
                   {PROJECT_STATUSES.map((s) => (
-                    <SelectItem key={s.value} value={s.value}>
-                      {s.label}
-                    </SelectItem>
+                    <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-            </div>
+            </FormField>
           )}
-        </CardContent>
-      </Card>
+
+          <FormField label="Owner Entity">
+            <Select
+              value={watch("owner_entity_id") ?? ""}
+              onValueChange={(val) => setValue("owner_entity_id", val || null)}
+            >
+              <SelectTrigger className={inputClass}>
+                <SelectValue placeholder="Select entity" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">None</SelectItem>
+                {entities.map((e) => (
+                  <SelectItem key={e.id} value={e.id}>{e.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </FormField>
+
+          <FormField label="Builder Entity">
+            <Select
+              value={watch("builder_entity_id") ?? ""}
+              onValueChange={(val) => setValue("builder_entity_id", val || null)}
+            >
+              <SelectTrigger className={inputClass}>
+                <SelectValue placeholder="Select entity" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">None</SelectItem>
+                {entities.map((e) => (
+                  <SelectItem key={e.id} value={e.id}>{e.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </FormField>
+        </FormGrid>
+      </FormSection>
+
+      {/* Property Details */}
+      <FormSection title="Property Details">
+        <FormGrid cols={4}>
+          <FormField label="Address">
+            <Input {...register("address_street")} placeholder="Street address" className={inputClass} />
+          </FormField>
+          <FormField label="City">
+            <Input {...register("address_city")} placeholder="City" className={inputClass} />
+          </FormField>
+          <FormField label="State">
+            <Input {...register("address_state")} placeholder="SC" maxLength={2} className={inputClass} />
+          </FormField>
+          <FormField label="Zip">
+            <Input {...register("address_zip")} placeholder="29401" className={inputClass} />
+          </FormField>
+        </FormGrid>
+      </FormSection>
 
       {/* Acquisition */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Acquisition</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="acquisition_date">Acquisition Date</Label>
-              <Input
-                id="acquisition_date"
-                type="date"
-                {...register("acquisition_date")}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="budget_land_acquisition">Purchase Price</Label>
-              <Input
-                id="budget_land_acquisition"
-                type="number"
-                step="0.01"
-                {...register("budget_land_acquisition")}
-                placeholder="0.00"
-              />
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Budget */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Budget</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-2 max-w-sm">
-            <Label htmlFor="budget_total">Total Budget *</Label>
-            <Input
-              id="budget_total"
-              type="number"
-              step="0.01"
-              {...register("budget_total")}
-              placeholder="0.00"
-            />
+      <FormSection title="Acquisition">
+        <FormGrid>
+          <FormField label="Acquisition Date">
+            <Input type="date" {...register("acquisition_date")} className={inputClass} />
+          </FormField>
+          <FormField label="Purchase Price ($)">
+            <Input type="number" step="0.01" {...register("budget_land_acquisition")} placeholder="0.00" className={inputClass} />
+          </FormField>
+          <FormField label="Total Budget" required>
+            <Input type="number" step="0.01" {...register("budget_total")} placeholder="0.00" className={inputClass} />
             {errors.budget_total && (
               <p className="text-xs text-destructive">{errors.budget_total.message}</p>
             )}
-          </div>
-        </CardContent>
-      </Card>
+          </FormField>
+          <FormField label="Contract Amount">
+            <Input type="number" step="0.01" {...register("contract_amount")} placeholder="0.00" className={inputClass} />
+          </FormField>
+        </FormGrid>
+      </FormSection>
 
-      {/* Contract */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Contract</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-2 max-w-sm">
-            <Label htmlFor="contract_amount">Contract Amount</Label>
-            <Input
-              id="contract_amount"
-              type="number"
-              step="0.01"
-              {...register("contract_amount")}
-              placeholder="0.00"
-            />
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Type-specific fields */}
+      {/* Construction (scattered_lot) */}
       {showLotDimensions && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Lot Dimensions</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="lot_width">Lot Width (ft)</Label>
-                <Input
-                  id="lot_width"
-                  type="number"
-                  step="0.1"
-                  {...register("lot_width")}
-                  placeholder="0"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="lot_depth">Lot Depth (ft)</Label>
-                <Input
-                  id="lot_depth"
-                  type="number"
-                  step="0.1"
-                  {...register("lot_depth")}
-                  placeholder="0"
-                />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <FormSection title="Construction" description="Lot dimensions for scattered lot build.">
+          <FormGrid>
+            <FormField label="Lot Width (ft)">
+              <Input type="number" step="0.1" {...register("lot_width")} placeholder="0" className={inputClass} />
+            </FormField>
+            <FormField label="Lot Depth (ft)">
+              <Input type="number" step="0.1" {...register("lot_depth")} placeholder="0" className={inputClass} />
+            </FormField>
+          </FormGrid>
+        </FormSection>
       )}
 
+      {/* Development (lot_development / community_development) */}
       {showLotDev && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Development Details</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="total_acreage">Acreage</Label>
-                <Input
-                  id="total_acreage"
-                  type="number"
-                  step="0.01"
-                  {...register("total_acreage")}
-                  placeholder="0"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="total_lots">Total Lots</Label>
-                <Input
-                  id="total_lots"
-                  type="number"
-                  {...register("total_lots")}
-                  placeholder="0"
-                />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <FormSection title="Development" description="Land development details.">
+          <FormGrid>
+            <FormField label="Acreage">
+              <Input type="number" step="0.01" {...register("total_acreage")} placeholder="0" className={inputClass} />
+            </FormField>
+            <FormField label="Total Lots">
+              <Input type="number" {...register("total_lots")} placeholder="0" className={inputClass} />
+            </FormField>
+          </FormGrid>
+        </FormSection>
       )}
 
+      {/* Floor Plan (scattered_lot / lot_purchase) */}
       {showFloorPlan && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Floor Plan</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2 max-w-sm">
-              <Label>Floor Plan</Label>
+        <FormSection title="Floor Plan">
+          <FormGrid>
+            <FormField label="Floor Plan">
               <Select
                 value={watch("floor_plan_id") ?? ""}
                 onValueChange={(val) => setValue("floor_plan_id", val || null)}
               >
-                <SelectTrigger>
+                <SelectTrigger className={inputClass}>
                   <SelectValue placeholder="Select floor plan" />
                 </SelectTrigger>
                 <SelectContent>
@@ -436,13 +323,13 @@ export function ProjectForm({
                   ))}
                 </SelectContent>
               </Select>
-            </div>
-          </CardContent>
-        </Card>
+            </FormField>
+          </FormGrid>
+        </FormSection>
       )}
 
       {/* Actions */}
-      <div className="flex items-center justify-end gap-3">
+      <div className="flex items-center justify-end gap-3 pt-2">
         <Button type="button" variant="outline" onClick={onCancel} disabled={submitting}>
           Cancel
         </Button>
