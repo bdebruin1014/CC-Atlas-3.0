@@ -220,6 +220,7 @@ function getDispositionDetailSidebar(id: string): SidebarConfig {
         title: "LISTING",
         links: [
           { label: "Overview", href: base, icon: Info },
+          { label: "Workflow", href: `${base}/workflow`, icon: GitBranch },
           { label: "Marketing", href: `${base}/marketing`, icon: Megaphone },
           { label: "Showings", href: `${base}/showings`, icon: Eye },
         ],
