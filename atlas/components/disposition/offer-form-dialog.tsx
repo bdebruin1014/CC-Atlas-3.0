@@ -93,9 +93,9 @@ export function OfferFormDialog({ listingId, open, onOpenChange }: Props) {
         <FormSection title="Contingencies">
           <div className="grid grid-cols-2 gap-3">
             {([["contingency_financing", "Financing"], ["contingency_inspection", "Inspection"], ["contingency_appraisal", "Appraisal"], ["contingency_sale", "Sale of Buyer's Home"]] as const).map(([k, l]) => (
-              <label key={k} className="flex cursor-pointer items-center gap-2 rounded-md border border-[#E5E7EB] px-3 py-2 hover:bg-[#F9FAFB]">
+              <label key={k} className="flex cursor-pointer items-center gap-2 rounded-md border border-border px-3 py-2 hover:bg-[#F9FAFB]">
                 <Checkbox checked={f[k]} onCheckedChange={(v) => upd(k, v === true)} />
-                <span className="text-[13px] text-[#1F2937]">{l}</span>
+                <span className="text-[13px] text-foreground">{l}</span>
               </label>
             ))}
           </div>
@@ -112,7 +112,7 @@ export function OfferFormDialog({ listingId, open, onOpenChange }: Props) {
         </FormSection>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button className="bg-[#1a5632] text-white hover:bg-[#164528]" onClick={submit} disabled={create.isPending || !f.buyer_name || !f.offer_price}>
+          <Button className="bg-primary text-primary-foreground hover:bg-primary/90" onClick={submit} disabled={create.isPending || !f.buyer_name || !f.offer_price}>
             {create.isPending ? "Saving…" : "Save Offer"}
           </Button>
         </DialogFooter>

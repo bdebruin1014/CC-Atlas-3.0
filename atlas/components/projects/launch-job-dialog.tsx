@@ -365,7 +365,7 @@ export function LaunchJobDialog({
           <Button
             onClick={handleSubmit}
             disabled={submitting || !jobName.trim()}
-            className="bg-[#1a5632] hover:bg-[#1a5632]/90 text-white"
+            className="bg-primary hover:bg-primary/90 text-primary-foreground"
           >
             {submitting ? "Launching..." : "Launch Job"}
           </Button>

@@ -48,6 +48,7 @@ import {
   X,
   GripVertical,
   User,
+  AlertTriangle,
 } from "lucide-react"
 
 // ---------------------------------------------------------------------------
@@ -133,7 +134,7 @@ function StatusBadge({ status }: { status: string }) {
 }
 
 function TypeBadge({ type }: { type: string | null }) {
-  if (!type) return <span className="text-[#9CA3AF] italic">—</span>
+  if (!type) return <span className="text-muted-foreground italic">—</span>
   return (
     <Badge variant="outline" className="text-[11px] font-normal">
       {PROPERTY_TYPE_LABELS[type] ?? type}
@@ -157,16 +158,16 @@ function StatCard({
   color: string
 }) {
   return (
-    <Card className="border-[#E5E7EB]">
+    <Card className="border-border">
       <CardContent className="flex items-center gap-3 p-4">
         <div className={cn("flex h-9 w-9 items-center justify-center rounded-lg", color)}>
           <Icon className="h-4 w-4 text-white" />
         </div>
         <div>
-          <p className="text-[11px] font-medium uppercase tracking-wide text-[#5A6B75]">
+          <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
             {label}
           </p>
-          <p className="text-lg font-bold text-[#1F2937]">{value}</p>
+          <p className="text-lg font-bold text-foreground">{value}</p>
         </div>
       </CardContent>
     </Card>
@@ -332,7 +333,7 @@ function CreateListingDialog({
           <Button
             onClick={handleSubmit}
             disabled={createListing.isPending}
-            className="bg-[#1a5632] hover:bg-[#164528] text-white"
+            className="bg-primary hover:bg-primary/90 text-primary-foreground"
           >
             {createListing.isPending ? "Creating..." : "Create Listing"}
           </Button>
@@ -362,7 +363,7 @@ function AllListingsView({
       sortable: true,
       mono: true,
       cell: (row) => (
-        <span className="text-[12px] font-mono text-[#1a5632]">
+        <span className="text-[12px] font-mono text-primary">
           {row.listing_number ?? "—"}
         </span>
       ),
@@ -375,7 +376,7 @@ function AllListingsView({
         <div className="max-w-[240px] truncate">
           <span className="font-medium">{row.property_address ?? "—"}</span>
           {row.property_city && (
-            <span className="ml-1 text-[#5A6B75]">
+            <span className="ml-1 text-muted-foreground">
               {row.property_city}, {row.property_state}
             </span>
           )}
@@ -411,7 +412,7 @@ function AllListingsView({
       sortable: true,
       className: "text-right",
       cell: (row) => (
-        <span className="tabular-nums text-[#5A6B75]">
+        <span className="tabular-nums text-muted-foreground">
           {row.dom ?? "—"}
         </span>
       ),
@@ -421,7 +422,7 @@ function AllListingsView({
       header: "Agent",
       cell: (row) => {
         const agent = row.listing_agent as AgentRef | null
-        if (!agent) return <span className="text-[#9CA3AF] italic">—</span>
+        if (!agent) return <span className="text-muted-foreground italic">—</span>
         return (
           <span className="text-[13px]">
             {agent.first_name} {agent.last_name}
@@ -499,7 +500,7 @@ function CommunityView({
 
   if (grouped.length === 0) {
     return (
-      <div className="py-16 text-center text-[13px] text-[#5A6B75]">
+      <div className="py-16 text-center text-[13px] text-muted-foreground">
         No listings found.
       </div>
     )
@@ -521,13 +522,13 @@ function CommunityView({
         const remaining = group.listings.length - sold
 
         return (
-          <Card key={group.id} className="border-[#E5E7EB]">
-            <div className="flex items-center justify-between border-b border-[#E5E7EB] bg-[#F9FAFB] px-4 py-3">
+          <Card key={group.id} className="border-border">
+            <div className="flex items-center justify-between border-b border-border bg-[#F9FAFB] px-4 py-3">
               <div>
-                <h3 className="text-sm font-semibold text-[#1F2937]">
+                <h3 className="text-sm font-semibold text-foreground">
                   {group.name}
                 </h3>
-                <p className="text-[11px] text-[#5A6B75]">
+                <p className="text-[11px] text-muted-foreground">
                   {group.listings.length} listing
                   {group.listings.length !== 1 ? "s" : ""}
                 </p>
@@ -563,11 +564,11 @@ function CommunityView({
                     className={cn(
                       "flex cursor-pointer items-center gap-4 px-4 py-2 text-[13px] hover:bg-[#f9fafb]",
                       idx < group.listings.length - 1 &&
-                        "border-b border-[#E5E7EB]"
+                        "border-b border-border"
                     )}
                     onClick={() => router.push(`/disposition/${l.id}`)}
                   >
-                    <span className="w-[90px] font-mono text-[12px] text-[#1a5632]">
+                    <span className="w-[90px] font-mono text-[12px] text-primary">
                       {l.listing_number}
                     </span>
                     <span className="flex-1 truncate font-medium">
@@ -577,10 +578,10 @@ function CommunityView({
                     <span className="w-[100px] text-right tabular-nums">
                       {l.list_price ? formatCurrency(l.list_price) : "—"}
                     </span>
-                    <span className="w-[40px] text-right tabular-nums text-[#5A6B75]">
+                    <span className="w-[40px] text-right tabular-nums text-muted-foreground">
                       {l.dom ?? "—"}
                     </span>
-                    <span className="w-[100px] truncate text-right text-[#5A6B75]">
+                    <span className="w-[100px] truncate text-right text-muted-foreground">
                       {agent
                         ? `${agent.first_name} ${agent.last_name}`
                         : "—"}
@@ -669,18 +670,18 @@ function PipelineView({
                   return (
                     <Card
                       key={l.id}
-                      className="cursor-pointer border-[#E5E7EB] hover:shadow-sm"
+                      className="cursor-pointer border-border hover:shadow-sm"
                       onClick={() => router.push(`/disposition/${l.id}`)}
                     >
                       <CardContent className="p-3">
                         <div className="flex items-start gap-2">
-                          <GripVertical className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#9CA3AF]" />
+                          <GripVertical className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground" />
                           <div className="min-w-0 flex-1">
-                            <p className="truncate text-[13px] font-medium text-[#1F2937]">
+                            <p className="truncate text-[13px] font-medium text-foreground">
                               {l.property_address ?? "No address"}
                             </p>
                             {l.property_city && (
-                              <p className="text-[11px] text-[#5A6B75]">
+                              <p className="text-[11px] text-muted-foreground">
                                 {l.property_city}, {l.property_state}
                               </p>
                             )}
@@ -691,15 +692,15 @@ function PipelineView({
                                   : "—"}
                               </span>
                               {l.dom !== null && (
-                                <span className="text-[11px] text-[#5A6B75]">
+                                <span className="text-[11px] text-muted-foreground">
                                   {l.dom}d
                                 </span>
                               )}
                             </div>
                             {agent && (
                               <div className="mt-1.5 flex items-center gap-1">
-                                <User className="h-3 w-3 text-[#9CA3AF]" />
-                                <span className="text-[11px] text-[#5A6B75]">
+                                <User className="h-3 w-3 text-muted-foreground" />
+                                <span className="text-[11px] text-muted-foreground">
                                   {agent.first_name} {agent.last_name}
                                 </span>
                               </div>
@@ -711,7 +712,7 @@ function PipelineView({
                   )
                 })}
                 {cards.length === 0 && (
-                  <div className="py-6 text-center text-[11px] text-[#9CA3AF]">
+                  <div className="py-6 text-center text-[11px] text-muted-foreground">
                     No listings
                   </div>
                 )}
@@ -763,11 +764,11 @@ function FilterPanel({
     !!filters.dateTo
 
   return (
-    <div className="w-[280px] shrink-0 border-l border-[#E5E7EB] bg-white">
+    <div className="w-[280px] shrink-0 border-l border-border bg-white">
       <ScrollArea className="h-full">
         <div className="p-4">
           <div className="mb-4 flex items-center justify-between">
-            <h3 className="text-[13px] font-semibold text-[#1F2937]">
+            <h3 className="text-[13px] font-semibold text-foreground">
               Filters
             </h3>
             {hasFilters && (
@@ -783,7 +784,7 @@ function FilterPanel({
                     dateTo: "",
                   })
                 }
-                className="text-[12px] text-[#1a5632] hover:underline"
+                className="text-[12px] text-primary hover:underline"
               >
                 Clear All
               </button>
@@ -792,11 +793,11 @@ function FilterPanel({
 
           {/* Search */}
           <div className="mb-4">
-            <Label className="mb-1.5 text-[11px] uppercase tracking-wide text-[#5A6B75]">
+            <Label className="mb-1.5 text-[11px] uppercase tracking-wide text-muted-foreground">
               Search
             </Label>
             <div className="relative">
-              <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[#9CA3AF]" />
+              <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
               <Input
                 value={filters.search}
                 onChange={(e) =>
@@ -810,7 +811,7 @@ function FilterPanel({
 
           {/* Status */}
           <div className="mb-4">
-            <Label className="mb-1.5 text-[11px] uppercase tracking-wide text-[#5A6B75]">
+            <Label className="mb-1.5 text-[11px] uppercase tracking-wide text-muted-foreground">
               Status
             </Label>
             <div className="space-y-1">
@@ -824,7 +825,7 @@ function FilterPanel({
                     onCheckedChange={() => toggleStatus(key)}
                     className="h-3.5 w-3.5"
                   />
-                  <span className="text-[13px] text-[#1F2937]">
+                  <span className="text-[13px] text-foreground">
                     {cfg.label}
                   </span>
                 </label>
@@ -834,7 +835,7 @@ function FilterPanel({
 
           {/* Property Type */}
           <div className="mb-4">
-            <Label className="mb-1.5 text-[11px] uppercase tracking-wide text-[#5A6B75]">
+            <Label className="mb-1.5 text-[11px] uppercase tracking-wide text-muted-foreground">
               Property Type
             </Label>
             <div className="space-y-1">
@@ -848,7 +849,7 @@ function FilterPanel({
                     onCheckedChange={() => togglePropertyType(key)}
                     className="h-3.5 w-3.5"
                   />
-                  <span className="text-[13px] text-[#1F2937]">{label}</span>
+                  <span className="text-[13px] text-foreground">{label}</span>
                 </label>
               ))}
             </div>
@@ -856,7 +857,7 @@ function FilterPanel({
 
           {/* Price Range */}
           <div className="mb-4">
-            <Label className="mb-1.5 text-[11px] uppercase tracking-wide text-[#5A6B75]">
+            <Label className="mb-1.5 text-[11px] uppercase tracking-wide text-muted-foreground">
               Price Range
             </Label>
             <div className="flex items-center gap-2">
@@ -869,7 +870,7 @@ function FilterPanel({
                 placeholder="Min"
                 className="h-8 text-[13px]"
               />
-              <span className="text-[#9CA3AF]">–</span>
+              <span className="text-muted-foreground">–</span>
               <Input
                 type="number"
                 value={filters.priceMax}
@@ -884,7 +885,7 @@ function FilterPanel({
 
           {/* Date Range */}
           <div className="mb-4">
-            <Label className="mb-1.5 text-[11px] uppercase tracking-wide text-[#5A6B75]">
+            <Label className="mb-1.5 text-[11px] uppercase tracking-wide text-muted-foreground">
               Listed Date
             </Label>
             <div className="space-y-2">
@@ -996,7 +997,7 @@ export default function DispositionPage() {
     return f
   }, [filters])
 
-  const { data: listingsData, isLoading } = useListings(apiFilters)
+  const { data: listingsData, isLoading, isError, refetch } = useListings(apiFilters)
   const allListings = (listingsData?.data ?? []) as ListingWithAgent[]
 
   // Client-side filter for price range, date range, and multi property types
@@ -1071,21 +1072,34 @@ export default function DispositionPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-[#1F2937]">
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">
             Disposition
           </h1>
-          <p className="text-sm text-[#5A6B75]">
+          <p className="text-sm text-muted-foreground">
             Manage property listings and sales pipeline
           </p>
         </div>
         <Button
           onClick={() => setShowCreate(true)}
-          className="bg-[#1a5632] hover:bg-[#164528] text-white"
+          className="bg-primary hover:bg-primary/90 text-primary-foreground"
         >
           <Plus className="mr-2 h-4 w-4" />
           New Listing
         </Button>
       </div>
+
+      {/* Error state */}
+      {isError && (
+        <Card className="border-destructive">
+          <CardContent className="flex items-center gap-3 p-6">
+            <AlertTriangle className="h-5 w-5 text-destructive" />
+            <div className="text-sm text-destructive">Failed to load listings.</div>
+            <Button variant="outline" size="sm" onClick={() => refetch()}>
+              Retry
+            </Button>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Stats */}
       {isLoading ? (
@@ -1102,7 +1116,7 @@ export default function DispositionPage() {
             label="Under Contract"
             value={stats.underContract}
             icon={FileSignature}
-            color="bg-[#1a5632]"
+            color="bg-primary"
           />
           <StatCard
             label="Pending Closing"
@@ -1132,13 +1146,13 @@ export default function DispositionPage() {
       )}
 
       {/* View toggle */}
-      <div className="flex items-center gap-1 rounded-lg border border-[#E5E7EB] p-1 w-fit">
+      <div className="flex items-center gap-1 rounded-lg border border-border p-1 w-fit">
         <Button
           variant={view === "all" ? "default" : "ghost"}
           size="sm"
           className={cn(
             "h-7 text-[12px]",
-            view === "all" && "bg-[#1a5632] text-white hover:bg-[#164528]"
+            view === "all" && "bg-primary text-primary-foreground hover:bg-primary/90"
           )}
           onClick={() => setView("all")}
         >
@@ -1151,7 +1165,7 @@ export default function DispositionPage() {
           className={cn(
             "h-7 text-[12px]",
             view === "community" &&
-              "bg-[#1a5632] text-white hover:bg-[#164528]"
+              "bg-primary text-primary-foreground hover:bg-primary/90"
           )}
           onClick={() => setView("community")}
         >
@@ -1164,7 +1178,7 @@ export default function DispositionPage() {
           className={cn(
             "h-7 text-[12px]",
             view === "pipeline" &&
-              "bg-[#1a5632] text-white hover:bg-[#164528]"
+              "bg-primary text-primary-foreground hover:bg-primary/90"
           )}
           onClick={() => setView("pipeline")}
         >
@@ -1198,17 +1212,17 @@ export default function DispositionPage() {
 
           {/* Empty state */}
           {!isLoading && allListings.length === 0 && (
-            <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-[#E5E7EB] py-16">
-              <Home className="mb-3 h-10 w-10 text-[#9CA3AF]" />
-              <p className="mb-1 text-[15px] font-medium text-[#1F2937]">
+            <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-border py-16">
+              <Home className="mb-3 h-10 w-10 text-muted-foreground" />
+              <p className="mb-1 text-[15px] font-medium text-foreground">
                 No listings yet
               </p>
-              <p className="mb-4 text-[13px] text-[#5A6B75]">
+              <p className="mb-4 text-[13px] text-muted-foreground">
                 Create your first listing to get started.
               </p>
               <Button
                 onClick={() => setShowCreate(true)}
-                className="bg-[#1a5632] hover:bg-[#164528] text-white"
+                className="bg-primary hover:bg-primary/90 text-primary-foreground"
               >
                 <Plus className="mr-2 h-4 w-4" />
                 New Listing

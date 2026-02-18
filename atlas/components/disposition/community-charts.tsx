@@ -58,11 +58,11 @@ export function SalesVelocityChart({ listings, stats, isLoading }: {
   }, [listings, stats])
 
   if (isLoading) return <Skeleton className="h-72 w-full rounded-lg" />
-  if (!data.length) return <p className="py-8 text-center text-[13px] text-[#5A6B75]">No velocity data yet</p>
+  if (!data.length) return <p className="py-8 text-center text-[13px] text-muted-foreground">No velocity data yet</p>
 
   return (
-    <div className="rounded-lg border border-[#E5E7EB] bg-white p-4">
-      <h3 className="mb-3 text-[13px] font-semibold text-[#1F2937]">Sales Velocity</h3>
+    <div className="rounded-lg border border-border bg-white p-4">
+      <h3 className="mb-3 text-[13px] font-semibold text-foreground">Sales Velocity</h3>
       <ResponsiveContainer width="100%" height={280}>
         <LineChart data={data}>
           <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
@@ -105,8 +105,8 @@ export function PricingAnalysisChart({ listings, isLoading }: {
   if (!chartData.length) return null
 
   return (
-    <div className="rounded-lg border border-[#E5E7EB] bg-white p-4">
-      <h3 className="mb-3 text-[13px] font-semibold text-[#1F2937]">Pricing Analysis</h3>
+    <div className="rounded-lg border border-border bg-white p-4">
+      <h3 className="mb-3 text-[13px] font-semibold text-foreground">Pricing Analysis</h3>
       <ResponsiveContainer width="100%" height={250}>
         <BarChart data={chartData}>
           <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
@@ -121,16 +121,16 @@ export function PricingAnalysisChart({ listings, isLoading }: {
       </ResponsiveContainer>
       <div className="mt-3 overflow-auto">
         <table className="w-full text-[12px]">
-          <thead><tr className="border-b border-[#E5E7EB] text-left text-[#6B7280]">
+          <thead><tr className="border-b border-border text-left text-muted-foreground">
             <th className="pb-1.5 font-medium">Type</th><th className="pb-1.5 font-medium">List Price</th>
             <th className="pb-1.5 font-medium">Avg Sale</th><th className="pb-1.5 font-medium">Margin</th>
           </tr></thead>
           <tbody>{tableData.map((r) => (
-            <tr key={r.plan} className="border-b border-[#E5E7EB] last:border-0">
+            <tr key={r.plan} className="border-b border-border last:border-0">
               <td className="py-1.5 capitalize">{r.plan}</td>
               <td className="py-1.5 tabular-nums">{formatCurrency(r.listPrice)}</td>
               <td className="py-1.5 tabular-nums">{formatCurrency(r.salePrice)}</td>
-              <td className={`py-1.5 tabular-nums ${r.salePrice >= r.listPrice ? "text-[#1a5632]" : "text-[#ef4444]"}`}>
+              <td className={`py-1.5 tabular-nums ${r.salePrice >= r.listPrice ? "text-primary" : "text-[#ef4444]"}`}>
                 {r.listPrice ? `${(((r.salePrice - r.listPrice) / r.listPrice) * 100).toFixed(1)}%` : "—"}
               </td>
             </tr>
@@ -177,8 +177,8 @@ export function ConcessionChart({ listings, stats, isLoading }: {
   if (isLoading || !summary) return <Skeleton className="h-48 w-full rounded-lg" />
 
   return (
-    <div className="rounded-lg border border-[#E5E7EB] bg-white p-4">
-      <h3 className="mb-3 text-[13px] font-semibold text-[#1F2937]">Concession Analysis</h3>
+    <div className="rounded-lg border border-border bg-white p-4">
+      <h3 className="mb-3 text-[13px] font-semibold text-foreground">Concession Analysis</h3>
       <div className="mb-4 grid grid-cols-3 gap-3">
         {[
           { label: "Total Concessions", value: formatCurrency(summary.total) },
@@ -186,7 +186,7 @@ export function ConcessionChart({ listings, stats, isLoading }: {
           { label: "% of Sale Price", value: `${summary.pctOfSale}%` },
         ].map((c) => (
           <div key={c.label} className="rounded-md bg-[#F9FAFB] px-3 py-2 text-center">
-            <p className="text-[10px] uppercase text-[#6B7280]">{c.label}</p>
+            <p className="text-[10px] uppercase text-muted-foreground">{c.label}</p>
             <p className="text-[14px] font-semibold tabular-nums">{c.value}</p>
           </div>
         ))}

@@ -17,10 +17,10 @@ interface FormSectionProps {
 export function FormSection({ title, description, children, className }: FormSectionProps) {
   return (
     <div className={cn("mt-6", className)}>
-      <div className="mb-4 border-b border-[#E5E7EB] pb-2">
-        <h3 className="text-base font-semibold text-[#1F2937]">{title}</h3>
+      <div className="mb-4 border-b border-border pb-2">
+        <h3 className="text-base font-semibold text-foreground">{title}</h3>
         {description && (
-          <p className="mt-0.5 text-[13px] text-[#5A6B75]">{description}</p>
+          <p className="mt-0.5 text-[13px] text-muted-foreground">{description}</p>
         )}
       </div>
       {children}
@@ -69,7 +69,7 @@ interface FormFieldProps {
 export function FormField({ label, required, children, className }: FormFieldProps) {
   return (
     <div className={cn("flex flex-col gap-1.5", className)}>
-      <label className="text-[11px] font-medium uppercase tracking-[0.3px] text-[#6B7280]">
+      <label className="text-[11px] font-medium uppercase tracking-[0.3px] text-muted-foreground">
         {label}
         {required && <span className="ml-0.5 text-[#ef4444]">*</span>}
       </label>

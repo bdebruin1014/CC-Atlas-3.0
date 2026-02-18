@@ -40,41 +40,41 @@ export function ListingBulkSalesTab({ listingId, projectId }: { listingId: strin
     } catch { toast({ title: "Failed to create agreement", variant: "destructive" }) }
   }
 
-  if (isLoading) return <div className="py-12 text-center text-[13px] text-[#5A6B75]">Loading…</div>
+  if (isLoading) return <div className="py-12 text-center text-[13px] text-muted-foreground">Loading…</div>
 
   return (
     <div>
       <div className="mb-4 flex items-center justify-between">
-        <h2 className="text-[15px] font-medium text-[#1F2937]">Bulk Sale Agreements</h2>
-        <Button size="sm" className="bg-[#1a5632] text-white hover:bg-[#164528]" onClick={() => setAgreeOpen(true)}>
+        <h2 className="text-[15px] font-medium text-foreground">Bulk Sale Agreements</h2>
+        <Button size="sm" className="bg-primary text-primary-foreground hover:bg-primary/90" onClick={() => setAgreeOpen(true)}>
           <Plus className="mr-1 h-3.5 w-3.5" />New Agreement
         </Button>
       </div>
 
       {!(agreements?.length) ? (
-        <div className="flex flex-col items-center gap-3 rounded-lg border border-dashed border-[#E5E7EB] py-16">
-          <FileText className="h-10 w-10 text-[#9CA3AF]" />
-          <p className="text-[13px] text-[#5A6B75]">No bulk sale agreements yet</p>
+        <div className="flex flex-col items-center gap-3 rounded-lg border border-dashed border-border py-16">
+          <FileText className="h-10 w-10 text-muted-foreground" />
+          <p className="text-[13px] text-muted-foreground">No bulk sale agreements yet</p>
         </div>
       ) : (
         <Accordion type="single" collapsible className="space-y-2">
           {agreements.map((a) => (
-            <AccordionItem key={a.id} value={a.id} className="rounded-lg border border-[#E5E7EB]">
+            <AccordionItem key={a.id} value={a.id} className="rounded-lg border border-border">
               <AccordionTrigger className="px-4 hover:no-underline">
                 <div className="flex flex-1 items-center gap-4 text-[13px]">
                   <span className="font-medium">{a.buyer_entity_name || "Unknown Buyer"}</span>
-                  <span className="text-[#5A6B75]">{a.total_lots ?? 0} lots</span>
-                  <span className="text-[#5A6B75]">{formatCurrency(a.price_per_lot)}/lot</span>
+                  <span className="text-muted-foreground">{a.total_lots ?? 0} lots</span>
+                  <span className="text-muted-foreground">{formatCurrency(a.price_per_lot)}/lot</span>
                   <span className="font-semibold tabular-nums">{formatCurrency(a.total_price)}</span>
                   <Badge variant={BS_V[a.status] ?? "gray"}>{a.status}</Badge>
                 </div>
               </AccordionTrigger>
               <AccordionContent className="px-4 pb-4">
                 <div className="mb-3 grid grid-cols-4 gap-3 text-[12px]">
-                  <div><span className="text-[#6B7280]">Contract Date</span><p>{formatDate(a.contract_date)}</p></div>
-                  <div><span className="text-[#6B7280]">Escalation</span><p>{a.escalation_rate ? `${a.escalation_rate}% / ${a.escalation_period ?? "—"}` : "—"}</p></div>
-                  <div><span className="text-[#6B7280]">Buyer Contact</span><p>{a.buyer ? `${a.buyer.first_name} ${a.buyer.last_name}` : "—"}</p></div>
-                  <div><span className="text-[#6B7280]">Notes</span><p className="truncate">{a.notes || "—"}</p></div>
+                  <div><span className="text-muted-foreground">Contract Date</span><p>{formatDate(a.contract_date)}</p></div>
+                  <div><span className="text-muted-foreground">Escalation</span><p>{a.escalation_rate ? `${a.escalation_rate}% / ${a.escalation_period ?? "—"}` : "—"}</p></div>
+                  <div><span className="text-muted-foreground">Buyer Contact</span><p>{a.buyer ? `${a.buyer.first_name} ${a.buyer.last_name}` : "—"}</p></div>
+                  <div><span className="text-muted-foreground">Notes</span><p className="truncate">{a.notes || "—"}</p></div>
                 </div>
                 <TakedownSection agreement={a} />
               </AccordionContent>
@@ -98,7 +98,7 @@ export function ListingBulkSalesTab({ listingId, projectId }: { listingId: strin
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setAgreeOpen(false)}>Cancel</Button>
-            <Button className="bg-[#1a5632] text-white hover:bg-[#164528]" onClick={submitAgreement} disabled={createBulk.isPending || !f.buyer || !f.lots}>
+            <Button className="bg-primary text-primary-foreground hover:bg-primary/90" onClick={submitAgreement} disabled={createBulk.isPending || !f.buyer || !f.lots}>
               {createBulk.isPending ? "Saving…" : "Save Agreement"}
             </Button>
           </DialogFooter>
@@ -126,12 +126,12 @@ function TakedownSection({ agreement }: { agreement: BulkSaleDetail }) {
   return (
     <div>
       <div className="mb-2 flex items-center justify-between">
-        <span className="text-[12px] font-semibold uppercase text-[#6B7280]">Takedown Schedule</span>
+        <span className="text-[12px] font-semibold uppercase text-muted-foreground">Takedown Schedule</span>
         <Button variant="outline" size="sm" className="h-7 text-[12px]" onClick={() => setOpen(true)}><Plus className="mr-1 h-3 w-3" />Add Takedown</Button>
       </div>
-      {!(takedowns?.length) ? <p className="py-4 text-center text-[12px] text-[#9CA3AF]">No takedowns scheduled</p> : (
+      {!(takedowns?.length) ? <p className="py-4 text-center text-[12px] text-muted-foreground">No takedowns scheduled</p> : (
         <Table>
-          <TableHeader><TableRow className="bg-[#F3F4F6]">
+          <TableHeader><TableRow className="bg-muted">
             {["#", "Scheduled", "Lots", "Amount", "Status", "Actual Date", "Actual Amt", "Variance"].map((h) => <TableHead key={h} className="text-[10px] uppercase tracking-wide">{h}</TableHead>)}
           </TableRow></TableHeader>
           <TableBody>
@@ -144,7 +144,7 @@ function TakedownSection({ agreement }: { agreement: BulkSaleDetail }) {
                 <TableCell><Badge variant={TD_V[t.status] ?? "gray"} className="text-[10px]">{t.status}</Badge></TableCell>
                 <TableCell className="text-[12px]">{formatDate(t.actual_date, { short: true })}</TableCell>
                 <TableCell className="text-[12px] tabular-nums">{t.actual_amount != null ? formatCurrency(t.actual_amount) : "—"}</TableCell>
-                <TableCell className={`text-[12px] tabular-nums ${(t.variance ?? 0) > 0 ? "text-[#1a5632]" : (t.variance ?? 0) < 0 ? "text-[#ef4444]" : ""}`}>{t.variance != null ? formatCurrency(t.variance) : "—"}</TableCell>
+                <TableCell className={`text-[12px] tabular-nums ${(t.variance ?? 0) > 0 ? "text-primary" : (t.variance ?? 0) < 0 ? "text-[#ef4444]" : ""}`}>{t.variance != null ? formatCurrency(t.variance) : "—"}</TableCell>
               </TableRow>
             ))}
           </TableBody>
@@ -161,7 +161,7 @@ function TakedownSection({ agreement }: { agreement: BulkSaleDetail }) {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
-            <Button className="bg-[#1a5632] text-white hover:bg-[#164528]" onClick={submit} disabled={createTD.isPending || !f.date || !f.lots}>
+            <Button className="bg-primary text-primary-foreground hover:bg-primary/90" onClick={submit} disabled={createTD.isPending || !f.date || !f.lots}>
               {createTD.isPending ? "Saving…" : "Save Takedown"}
             </Button>
           </DialogFooter>

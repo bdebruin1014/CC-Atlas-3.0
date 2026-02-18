@@ -90,9 +90,9 @@ export function ListingMarketingTab({ listing }: ListingMarketingTabProps) {
     <div className="space-y-0">
       {/* Photo Upload */}
       <FormSection title="Photos">
-        <div className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-[#E5E7EB] bg-[#F9FAFB] px-6 py-12">
-          <Upload className="mb-3 h-10 w-10 text-[#9CA3AF]" />
-          <p className="mb-2 text-[13px] text-[#5A6B75]">
+        <div className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-border bg-[#F9FAFB] px-6 py-12">
+          <Upload className="mb-3 h-10 w-10 text-muted-foreground" />
+          <p className="mb-2 text-[13px] text-muted-foreground">
             Drag and drop photos here, or click to browse
           </p>
           <Button variant="outline" size="sm">
@@ -164,13 +164,13 @@ export function ListingMarketingTab({ listing }: ListingMarketingTabProps) {
           {CHECKLIST_ITEMS.map((item) => (
             <label
               key={item.key}
-              className="flex cursor-pointer items-center gap-2 rounded-md border border-[#E5E7EB] px-3 py-2 hover:bg-[#F9FAFB]"
+              className="flex cursor-pointer items-center gap-2 rounded-md border border-border px-3 py-2 hover:bg-[#F9FAFB]"
             >
               <Checkbox
                 checked={!!checklist[item.key]}
                 onCheckedChange={() => toggleCheck(item.key)}
               />
-              <span className="text-[13px] text-[#1F2937]">{item.label}</span>
+              <span className="text-[13px] text-foreground">{item.label}</span>
             </label>
           ))}
         </div>
@@ -179,7 +179,7 @@ export function ListingMarketingTab({ listing }: ListingMarketingTabProps) {
       {/* Save */}
       <div className="mt-6 flex justify-end">
         <Button
-          className="bg-[#1a5632] text-white hover:bg-[#164528]"
+          className="bg-primary text-primary-foreground hover:bg-primary/90"
           onClick={handleSave}
           disabled={saving}
         >

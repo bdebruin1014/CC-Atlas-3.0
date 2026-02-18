@@ -71,16 +71,26 @@ export default function NewJobPage() {
     if (!isValid) return
     setSubmitting(true)
 
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000))
+    try {
+      // Simulate API call
+      await new Promise((resolve) => setTimeout(resolve, 1000))
 
-    toast({
-      title: "Job Created",
-      description: `${jobName} with ${parsedUnitCount} units has been created successfully.`,
-    })
+      toast({
+        title: "Job Created",
+        description: `${jobName} with ${parsedUnitCount} units has been created successfully.`,
+      })
 
-    setSubmitting(false)
-    router.push("/construction")
+      router.push("/construction")
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Failed to create job"
+      toast({
+        title: "Job creation failed",
+        description: message,
+        variant: "destructive",
+      })
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   return (

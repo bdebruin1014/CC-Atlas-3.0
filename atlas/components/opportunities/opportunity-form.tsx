@@ -223,7 +223,7 @@ export function OpportunityForm({
     setStep((s) => Math.max(s - 1, 1))
   }
 
-  const inputClass = "h-9 border-[#E5E7EB] focus:ring-[#1a5632]"
+  const inputClass = "h-9 border-border focus:ring-primary"
 
   return (
     <form onSubmit={form.handleSubmit(handleSubmit as never)} className="space-y-4">
@@ -485,8 +485,8 @@ export function OpportunityForm({
                 </Select>
               </FormField>
 
-              <div className="flex items-center justify-between rounded-lg border border-[#E5E7EB] p-3">
-                <span className="text-[11px] font-medium uppercase tracking-[0.3px] text-[#6B7280]">Survey Complete</span>
+              <div className="flex items-center justify-between rounded-lg border border-border p-3">
+                <span className="text-[11px] font-medium uppercase tracking-[0.3px] text-muted-foreground">Survey Complete</span>
                 <Switch
                   checked={form.watch('survey_complete')}
                   onCheckedChange={(v) => form.setValue('survey_complete', v)}
@@ -531,29 +531,29 @@ export function OpportunityForm({
 
           <FormSection title="Utilities">
             <FormGrid>
-              <div className="flex items-center justify-between rounded-lg border border-[#E5E7EB] p-3">
-                <span className="text-[11px] font-medium uppercase tracking-[0.3px] text-[#6B7280]">Historic District</span>
+              <div className="flex items-center justify-between rounded-lg border border-border p-3">
+                <span className="text-[11px] font-medium uppercase tracking-[0.3px] text-muted-foreground">Historic District</span>
                 <Switch
                   checked={form.watch('historic_district')}
                   onCheckedChange={(v) => form.setValue('historic_district', v)}
                 />
               </div>
-              <div className="flex items-center justify-between rounded-lg border border-[#E5E7EB] p-3">
-                <span className="text-[11px] font-medium uppercase tracking-[0.3px] text-[#6B7280]">Water Available</span>
+              <div className="flex items-center justify-between rounded-lg border border-border p-3">
+                <span className="text-[11px] font-medium uppercase tracking-[0.3px] text-muted-foreground">Water Available</span>
                 <Switch
                   checked={form.watch('water_available')}
                   onCheckedChange={(v) => form.setValue('water_available', v)}
                 />
               </div>
-              <div className="flex items-center justify-between rounded-lg border border-[#E5E7EB] p-3">
-                <span className="text-[11px] font-medium uppercase tracking-[0.3px] text-[#6B7280]">Sewer Available</span>
+              <div className="flex items-center justify-between rounded-lg border border-border p-3">
+                <span className="text-[11px] font-medium uppercase tracking-[0.3px] text-muted-foreground">Sewer Available</span>
                 <Switch
                   checked={form.watch('sewer_available')}
                   onCheckedChange={(v) => form.setValue('sewer_available', v)}
                 />
               </div>
-              <div className="flex items-center justify-between rounded-lg border border-[#E5E7EB] p-3">
-                <span className="text-[11px] font-medium uppercase tracking-[0.3px] text-[#6B7280]">Electric Available</span>
+              <div className="flex items-center justify-between rounded-lg border border-border p-3">
+                <span className="text-[11px] font-medium uppercase tracking-[0.3px] text-muted-foreground">Electric Available</span>
                 <Switch
                   checked={form.watch('electric_available')}
                   onCheckedChange={(v) => form.setValue('electric_available', v)}
@@ -573,8 +573,8 @@ export function OpportunityForm({
             <FormField label="Estimated Lots">
               <Input type="number" {...form.register('estimated_total_lots')} placeholder="45" className={inputClass} />
             </FormField>
-            <div className="flex items-center justify-between rounded-lg border border-[#E5E7EB] p-3">
-              <span className="text-[11px] font-medium uppercase tracking-[0.3px] text-[#6B7280]">Rezoning Required</span>
+            <div className="flex items-center justify-between rounded-lg border border-border p-3">
+              <span className="text-[11px] font-medium uppercase tracking-[0.3px] text-muted-foreground">Rezoning Required</span>
               <Switch
                 checked={form.watch('zoning_required')}
                 onCheckedChange={(v) => form.setValue('zoning_required', v)}

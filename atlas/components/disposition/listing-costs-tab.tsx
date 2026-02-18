@@ -65,20 +65,20 @@ export function ListingCostsTab({ listingId }: { listingId: string }) {
     <div>
       <div className="mb-4 grid grid-cols-1 gap-4 md:grid-cols-3">
         {[{ icon: Receipt, label: "Total Costs", value: totalCosts }, { icon: DollarSign, label: "Commission Total", value: commTotal }, { icon: Calculator, label: "Other Selling Costs", value: totalCosts - commTotal }].map((c) => (
-          <div key={c.label} className="rounded-lg border border-[#E5E7EB] bg-white p-4">
-            <div className="flex items-center gap-2 text-[11px] font-medium uppercase tracking-[0.3px] text-[#6B7280]"><c.icon className="h-4 w-4" />{c.label}</div>
-            <div className="mt-1 text-xl font-semibold tabular-nums text-[#1F2937]">{formatCurrency(c.value)}</div>
+          <div key={c.label} className="rounded-lg border border-border bg-white p-4">
+            <div className="flex items-center gap-2 text-[11px] font-medium uppercase tracking-[0.3px] text-muted-foreground"><c.icon className="h-4 w-4" />{c.label}</div>
+            <div className="mt-1 text-xl font-semibold tabular-nums text-foreground">{formatCurrency(c.value)}</div>
           </div>
         ))}
       </div>
       <div className="mb-4 flex justify-end">
-        <Button size="sm" className="bg-[#1a5632] text-white hover:bg-[#164528]" onClick={openAdd}><Plus className="mr-1 h-3.5 w-3.5" />Add Cost</Button>
+        <Button size="sm" className="bg-primary text-primary-foreground hover:bg-primary/90" onClick={openAdd}><Plus className="mr-1 h-3.5 w-3.5" />Add Cost</Button>
       </div>
-      {isLoading ? <div className="py-12 text-center text-[13px] text-[#5A6B75]">Loading…</div> : !(costs?.length) ? (
-        <div className="rounded-lg border border-dashed border-[#E5E7EB] py-16 text-center text-[13px] text-[#5A6B75]">No costs recorded yet</div>
+      {isLoading ? <div className="py-12 text-center text-[13px] text-muted-foreground">Loading…</div> : !(costs?.length) ? (
+        <div className="rounded-lg border border-dashed border-border py-16 text-center text-[13px] text-muted-foreground">No costs recorded yet</div>
       ) : (
         <Table>
-          <TableHeader><TableRow className="bg-[#F3F4F6]">
+          <TableHeader><TableRow className="bg-muted">
             {["Category", "Description", "Amount", "Paid Date", "Vendor", ""].map((h) => <TableHead key={h} className="text-[11px] uppercase tracking-wide">{h}</TableHead>)}
           </TableRow></TableHeader>
           <TableBody>
@@ -118,7 +118,7 @@ export function ListingCostsTab({ listingId }: { listingId: string }) {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setFormOpen(false)}>Cancel</Button>
-            <Button className="bg-[#1a5632] text-white hover:bg-[#164528]" onClick={submit} disabled={createCost.isPending || updateCost.isPending || !f.category || !f.amount}>
+            <Button className="bg-primary text-primary-foreground hover:bg-primary/90" onClick={submit} disabled={createCost.isPending || updateCost.isPending || !f.category || !f.amount}>
               {(createCost.isPending || updateCost.isPending) ? "Saving…" : "Save"}
             </Button>
           </DialogFooter>

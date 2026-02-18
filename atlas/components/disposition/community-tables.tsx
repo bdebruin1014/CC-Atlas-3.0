@@ -64,19 +64,19 @@ export function CommunityUnitTable({ listings, isLoading }: {
   ]
 
   return (
-    <div className="rounded-lg border border-[#E5E7EB] bg-white p-4">
+    <div className="rounded-lg border border-border bg-white p-4">
       <div className="mb-3 flex items-center justify-between">
-        <h3 className="text-[13px] font-semibold text-[#1F2937]">Unit Table</h3>
+        <h3 className="text-[13px] font-semibold text-foreground">Unit Table</h3>
         <Button variant="outline" size="sm" className="h-7 text-[12px]" onClick={() => exportCSV(listings)}>
           <Download className="mr-1 h-3 w-3" />Export CSV
         </Button>
       </div>
       <div className="max-h-[400px] overflow-auto">
         <Table>
-          <TableHeader><TableRow className="bg-[#F3F4F6]">
+          <TableHeader><TableRow className="bg-muted">
             {cols.map((c) => (
               <TableHead key={c.key} className="cursor-pointer select-none text-[11px] uppercase tracking-wide" onClick={() => toggle(c.key)}>
-                <span className="flex items-center gap-1">{c.label}<ArrowUpDown className="h-3 w-3 text-[#9CA3AF]" /></span>
+                <span className="flex items-center gap-1">{c.label}<ArrowUpDown className="h-3 w-3 text-muted-foreground" /></span>
               </TableHead>
             ))}
           </TableRow></TableHeader>
@@ -122,10 +122,10 @@ export function AgentPerformanceTable({ listings, isLoading }: {
   if (isLoading || agents.length <= 1) return null
 
   return (
-    <div className="rounded-lg border border-[#E5E7EB] bg-white p-4">
-      <h3 className="mb-3 text-[13px] font-semibold text-[#1F2937]">Agent Performance</h3>
+    <div className="rounded-lg border border-border bg-white p-4">
+      <h3 className="mb-3 text-[13px] font-semibold text-foreground">Agent Performance</h3>
       <Table>
-        <TableHeader><TableRow className="bg-[#F3F4F6]">
+        <TableHeader><TableRow className="bg-muted">
           {["Agent", "Listings", "Showings", "Offers", "Closed", "Avg DOM", "Volume"].map((h) => (
             <TableHead key={h} className="text-[11px] uppercase tracking-wide">{h}</TableHead>
           ))}

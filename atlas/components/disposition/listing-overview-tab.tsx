@@ -74,7 +74,7 @@ export function ListingOverviewTab({ listing }: Props) {
         {editing ? (
           <>
             <Button size="sm" variant="outline" onClick={handleCancel} disabled={updateListing.isPending}><X className="mr-1 h-3.5 w-3.5" />Cancel</Button>
-            <Button size="sm" className="bg-[#1a5632] text-white hover:bg-[#164528]" onClick={handleSave} disabled={updateListing.isPending}><Save className="mr-1 h-3.5 w-3.5" />{updateListing.isPending ? "Saving…" : "Save"}</Button>
+            <Button size="sm" className="bg-primary text-primary-foreground hover:bg-primary/90" onClick={handleSave} disabled={updateListing.isPending}><Save className="mr-1 h-3.5 w-3.5" />{updateListing.isPending ? "Saving…" : "Save"}</Button>
           </>
         ) : (
           <Button size="sm" variant="outline" onClick={handleEdit}><Pencil className="mr-1 h-3.5 w-3.5" />Edit</Button>
@@ -134,9 +134,9 @@ export function ListingOverviewTab({ listing }: Props) {
             { icon: Receipt, label: "Total Costs", value: formatCurrency(totalCosts) },
             { icon: Calculator, label: "Projected Profit", value: formatCurrency(listPrice - totalCosts) },
           ].map((c) => (
-            <div key={c.label} className="rounded-lg border border-[#E5E7EB] bg-white p-4">
-              <div className="flex items-center gap-2 text-[11px] font-medium uppercase tracking-[0.3px] text-[#6B7280]"><c.icon className="h-4 w-4" />{c.label}</div>
-              <div className="mt-1 text-xl font-semibold tabular-nums text-[#1F2937]">{c.value}</div>
+            <div key={c.label} className="rounded-lg border border-border bg-white p-4">
+              <div className="flex items-center gap-2 text-[11px] font-medium uppercase tracking-[0.3px] text-muted-foreground"><c.icon className="h-4 w-4" />{c.label}</div>
+              <div className="mt-1 text-xl font-semibold tabular-nums text-foreground">{c.value}</div>
             </div>
           ))}
         </div>
@@ -152,8 +152,8 @@ export function ListingOverviewTab({ listing }: Props) {
           ] as const).map(([label, href, name]) => (
             <FormField key={label} label={label}>
               {href && name ? (
-                <Link href={href} className="inline-flex items-center gap-1 text-[13px] text-[#1a5632] hover:underline">{name}<ExternalLink className="h-3 w-3" /></Link>
-              ) : <span className="text-[13px] text-[#9CA3AF]">Not linked</span>}
+                <Link href={href} className="inline-flex items-center gap-1 text-[13px] text-primary hover:underline">{name}<ExternalLink className="h-3 w-3" /></Link>
+              ) : <span className="text-[13px] text-muted-foreground">Not linked</span>}
             </FormField>
           ))}
         </FormGrid>

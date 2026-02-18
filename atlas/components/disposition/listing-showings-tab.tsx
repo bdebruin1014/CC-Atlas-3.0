@@ -34,20 +34,20 @@ export function ListingShowingsTab({ listingId }: { listingId: string }) {
     <div>
       <div className="mb-4 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <h2 className="text-[15px] font-medium text-[#1F2937]">Showings</h2>
+          <h2 className="text-[15px] font-medium text-foreground">Showings</h2>
           <Badge variant="secondary" className="text-xs">{count}</Badge>
         </div>
-        <Button size="sm" className="bg-[#1a5632] text-white hover:bg-[#164528]" onClick={() => setOpen(true)}>
+        <Button size="sm" className="bg-primary text-primary-foreground hover:bg-primary/90" onClick={() => setOpen(true)}>
           <Plus className="mr-1 h-3.5 w-3.5" />Schedule Showing
         </Button>
       </div>
       {isLoading ? (
-        <div className="py-12 text-center text-[13px] text-[#5A6B75]">Loading…</div>
+        <div className="py-12 text-center text-[13px] text-muted-foreground">Loading…</div>
       ) : count === 0 ? (
-        <div className="flex flex-col items-center gap-3 rounded-lg border border-dashed border-[#E5E7EB] py-16">
-          <Calendar className="h-10 w-10 text-[#9CA3AF]" />
-          <p className="text-[13px] text-[#5A6B75]">No showings recorded yet</p>
-          <Button size="sm" className="bg-[#1a5632] text-white hover:bg-[#164528]" onClick={() => setOpen(true)}>
+        <div className="flex flex-col items-center gap-3 rounded-lg border border-dashed border-border py-16">
+          <Calendar className="h-10 w-10 text-muted-foreground" />
+          <p className="text-[13px] text-muted-foreground">No showings recorded yet</p>
+          <Button size="sm" className="bg-primary text-primary-foreground hover:bg-primary/90" onClick={() => setOpen(true)}>
             <Plus className="mr-1 h-3.5 w-3.5" />Schedule Showing
           </Button>
         </div>
@@ -64,7 +64,7 @@ function ShowingsTable({ showings }: { showings: DispositionShowing[] }) {
     <TooltipProvider>
       <Table>
         <TableHeader>
-          <TableRow className="bg-[#F3F4F6]">
+          <TableRow className="bg-muted">
             {["Date/Time", "Agent Name", "Company", "Interest Level", "Feedback", "Follow-up"].map((h) => (
               <TableHead key={h} className="text-[11px] uppercase tracking-wide">{h}</TableHead>
             ))}
@@ -77,7 +77,7 @@ function ShowingsTable({ showings }: { showings: DispositionShowing[] }) {
               <TableCell className="text-[13px]">{s.showing_agent_name || "—"}</TableCell>
               <TableCell className="text-[13px]">{s.showing_agent_company || "—"}</TableCell>
               <TableCell>
-                {s.interest_level ? <Badge variant={INTEREST[s.interest_level]?.variant ?? "gray"}>{INTEREST[s.interest_level]?.label ?? s.interest_level}</Badge> : <span className="text-[13px] text-[#9CA3AF]">—</span>}
+                {s.interest_level ? <Badge variant={INTEREST[s.interest_level]?.variant ?? "gray"}>{INTEREST[s.interest_level]?.label ?? s.interest_level}</Badge> : <span className="text-[13px] text-muted-foreground">—</span>}
               </TableCell>
               <TableCell className="max-w-[200px] text-[13px]">
                 {s.feedback ? (s.feedback.length > 50 ? (
@@ -86,8 +86,8 @@ function ShowingsTable({ showings }: { showings: DispositionShowing[] }) {
               </TableCell>
               <TableCell>
                 {s.follow_up_needed ? (
-                  <Tooltip><TooltipTrigger asChild><span className="inline-flex items-center gap-1 text-[#1a5632]"><CheckCircle2 className="h-4 w-4" />{s.follow_up_date && <span className="text-[12px]">{format(new Date(s.follow_up_date), "M/d")}</span>}</span></TooltipTrigger><TooltipContent>{s.follow_up_notes || "Follow-up needed"}</TooltipContent></Tooltip>
-                ) : <span className="text-[13px] text-[#9CA3AF]">—</span>}
+                  <Tooltip><TooltipTrigger asChild><span className="inline-flex items-center gap-1 text-primary"><CheckCircle2 className="h-4 w-4" />{s.follow_up_date && <span className="text-[12px]">{format(new Date(s.follow_up_date), "M/d")}</span>}</span></TooltipTrigger><TooltipContent>{s.follow_up_notes || "Follow-up needed"}</TooltipContent></Tooltip>
+                ) : <span className="text-[13px] text-muted-foreground">—</span>}
               </TableCell>
             </TableRow>
           ))}
@@ -130,8 +130,8 @@ function ShowingDialog({ listingId, open, onOpenChange, create }: {
           <FormField label="Phone"><Input value={f.phone} onChange={(e) => upd("phone", e.target.value)} /></FormField>
           <FormField label="Email"><Input type="email" value={f.email} onChange={(e) => upd("email", e.target.value)} /></FormField>
         </div>
-        <div className="mt-2 border-t border-[#E5E7EB] pt-4">
-          <p className="mb-3 text-[11px] font-medium uppercase tracking-[0.3px] text-[#6B7280]">After the Showing</p>
+        <div className="mt-2 border-t border-border pt-4">
+          <p className="mb-3 text-[11px] font-medium uppercase tracking-[0.3px] text-muted-foreground">After the Showing</p>
           <div className="space-y-4">
             <FormField label="Feedback"><Textarea rows={2} value={f.feedback} onChange={(e) => upd("feedback", e.target.value)} placeholder="Agent feedback…" /></FormField>
             <FormField label="Interest Level">
@@ -142,7 +142,7 @@ function ShowingDialog({ listingId, open, onOpenChange, create }: {
             </FormField>
             <label className="flex cursor-pointer items-center gap-2">
               <Checkbox checked={f.followUp} onCheckedChange={(v) => upd("followUp", v === true)} />
-              <span className="text-[13px] text-[#1F2937]">Follow-up Needed</span>
+              <span className="text-[13px] text-foreground">Follow-up Needed</span>
             </label>
             {f.followUp && (
               <div className="grid grid-cols-2 gap-4">
@@ -154,7 +154,7 @@ function ShowingDialog({ listingId, open, onOpenChange, create }: {
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button className="bg-[#1a5632] text-white hover:bg-[#164528]" onClick={submit} disabled={create.isPending || !f.date || !f.name}>
+          <Button className="bg-primary text-primary-foreground hover:bg-primary/90" onClick={submit} disabled={create.isPending || !f.date || !f.name}>
             {create.isPending ? "Saving…" : "Save Showing"}
           </Button>
         </DialogFooter>
