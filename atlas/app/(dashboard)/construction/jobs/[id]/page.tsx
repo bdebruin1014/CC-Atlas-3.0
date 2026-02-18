@@ -24,6 +24,7 @@ import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Loader2 } from "lucide-react"
 import {
   StatCard,
   StackedBar,
@@ -43,7 +44,7 @@ import {
   PO_STATUS_CONFIG,
   CONSTRUCTION_PHASES,
 } from "@/lib/construction/types"
-import type { ChangeOrderStatus } from "@/lib/construction/types"
+import type { ChangeOrderStatus, JobStatus } from "@/lib/construction/types"
 import { RecordTasksPanel, useRecordTaskCount } from "@/components/shared/record-tasks-panel"
 import { PhotoGallery } from "@/components/construction/photo-gallery"
 import {
@@ -51,6 +52,8 @@ import {
   PUNCH_ROOM_CONFIG,
   PUNCH_STATUS_CONFIG,
 } from "@/lib/hooks/use-punch-items"
+import { useJob } from "@/lib/hooks/use-jobs"
+import { useUnits } from "@/lib/hooks/use-units"
 
 export default function JobDetailPage() {
   const router = useRouter()
@@ -59,7 +62,35 @@ export default function JobDetailPage() {
 
   const taskCount = useRecordTaskCount("job", jobId)
 
-  const job = MOCK_JOBS.find((j) => j.id === jobId)
+  // Fetch real data from Supabase
+  const { data: dbJob, isLoading: jobLoading } = useJob(jobId)
+  const { data: dbUnits = [] } = useUnits(jobId)
+
+  // Fall back to mock data for legacy job IDs (e.g. "job-001")
+  const mockJob = MOCK_JOBS.find((j) => j.id === jobId)
+
+  // Merge: prefer real DB job, fall back to mock
+  const job = dbJob
+    ? {
+        ...dbJob,
+        // Map DB field names to the shape the template expects
+        superintendent: dbJob.superintendent_id ?? "TBD",
+        project_manager: dbJob.pm_id ?? "TBD",
+        client_entity: "",
+        client_name: "",
+        contract_amount: dbJob.contract_amount ?? 0,
+        builder_fee: dbJob.builder_fee ?? 0,
+        units_completed: 0,
+      }
+    : mockJob
+
+  if (jobLoading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    )
+  }
 
   if (!job) {
     return (
@@ -76,8 +107,30 @@ export default function JobDetailPage() {
     )
   }
 
-  const statusConfig = JOB_STATUS_CONFIG[job.status]
-  const units = jobId === "job-001" ? MOCK_UNITS_JOB001 : []
+  const statusConfig = JOB_STATUS_CONFIG[(job.status as JobStatus) ?? "active"] ?? JOB_STATUS_CONFIG.active
+
+  // Use real units if available, fall back to mock for legacy IDs
+  const units = dbUnits.length > 0
+    ? dbUnits.map((u) => ({
+        id: u.id,
+        unit_number: u.unit_number,
+        address: u.lot_address ?? "",
+        floor_plan_name: "",
+        floor_plan_specs: "",
+        upgrade_package: u.upgrade_package,
+        status: (u.current_milestone ?? 0) >= 16 ? "complete" as const : (u.current_milestone ?? 0) > 0 ? "in_progress" as const : "not_started" as const,
+        current_phase: u.current_milestone ?? 0,
+        total_budget: u.total_budget ?? 0,
+        committed: u.total_committed ?? 0,
+        actual: u.total_actual ?? 0,
+        schedule_status: "on_schedule" as const,
+        permit_date: u.permit_date,
+        construction_start: u.start_date,
+        projected_completion: u.projected_completion_date,
+        co_date: u.co_date,
+      }))
+    : jobId === "job-001" ? MOCK_UNITS_JOB001 : []
+
   const purchaseOrders = MOCK_PURCHASE_ORDERS.filter(
     (po) => po.job_id === jobId
   )

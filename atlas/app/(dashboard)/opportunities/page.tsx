@@ -106,7 +106,7 @@ export default function OpportunitiesPage() {
       let query = supabase
         .from('opportunities')
         .select(
-          '*, assigned_user:profiles!opportunities_assigned_to_fkey(id, full_name, avatar_url), entity:entities!opportunities_entity_id_fkey(id, name)'
+          '*, assigned_user:profiles!opportunities_assigned_to_fkey(id, full_name, avatar_url), entity:entities!opportunities_owner_entity_id_fkey(id, name)'
         )
         .eq('archived', false)
         .order('updated_at', { ascending: false })

@@ -8,6 +8,7 @@ import { createClient } from '@/lib/supabase/client'
 import { getStagesForType, OPPORTUNITY_TYPE_LABELS, type OpportunityType } from '@/lib/types/opportunities'
 import { toast } from '@/lib/hooks/use-toast'
 import { useOrganizationId } from '@/lib/hooks/use-organization'
+import { autoInstantiateWorkflow } from '@/lib/hooks/use-workflow'
 
 export default function NewOpportunityPage() {
   const router = useRouter()
@@ -112,6 +113,9 @@ export default function NewOpportunityPage() {
         .single()
 
       if (error) throw error
+
+      // Auto-instantiate the matching workflow template (best-effort)
+      autoInstantiateWorkflow('opportunity', created.id, type)
 
       toast({
         title: 'Opportunity Created',

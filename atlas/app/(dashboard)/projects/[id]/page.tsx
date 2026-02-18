@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useParams, useRouter } from "next/navigation"
 import {
   ArrowLeft,
@@ -413,7 +413,7 @@ export default function ProjectDetailPage() {
 
   // Fetch linked jobs inline
   const [linkedJobs, setLinkedJobs] = useState<LinkedJob[]>([])
-  useState(() => {
+  useEffect(() => {
     // fetch linked jobs on mount
     import("@/lib/supabase/client").then(({ createClient }) => {
       const supabase = createClient()
@@ -429,7 +429,7 @@ export default function ProjectDetailPage() {
           )
         })
     })
-  })
+  }, [projectId])
 
   const [showEditDialog, setShowEditDialog] = useState(false)
   const [showStatusDialog, setShowStatusDialog] = useState(false)
