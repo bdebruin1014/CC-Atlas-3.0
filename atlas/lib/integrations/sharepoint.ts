@@ -35,6 +35,330 @@ interface GraphTokenResponse {
 }
 
 // ---------------------------------------------------------------------------
+// Module Folder Templates — Default sub-folder structures per module type
+// ---------------------------------------------------------------------------
+
+export type ModuleType =
+  | 'opportunity'
+  | 'project'
+  | 'job'
+  | 'disposition'
+  | 'entity'
+
+/**
+ * Default SharePoint folder templates for all 5 primary modules.
+ * Each key maps to a record sub-type (or '_default' for the base template).
+ * Used by autoCreateModuleFolders() when no DB template is found.
+ */
+export const MODULE_FOLDER_TEMPLATES: Record<
+  ModuleType,
+  Record<string, string[]>
+> = {
+  // ---- Opportunities ----
+  opportunity: {
+    scattered_lot: [
+      '01. Property Info',
+      '01. Property Info/Plat & Survey',
+      '01. Property Info/Zoning',
+      '01. Property Info/Title',
+      '02. Due Diligence',
+      '02. Due Diligence/Soil & Environmental',
+      '02. Due Diligence/Utilities',
+      '02. Due Diligence/Inspections',
+      '03. Deal Analysis',
+      '04. Offers & Contracts',
+      '05. Correspondence',
+      '06. Photos',
+    ],
+    lot_development: [
+      '01. Property Info',
+      '01. Property Info/Plat & Survey',
+      '01. Property Info/Title',
+      '02. Due Diligence',
+      '02. Due Diligence/Environmental',
+      '02. Due Diligence/Geotechnical',
+      '02. Due Diligence/Utilities',
+      '03. Feasibility',
+      '03. Feasibility/Proforma',
+      '03. Feasibility/Zoning & Entitlements',
+      '04. Deal Analysis',
+      '05. Offers & Contracts',
+      '06. Engineering',
+      '07. Correspondence',
+      '08. Photos',
+    ],
+    community_development: [
+      '01. Property Info',
+      '01. Property Info/Plat & Survey',
+      '01. Property Info/Title',
+      '02. Due Diligence',
+      '03. Feasibility',
+      '03. Feasibility/Proforma',
+      '03. Feasibility/Market Research',
+      '04. Deal Analysis',
+      '05. Offers & Contracts',
+      '06. Planning',
+      '07. Correspondence',
+      '08. Photos',
+    ],
+    _default: [
+      '01. Property Info',
+      '02. Due Diligence',
+      '03. Deal Analysis',
+      '04. Offers & Contracts',
+      '05. Correspondence',
+      '06. Photos',
+    ],
+  },
+
+  // ---- Projects ----
+  project: {
+    custom_home: [
+      '01. Acquisition',
+      '01. Acquisition/Contract',
+      '01. Acquisition/Title',
+      '01. Acquisition/Survey',
+      '02. Permitting',
+      '03. Plans & Specs',
+      '04. Contracts',
+      '05. Construction',
+      '05. Construction/Photos',
+      '05. Construction/Inspections',
+      '06. Financial',
+      '06. Financial/Draw Requests',
+      '06. Financial/Invoices',
+      '07. Correspondence',
+      '08. Warranty',
+    ],
+    remodel: [
+      '01. Acquisition',
+      '02. Permitting',
+      '03. Plans & Specs',
+      '04. Contracts',
+      '05. Construction',
+      '05. Construction/Photos',
+      '05. Construction/Before & After',
+      '06. Financial',
+      '07. Correspondence',
+    ],
+    land_development: [
+      '01. Acquisition',
+      '01. Acquisition/Contract',
+      '01. Acquisition/Title',
+      '02. Engineering',
+      '02. Engineering/Site Plans',
+      '02. Engineering/Utilities',
+      '03. Permitting',
+      '04. Environmental',
+      '05. Financial',
+      '06. Legal',
+      '07. Correspondence',
+    ],
+    commercial: [
+      '01. Acquisition',
+      '02. Permitting',
+      '03. Plans & Specs',
+      '04. Contracts',
+      '05. Construction',
+      '05. Construction/Photos',
+      '05. Construction/Tenant Improvements',
+      '06. Financial',
+      '07. Legal',
+      '08. Correspondence',
+    ],
+    _default: [
+      '01. Acquisition',
+      '02. Permitting',
+      '03. Plans & Specs',
+      '04. Contracts',
+      '05. Construction',
+      '06. Financial',
+      '07. Correspondence',
+      '08. Warranty',
+    ],
+  },
+
+  // ---- Construction Jobs ----
+  job: {
+    _default: [
+      '01. Contract & Scope',
+      '02. Permitting',
+      '03. Plans & Specs',
+      '04. Subcontracts & POs',
+      '05. Change Orders',
+      '06. Inspections',
+      '07. Draw Requests',
+      '08. Invoices & Lien Waivers',
+      '09. Daily Logs',
+      '10. Photos',
+      '11. Punch List',
+      '12. Closeout & Warranty',
+      '13. Correspondence',
+    ],
+  },
+
+  // ---- Disposition Listings ----
+  disposition: {
+    _default: [
+      '01. Listing',
+      '01. Listing/Marketing Materials',
+      '01. Listing/Photos & Virtual Tour',
+      '01. Listing/MLS Documents',
+      '02. Showings & Offers',
+      '03. Contract & Addenda',
+      '04. Due Diligence',
+      '04. Due Diligence/Inspections',
+      '04. Due Diligence/Appraisal',
+      '04. Due Diligence/Repair Requests',
+      '05. Title & Closing',
+      '05. Title & Closing/Title Commitment',
+      '05. Title & Closing/Survey',
+      '05. Title & Closing/Settlement Statement',
+      '06. Financial',
+      '06. Financial/Commission Statements',
+      '06. Financial/Seller Proceeds',
+      '07. Correspondence',
+    ],
+  },
+
+  // ---- Accounting Entities ----
+  entity: {
+    spe: [
+      '01. Formation',
+      '01. Formation/Operating Agreement',
+      '01. Formation/Articles of Organization',
+      '01. Formation/EIN',
+      '02. Banking',
+      '02. Banking/Statements',
+      '02. Banking/Reconciliations',
+      '03. Tax',
+      '03. Tax/Returns',
+      '03. Tax/K-1s',
+      '04. Investor Documents',
+      '04. Investor Documents/Capital Call Notices',
+      '04. Investor Documents/Distribution Notices',
+      '04. Investor Documents/Quarterly Reports',
+      '05. Insurance',
+      '06. Legal',
+      '07. Audits & Reviews',
+    ],
+    operating_company: [
+      '01. Formation',
+      '01. Formation/Operating Agreement',
+      '01. Formation/Articles',
+      '01. Formation/EIN',
+      '02. Banking',
+      '02. Banking/Statements',
+      '02. Banking/Reconciliations',
+      '03. Tax',
+      '03. Tax/Returns',
+      '04. Payroll',
+      '05. Insurance',
+      '05. Insurance/GL',
+      '05. Insurance/WC',
+      '05. Insurance/Builders Risk',
+      '06. Legal',
+      '07. Audits & Reviews',
+      '08. Vendor W-9s & 1099s',
+    ],
+    holding_company: [
+      '01. Formation',
+      '01. Formation/Operating Agreement',
+      '01. Formation/Articles',
+      '01. Formation/EIN',
+      '02. Banking',
+      '02. Banking/Statements',
+      '03. Tax',
+      '03. Tax/Returns',
+      '04. Intercompany',
+      '05. Insurance',
+      '06. Legal',
+    ],
+    fund_syndication: [
+      '01. Formation',
+      '01. Formation/PPM',
+      '01. Formation/Operating Agreement',
+      '01. Formation/Subscription Agreements',
+      '01. Formation/EIN',
+      '02. Banking',
+      '02. Banking/Statements',
+      '03. Tax',
+      '03. Tax/Returns',
+      '03. Tax/K-1s',
+      '04. Investor Documents',
+      '04. Investor Documents/Capital Call Notices',
+      '04. Investor Documents/Distribution Notices',
+      '04. Investor Documents/Quarterly Reports',
+      '05. Insurance',
+      '06. Legal',
+      '07. Audits & Reviews',
+    ],
+    _default: [
+      '01. Formation',
+      '02. Banking',
+      '03. Tax',
+      '04. Insurance',
+      '05. Legal',
+    ],
+  },
+}
+
+/**
+ * Resolve the folder template for a given module and sub-type.
+ * Checks the DB sharepoint_folder_templates table first,
+ * then falls back to the built-in MODULE_FOLDER_TEMPLATES constant.
+ */
+export async function resolveFolderTemplate(
+  module: ModuleType,
+  subType?: string | null
+): Promise<string[]> {
+  // 1) Try loading from DB
+  try {
+    const supabase = createClient()
+    const typeLookup = subType || '_default'
+    const { data } = await supabase
+      .from('sharepoint_folder_templates')
+      .select('folder_structure')
+      .eq('project_type', `${module}:${typeLookup}`)
+      .eq('is_default', true)
+      .limit(1)
+      .maybeSingle()
+
+    if (data?.folder_structure && Array.isArray(data.folder_structure)) {
+      return data.folder_structure as string[]
+    }
+  } catch {
+    // DB lookup failed — fall through to built-in template
+  }
+
+  // 2) Built-in template
+  const moduleTemplates = MODULE_FOLDER_TEMPLATES[module]
+  const key = subType && moduleTemplates[subType] ? subType : '_default'
+  return moduleTemplates[key] ?? moduleTemplates._default ?? []
+}
+
+/**
+ * Build the root folder name for a module record.
+ * Convention: "<PREFIX> <Record Number> - <Label>"
+ */
+export function buildFolderName(
+  module: ModuleType,
+  recordNumber: string,
+  label: string
+): string {
+  const prefix: Record<ModuleType, string> = {
+    opportunity: 'OPP',
+    project: 'PRJ',
+    job: 'JOB',
+    disposition: 'DSP',
+    entity: 'ENT',
+  }
+
+  const num = recordNumber || 'NEW'
+  return `${prefix[module]} ${num} - ${label}`.replace(/[<>:"/\\|?*]/g, '_')
+}
+
+// ---------------------------------------------------------------------------
 // SharePointService
 // ---------------------------------------------------------------------------
 
@@ -92,14 +416,27 @@ export class SharePointService {
   /**
    * Create a project folder with the standard Red Cedar folder structure.
    * Uses project type to determine which sub-folder template to apply.
+   * @deprecated Use createModuleFolder() with MODULE_FOLDER_TEMPLATES instead.
    */
   async createProjectFolder(
     projectType: string,
     projectNumber: string,
     address: string
   ): Promise<string> {
-    const token = await this.getAccessToken()
     const folderName = `${projectNumber} - ${address}`
+    const template = await resolveFolderTemplate('project', projectType)
+    return this.createModuleFolder(folderName, template)
+  }
+
+  /**
+   * Create a module folder with its full sub-folder tree.
+   * Accepts a root folder name and the list of sub-folder paths to create.
+   */
+  async createModuleFolder(
+    folderName: string,
+    subFolders: string[]
+  ): Promise<string> {
+    const token = await this.getAccessToken()
 
     // In production: POST /drives/{driveId}/root/children
     // {
@@ -107,52 +444,14 @@ export class SharePointService {
     //   "folder": {},
     //   "@microsoft.graph.conflictBehavior": "rename"
     // }
-    // Then create template sub-folders based on projectType
-
-    const templateFolders: Record<string, string[]> = {
-      custom_home: [
-        'Plans & Specs',
-        'Contracts',
-        'Permits',
-        'Photos',
-        'Correspondence',
-        'Financial',
-        'Warranty',
-      ],
-      remodel: [
-        'Plans & Specs',
-        'Contracts',
-        'Permits',
-        'Photos',
-        'Before & After',
-        'Financial',
-      ],
-      land_development: [
-        'Site Plans',
-        'Engineering',
-        'Permits',
-        'Environmental',
-        'Financial',
-        'Legal',
-      ],
-      commercial: [
-        'Plans & Specs',
-        'Contracts',
-        'Permits',
-        'Photos',
-        'Tenant Improvements',
-        'Financial',
-        'Legal',
-      ],
-    }
-
-    const subFolders = templateFolders[projectType] ?? templateFolders.custom_home
+    // Then create each sub-folder path (Graph API supports nested creation
+    // via PATCH /root:/{path}:/children for intermediate directories)
 
     console.log(
       `SharePoint: Would create folder "${folderName}" at /drives/${this.config.driveId}/root/children`
     )
     console.log(
-      `SharePoint: Would create sub-folders: ${subFolders!.join(', ')}`
+      `SharePoint: Would create ${subFolders.length} sub-folders: ${subFolders.join(', ')}`
     )
     console.log(`SharePoint: Using token: ${token.slice(0, 10)}...`)
 
@@ -288,6 +587,40 @@ export async function getSharePointService(): Promise<SharePointService | null> 
 
     return new SharePointService(config)
   } catch {
+    return null
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Auto-create helper for API routes
+// ---------------------------------------------------------------------------
+
+/**
+ * Auto-create a SharePoint folder structure for a newly created record.
+ * Called from API POST routes after record creation. Best-effort / non-fatal.
+ *
+ * Returns the root folder URL on success, or null if SharePoint is not
+ * configured or the operation fails.
+ */
+export async function autoCreateModuleFolders(opts: {
+  module: ModuleType
+  subType?: string | null
+  recordNumber: string
+  label: string
+  recordId: string
+}): Promise<string | null> {
+  try {
+    const service = await getSharePointService()
+    if (!service) return null
+
+    const folderName = buildFolderName(opts.module, opts.recordNumber, opts.label)
+    const template = await resolveFolderTemplate(opts.module, opts.subType)
+
+    // Create root folder + sub-folders
+    const rootUrl = await service.createModuleFolder(folderName, template)
+    return rootUrl
+  } catch (err) {
+    console.error(`SharePoint: auto-create folders failed for ${opts.module}/${opts.recordId}:`, err)
     return null
   }
 }

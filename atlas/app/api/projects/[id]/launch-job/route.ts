@@ -1,6 +1,7 @@
 import { createServerSupabaseClient } from "@/lib/supabase/server"
 import { NextResponse } from "next/server"
 import { z } from "zod"
+import { autoCreateModuleFolders } from "@/lib/integrations/sharepoint"
 
 // ---------------------------------------------------------------------------
 // Validation
@@ -270,6 +271,15 @@ export async function POST(
         unit_count: input.units.length,
       },
     })
+
+    // Auto-create SharePoint folder structure (best-effort)
+    autoCreateModuleFolders({
+      module: "job",
+      subType: null,
+      recordNumber: jobNumber,
+      label: job.name,
+      recordId: job.id,
+    }).catch(() => {})
 
     return NextResponse.json(
       { data: { jobId: job.id, jobNumber } },

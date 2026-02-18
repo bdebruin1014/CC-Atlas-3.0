@@ -1,6 +1,7 @@
 import { createServerSupabaseClient } from "@/lib/supabase/server"
 import { NextResponse } from "next/server"
 import { z } from "zod"
+import { autoCreateModuleFolders } from "@/lib/integrations/sharepoint"
 
 // ---------------------------------------------------------------------------
 // Validation schemas
@@ -416,6 +417,15 @@ export async function POST(request: Request) {
         initial_period: currentPeriod,
       },
     })
+
+    // Auto-create SharePoint folder structure (best-effort)
+    autoCreateModuleFolders({
+      module: "entity",
+      subType: input.use_type || null,
+      recordNumber: entity.ein || entity.id.slice(0, 8),
+      label: entity.name,
+      recordId: entity.id,
+    }).catch(() => {})
 
     return NextResponse.json({ data: entity }, { status: 201 })
   } catch (err) {

@@ -1,6 +1,7 @@
 import { createServerSupabaseClient } from "@/lib/supabase/server"
 import { NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
+import { autoCreateModuleFolders } from "@/lib/integrations/sharepoint"
 
 // ---------------------------------------------------------------------------
 // Validation
@@ -329,6 +330,15 @@ export async function POST(request: Request) {
         // Workflow auto-instantiation is best-effort
         console.error("Auto-instantiate disposition workflow error:", wfErr)
       }
+
+      // Auto-create SharePoint folder structure (best-effort)
+      autoCreateModuleFolders({
+        module: "disposition",
+        subType: null,
+        recordNumber: data.listing_number || data.id.slice(0, 8),
+        label: data.property_address || "Untitled",
+        recordId: data.id,
+      }).catch(() => {})
     }
 
     return NextResponse.json({ data }, { status: 201 })
