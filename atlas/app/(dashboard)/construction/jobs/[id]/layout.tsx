@@ -19,6 +19,7 @@ import { useUnits } from "@/lib/hooks/use-units"
 import type { Unit } from "@/lib/hooks/use-units"
 import { JOB_STATUS_CONFIG } from "@/lib/construction/types"
 import type { JobStatus } from "@/lib/construction/types"
+import { useTabNavigation } from "@/lib/hooks/use-tab-navigation"
 
 // ---------------------------------------------------------------------------
 // Job Context
@@ -56,6 +57,13 @@ export default function JobDetailLayout({
 
   const { data: job, isLoading: jobLoading } = useJob(jobId)
   const { data: units = [], isLoading: unitsLoading } = useUnits(jobId)
+
+  // Register open-records tab
+  useTabNavigation({
+    id: jobId,
+    label: job?.name || "Loading...",
+    module: "job",
+  })
 
   if (jobLoading || unitsLoading) {
     return (

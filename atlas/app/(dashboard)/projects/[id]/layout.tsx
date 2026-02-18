@@ -45,6 +45,7 @@ import {
 } from "@/lib/hooks/use-projects"
 import { ProjectForm } from "@/components/projects/project-form"
 import { LaunchJobDialog } from "@/components/projects/launch-job-dialog"
+import { useTabNavigation } from "@/lib/hooks/use-tab-navigation"
 
 // ---------------------------------------------------------------------------
 // Context for sharing project data across sub-routes
@@ -173,6 +174,13 @@ export default function ProjectDetailLayout({
         })
     })
   }, [projectId])
+
+  // Register open-records tab
+  useTabNavigation({
+    id: projectId,
+    label: project?.name || "Loading...",
+    module: "project",
+  })
 
   const [showEditDialog, setShowEditDialog] = useState(false)
   const [showStatusDialog, setShowStatusDialog] = useState(false)

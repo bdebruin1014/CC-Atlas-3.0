@@ -35,6 +35,7 @@ import {
   ENTITY_USE_TYPE_LABELS,
   ENTITY_LEGAL_TYPE_LABELS,
 } from "@/lib/types/accounting"
+import { useTabNavigation } from "@/lib/hooks/use-tab-navigation"
 
 // ---------------------------------------------------------------------------
 // DB -> UI mapping (mirrors entities/page.tsx)
@@ -111,6 +112,13 @@ export default function EntityDetailPage({ params }: { params: Promise<{ id: str
     netEquity: 0,
     pendingTransactions: 0,
     investorCount: 0,
+  })
+
+  // Register open-records tab
+  useTabNavigation({
+    id: entityId,
+    label: entity?.name || "Loading...",
+    module: "entity",
   })
 
   useEffect(() => {
