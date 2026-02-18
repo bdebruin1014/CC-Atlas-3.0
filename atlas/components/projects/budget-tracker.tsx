@@ -116,7 +116,6 @@ export function BudgetTracker({
     description: "",
     amount: "",
     cost_category: "",
-    vendor_name: "",
     reference_number: "",
     status: "pending" as ExpenseStatus,
   })
@@ -131,14 +130,15 @@ export function BudgetTracker({
     try {
       await addExpense({
         project_id: projectId,
+        entity_id: null,
         date: newExpense.date,
         description: newExpense.description,
         amount: parseFloat(newExpense.amount),
         cost_category: newExpense.cost_category,
-        vendor_name: newExpense.vendor_name || null,
         vendor_contact_id: null,
         reference_number: newExpense.reference_number || null,
-        document_url: null,
+        document_id: null,
+        accounting_transaction_id: null,
         status: newExpense.status,
       })
       setShowExpenseDialog(false)
@@ -147,7 +147,6 @@ export function BudgetTracker({
         description: "",
         amount: "",
         cost_category: "",
-        vendor_name: "",
         reference_number: "",
         status: "pending",
       })
@@ -343,7 +342,7 @@ export function BudgetTracker({
                   <TableHead>Date</TableHead>
                   <TableHead>Description</TableHead>
                   <TableHead>Category</TableHead>
-                  <TableHead>Vendor</TableHead>
+                  <TableHead>Ref #</TableHead>
                   <TableHead className="text-right">Amount</TableHead>
                   <TableHead>Status</TableHead>
                 </TableRow>
@@ -356,7 +355,7 @@ export function BudgetTracker({
                     </TableCell>
                     <TableCell>{exp.description}</TableCell>
                     <TableCell>{exp.cost_category}</TableCell>
-                    <TableCell>{exp.vendor_name ?? "—"}</TableCell>
+                    <TableCell>{exp.reference_number ?? "—"}</TableCell>
                     <TableCell className="text-right font-medium">
                       {formatCurrency(exp.amount)}
                     </TableCell>
@@ -446,32 +445,19 @@ export function BudgetTracker({
                 </SelectContent>
               </Select>
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="exp_vendor">Vendor</Label>
-                <Input
-                  id="exp_vendor"
-                  value={newExpense.vendor_name}
-                  onChange={(e) =>
-                    setNewExpense({ ...newExpense, vendor_name: e.target.value })
-                  }
-                  placeholder="Vendor name"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="exp_ref">Reference #</Label>
-                <Input
-                  id="exp_ref"
-                  value={newExpense.reference_number}
-                  onChange={(e) =>
-                    setNewExpense({
-                      ...newExpense,
-                      reference_number: e.target.value,
-                    })
-                  }
-                  placeholder="Invoice/PO #"
-                />
-              </div>
+            <div className="space-y-2">
+              <Label htmlFor="exp_ref">Reference #</Label>
+              <Input
+                id="exp_ref"
+                value={newExpense.reference_number}
+                onChange={(e) =>
+                  setNewExpense({
+                    ...newExpense,
+                    reference_number: e.target.value,
+                  })
+                }
+                placeholder="Invoice/PO #"
+              />
             </div>
             <div className="space-y-2">
               <Label>Status</Label>

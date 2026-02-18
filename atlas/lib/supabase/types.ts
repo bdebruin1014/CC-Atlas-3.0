@@ -73,6 +73,11 @@ export type FloorPlanStatus = 'active' | 'inactive' | 'draft'
 export type IntegrationProvider = 'sharepoint' | 'outlook' | 'akaunting' | 'quickbooks' | 'zapier' | 'sendgrid'
 export type CalendarEventType = 'inspection' | 'closing' | 'meeting' | 'deadline' | 'milestone' | 'permit' | 'walkthrough' | 'open_house' | 'draw_request' | 'other'
 
+// Standalone tasks enums
+export type StandaloneTaskStatus = 'not_started' | 'in_progress' | 'completed' | 'cancelled'
+export type StandaloneTaskPriority = 'low' | 'medium' | 'high' | 'urgent'
+export type StandaloneTaskModule = 'opportunity' | 'project' | 'construction' | 'disposition' | 'general'
+
 // Disposition module enums
 export type DispositionPropertyType = 'single_family' | 'townhome' | 'lot' | 'condo' | 'duplex' | 'land'
 export type DispositionListingStatus = 'draft' | 'pre_listing' | 'active' | 'under_contract' | 'pending_closing' | 'closed' | 'withdrawn' | 'expired'
@@ -1128,6 +1133,27 @@ export interface DispositionTakedownSchedule {
   updated_at: string
 }
 
+// ---- Standalone Tasks Module ----
+
+export interface StandaloneTask {
+  id: string
+  organization_id: string
+  title: string
+  description: string | null
+  status: StandaloneTaskStatus
+  priority: StandaloneTaskPriority
+  assigned_to: string | null
+  created_by: string
+  due_date: string | null
+  completed_at: string | null
+  completed_by: string | null
+  module: StandaloneTaskModule | null
+  linked_record_id: string | null
+  tags: string[]
+  created_at: string
+  updated_at: string
+}
+
 // ---- Database Interface (Supabase compatible) ----
 // Note: When connecting to a real Supabase instance, regenerate types with:
 //   npx supabase gen types typescript --project-id <project-id> > lib/supabase/types.ts
@@ -1212,6 +1238,8 @@ export interface Database {
       construction_photos: { Row: ConstructionPhoto; Insert: Partial<ConstructionPhoto> & { file_url: string }; Update: Partial<ConstructionPhoto>; Relationships: [] }
       milestone_photo_requirements: { Row: MilestonePhotoRequirement; Insert: Partial<MilestonePhotoRequirement> & { milestone_sequence: number }; Update: Partial<MilestonePhotoRequirement>; Relationships: [] }
       daily_logs: { Row: DailyLog; Insert: Partial<DailyLog> & { job_id: string; log_date: string; work_performed: string }; Update: Partial<DailyLog>; Relationships: [] }
+      // Standalone tasks module
+      standalone_tasks: { Row: StandaloneTask; Insert: Partial<StandaloneTask> & { organization_id: string; title: string; created_by: string }; Update: Partial<StandaloneTask>; Relationships: [] }
       [key: string]: AnyTable | { Row: any; Insert: any; Update: any; Relationships: any }
     }
     Views: {

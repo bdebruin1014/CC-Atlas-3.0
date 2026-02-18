@@ -87,19 +87,19 @@ export async function GET(request: NextRequest) {
     // Status filter
     const statuses = params.get("status")
     if (statuses) {
-      query = query.in("status", statuses.split(","))
+      query = query.in("status", statuses.split(",") as any)
     }
 
     // Priority filter
     const priorities = params.get("priority")
     if (priorities) {
-      query = query.in("priority", priorities.split(","))
+      query = query.in("priority", priorities.split(",") as any)
     }
 
     // Module filter
     const modules = params.get("module")
     if (modules) {
-      query = query.in("module", modules.split(","))
+      query = query.in("module", modules.split(",") as any)
     }
 
     // Assignee filter
