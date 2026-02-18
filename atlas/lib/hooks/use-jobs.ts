@@ -96,7 +96,7 @@ export function useJobs(filters?: JobFilters) {
         query = query.eq('type', filters.type)
       }
       if (filters?.status) {
-        query = query.eq('status', filters.status)
+        query = query.eq('status', filters.status as any)
       }
       if (filters?.superintendentId) {
         query = query.eq('superintendent_id', filters.superintendentId)
@@ -110,7 +110,7 @@ export function useJobs(filters?: JobFilters) {
       const { data, error } = await query
 
       if (error) throw error
-      return (data ?? []) as Job[]
+      return (data ?? []) as unknown as Job[]
     },
   })
 }

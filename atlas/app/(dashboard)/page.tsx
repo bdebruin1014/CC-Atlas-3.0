@@ -134,7 +134,7 @@ export default function DashboardPage() {
       const { data, error } = await supabase
         .from("projects")
         .select("id, status, budget_total")
-        .in("status", ["active", "pre_construction", "in_progress"])
+        .in("status", ["active", "pre_construction", "under_contract"])
 
       if (error) throw error
 
@@ -152,7 +152,7 @@ export default function DashboardPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("jobs")
-        .select("id, name, job_number, status, estimated_completion, start_date")
+        .select("id, name, job_number, status, projected_completion, start_date")
         .not("status", "in", '("completed","cancelled","closed")')
 
       if (error) throw error
@@ -165,7 +165,8 @@ export default function DashboardPage() {
     queryKey: ["dashboard", "overdue-tasks"],
     queryFn: async () => {
       const today = new Date().toISOString().split("T")[0]
-      const { count, error } = await supabase
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { count, error } = await (supabase as any)
         .from("standalone_tasks")
         .select("id", { count: "exact", head: true })
         .lt("due_date", today)
@@ -173,7 +174,7 @@ export default function DashboardPage() {
         .neq("status", "cancelled")
 
       if (error) throw error
-      return count ?? 0
+      return (count ?? 0) as number
     },
   })
 
@@ -214,7 +215,8 @@ export default function DashboardPage() {
       } = await supabase.auth.getUser()
       if (!user) return []
 
-      const { data, error } = await supabase
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data, error } = await (supabase as any)
         .from("standalone_tasks")
         .select("id, title, due_date, priority, module, status")
         .eq("assigned_to", user.id)
@@ -224,7 +226,7 @@ export default function DashboardPage() {
         .limit(5)
 
       if (error) throw error
-      return data ?? []
+      return (data ?? []) as { id: string; title: string; due_date: string | null; priority: string; module: string | null; status: string }[]
     },
   })
 
@@ -277,7 +279,8 @@ export default function DashboardPage() {
       })
 
       // Tasks due
-      const { data: tasks } = await supabase
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: tasks } = await (supabase as any)
         .from("standalone_tasks")
         .select("id, title, due_date, module")
         .gte("due_date", today)
@@ -286,7 +289,7 @@ export default function DashboardPage() {
         .neq("status", "cancelled")
         .limit(20)
 
-      tasks?.forEach((t) => {
+      ;(tasks as { id: string; title: string; due_date: string | null; module: string | null }[] | null)?.forEach((t) => {
         if (t.due_date) {
           items.push({
             date: t.due_date,
@@ -365,13 +368,13 @@ export default function DashboardPage() {
 
       const { data: closedData } = await supabase
         .from("disposition_settlements")
-        .select("id, sale_price")
+        .select("id, gross_sale_price")
         .gte("closing_date", firstDay)
         .lte("closing_date", lastDay)
 
       const closedCount = closedData?.length ?? 0
       const revenueMTD =
-        closedData?.reduce((s, r) => s + (Number(r.sale_price) || 0), 0) ?? 0
+        closedData?.reduce((s, r) => s + (Number(r.gross_sale_price) || 0), 0) ?? 0
 
       return {
         active: activeCount ?? 0,
@@ -655,8 +658,8 @@ export default function DashboardPage() {
                 {constructionJobs.slice(0, 16).map((job) => {
                   // Determine color based on schedule status
                   let color = "bg-green-100 border-green-300 text-green-800"
-                  if (job.estimated_completion) {
-                    const est = new Date(job.estimated_completion)
+                  if (job.projected_completion) {
+                    const est = new Date(job.projected_completion)
                     const now = new Date()
                     const daysLeft = Math.ceil(
                       (est.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)

@@ -255,9 +255,9 @@ export default function OpportunityDetailPage() {
   }
 
   const stages = getStagesForType(opportunity.type)
-  const currentStage = getStageDefinition(opportunity.type, opportunity.stage)
+  const currentStage = getStageDefinition(opportunity.type, (opportunity as any).stage ?? opportunity.current_stage)
   const currentStageIndex = stages.findIndex(
-    (s) => s.id === opportunity.stage
+    (s) => s.id === ((opportunity as any).stage ?? opportunity.current_stage)
   )
   const typeColor =
     OPPORTUNITY_TYPE_COLORS[opportunity.type] ?? '#6b7280'
@@ -280,7 +280,7 @@ export default function OpportunityDetailPage() {
         <div className="space-y-2">
           <div className="flex items-center gap-3">
             <h1 className="text-2xl font-bold tracking-tight">
-              {opportunity.name || opportunity.address_line1 || 'Untitled'}
+              {opportunity.name || (opportunity as any).address_line1 || opportunity.address_street || 'Untitled'}
             </h1>
           </div>
           <div className="flex flex-wrap items-center gap-2">
@@ -486,7 +486,7 @@ export default function OpportunityDetailPage() {
                   icon={<MapPin className="h-4 w-4" />}
                   value={
                     [
-                      opportunity.address_line1,
+                      (opportunity as any).address_line1 ?? opportunity.address_street,
                       opportunity.address_city,
                       opportunity.address_state,
                       opportunity.address_zip,
@@ -502,7 +502,7 @@ export default function OpportunityDetailPage() {
                 <InfoRow
                   label="Parcel / TMS"
                   icon={<FileText className="h-4 w-4" />}
-                  value={opportunity.parcel_tms}
+                  value={(opportunity as any).parcel_tms ?? opportunity.parcel_tms_number}
                 />
                 <InfoRow
                   label="Type"
@@ -548,8 +548,8 @@ export default function OpportunityDetailPage() {
                   label="Projected ARV"
                   icon={<DollarSign className="h-4 w-4" />}
                   value={
-                    opportunity.projected_arv
-                      ? formatCurrency(opportunity.projected_arv)
+                    (opportunity as any).projected_arv
+                      ? formatCurrency((opportunity as any).projected_arv)
                       : '—'
                   }
                 />
@@ -584,7 +584,7 @@ export default function OpportunityDetailPage() {
                   <InfoRow
                     label="Zoning"
                     icon={<Building2 className="h-4 w-4" />}
-                    value={opportunity.zoning}
+                    value={(opportunity as any).zoning ?? opportunity.zoning_current}
                   />
                   <InfoRow
                     label="Build Type"
@@ -593,19 +593,19 @@ export default function OpportunityDetailPage() {
                   />
                   <InfoRow
                     label="Road Type"
-                    value={opportunity.road_type}
+                    value={(opportunity as any).road_type ?? opportunity.road_surrounding}
                   />
                   <InfoRow
                     label="Road Frontage"
                     value={
-                      opportunity.road_frontage
-                        ? `${opportunity.road_frontage} ft`
+                      (opportunity as any).road_frontage
+                        ? `${(opportunity as any).road_frontage} ft`
                         : null
                     }
                   />
                   <InfoRow
                     label="Survey Status"
-                    value={opportunity.survey_status}
+                    value={(opportunity as any).survey_status ?? (opportunity.survey_complete ? 'Complete' : 'Pending')}
                   />
                   <InfoRow
                     label="Garage Position"
@@ -616,17 +616,17 @@ export default function OpportunityDetailPage() {
                     icon={<Ruler className="h-4 w-4" />}
                     value={
                       [
-                        opportunity.setback_front != null
-                          ? `F: ${opportunity.setback_front}′`
+                        (opportunity as any).setback_front != null
+                          ? `F: ${(opportunity as any).setback_front}′`
                           : null,
-                        opportunity.setback_rear != null
-                          ? `R: ${opportunity.setback_rear}′`
+                        (opportunity as any).setback_rear != null
+                          ? `R: ${(opportunity as any).setback_rear}′`
                           : null,
-                        opportunity.setback_left != null
-                          ? `L: ${opportunity.setback_left}′`
+                        (opportunity as any).setback_left != null
+                          ? `L: ${(opportunity as any).setback_left}′`
                           : null,
-                        opportunity.setback_right != null
-                          ? `R: ${opportunity.setback_right}′`
+                        (opportunity as any).setback_right != null
+                          ? `R: ${(opportunity as any).setback_right}′`
                           : null,
                       ]
                         .filter(Boolean)
@@ -646,8 +646,8 @@ export default function OpportunityDetailPage() {
                         opportunity.lot_sqft
                           ? `${opportunity.lot_sqft.toLocaleString()} SF`
                           : null,
-                        opportunity.lot_acreage
-                          ? `${opportunity.lot_acreage} AC`
+                        (opportunity as any).lot_acreage ?? opportunity.total_acreage
+                          ? `${(opportunity as any).lot_acreage ?? opportunity.total_acreage} AC`
                           : null,
                       ]
                         .filter(Boolean)
@@ -658,7 +658,7 @@ export default function OpportunityDetailPage() {
                     label="Floor Plan"
                     value={
                       opportunity.floor_plan
-                        ? `${opportunity.floor_plan.name} (${opportunity.floor_plan.sqft.toLocaleString()} SF)`
+                        ? `${opportunity.floor_plan.name} (${((opportunity.floor_plan as any).sqft ?? opportunity.floor_plan.square_footage).toLocaleString()} SF)`
                         : null
                     }
                   />
@@ -671,7 +671,7 @@ export default function OpportunityDetailPage() {
                     <Droplets
                       className={cn(
                         'h-4 w-4',
-                        opportunity.has_water
+                        ((opportunity as any).has_water ?? opportunity.water_available)
                           ? 'text-blue-500'
                           : 'text-muted-foreground/30'
                       )}
@@ -679,7 +679,7 @@ export default function OpportunityDetailPage() {
                     <span
                       className={cn(
                         'text-sm',
-                        opportunity.has_water
+                        ((opportunity as any).has_water ?? opportunity.water_available)
                           ? 'text-foreground'
                           : 'text-muted-foreground/50 line-through'
                       )}
@@ -691,7 +691,7 @@ export default function OpportunityDetailPage() {
                     <Trees
                       className={cn(
                         'h-4 w-4',
-                        opportunity.has_sewer
+                        ((opportunity as any).has_sewer ?? opportunity.sewer_available)
                           ? 'text-green-500'
                           : 'text-muted-foreground/30'
                       )}
@@ -699,7 +699,7 @@ export default function OpportunityDetailPage() {
                     <span
                       className={cn(
                         'text-sm',
-                        opportunity.has_sewer
+                        ((opportunity as any).has_sewer ?? opportunity.sewer_available)
                           ? 'text-foreground'
                           : 'text-muted-foreground/50 line-through'
                       )}
@@ -711,7 +711,7 @@ export default function OpportunityDetailPage() {
                     <Zap
                       className={cn(
                         'h-4 w-4',
-                        opportunity.has_electric
+                        ((opportunity as any).has_electric ?? opportunity.electric_available)
                           ? 'text-yellow-500'
                           : 'text-muted-foreground/30'
                       )}
@@ -719,7 +719,7 @@ export default function OpportunityDetailPage() {
                     <span
                       className={cn(
                         'text-sm',
-                        opportunity.has_electric
+                        ((opportunity as any).has_electric ?? opportunity.electric_available)
                           ? 'text-foreground'
                           : 'text-muted-foreground/50 line-through'
                       )}
@@ -727,7 +727,7 @@ export default function OpportunityDetailPage() {
                       Electric
                     </span>
                   </div>
-                  {opportunity.historic_overlay && (
+                  {((opportunity as any).historic_overlay ?? opportunity.historic_district) && (
                     <Badge variant="outline" className="text-xs">
                       Historic Overlay
                     </Badge>
@@ -756,7 +756,7 @@ export default function OpportunityDetailPage() {
                   />
                   <InfoRow
                     label="Estimated Lots"
-                    value={opportunity.estimated_lots}
+                    value={(opportunity as any).estimated_lots ?? opportunity.estimated_total_lots}
                   />
                   <InfoRow
                     label="Rezoning Required"
@@ -771,8 +771,8 @@ export default function OpportunityDetailPage() {
                   <InfoRow
                     label="Infrastructure Estimate"
                     value={
-                      opportunity.infrastructure_estimate
-                        ? formatCurrency(opportunity.infrastructure_estimate)
+                      ((opportunity as any).infrastructure_estimate ?? opportunity.infrastructure_scope_estimate)
+                        ? formatCurrency((opportunity as any).infrastructure_estimate ?? opportunity.infrastructure_scope_estimate)
                         : null
                     }
                   />
@@ -795,19 +795,19 @@ export default function OpportunityDetailPage() {
                 {[
                   {
                     label: 'Offer Date',
-                    value: opportunity.date_offer,
+                    value: (opportunity as any).date_offer ?? opportunity.date_identified,
                   },
                   {
                     label: 'Contract Date',
-                    value: opportunity.date_contract,
+                    value: (opportunity as any).date_contract ?? opportunity.date_under_contract,
                   },
                   {
                     label: 'DD Expiration',
-                    value: opportunity.date_dd_expiration,
+                    value: (opportunity as any).date_dd_expiration ?? opportunity.due_diligence_deadline,
                   },
                   {
                     label: 'Closing Date',
-                    value: opportunity.date_closing,
+                    value: (opportunity as any).date_closing ?? opportunity.projected_close_date,
                   },
                 ].map((d) => (
                   <div
@@ -888,7 +888,7 @@ export default function OpportunityDetailPage() {
         {/* NOTES TAB                                                        */}
         {/* ================================================================ */}
         <TabsContent value="notes">
-          <NotesTab opportunityId={id} initialNotes={opportunity.notes} />
+          <NotesTab opportunityId={id} initialNotes={(opportunity as any).notes ?? null} />
         </TabsContent>
 
         {/* ================================================================ */}
@@ -898,7 +898,7 @@ export default function OpportunityDetailPage() {
           <RecordTasksPanel
             recordType="opportunity"
             recordId={id}
-            recordName={opportunity.name || opportunity.address_line1 || 'Opportunity'}
+            recordName={opportunity.name || (opportunity as any).address_line1 || opportunity.address_street || 'Opportunity'}
             recordUrl={`/opportunities/${id}`}
           />
         </TabsContent>
@@ -1035,7 +1035,7 @@ function NotesTab({
       const supabase = createClient()
       const { error } = await supabase
         .from('opportunities')
-        .update({ notes })
+        .update({ notes } as any)
         .eq('id', opportunityId)
 
       if (error) throw error
