@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { cn, formatCurrency, formatDate } from "@/lib/utils/format"
 import { CompsTable } from "@/components/opportunities/comps-table"
+import { SubAcquisitionsTable } from "@/components/opportunities/sub-acquisitions-table"
 import { useOpportunityContext } from "./layout"
 import { useParams } from "next/navigation"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -159,6 +160,9 @@ export default function OpportunityBasicInfoPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Sub-Acquisitions (multi-property) */}
+      <SubAcquisitionsTable opportunityId={opportunity.id} />
 
       {/* Key Dates */}
       <Card>
