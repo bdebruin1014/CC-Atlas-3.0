@@ -390,7 +390,7 @@ export default function JobDetailPage() {
               <CardContent>
                 {changeOrders.filter(
                   (co) =>
-                    co.status === "submitted" || co.status === "under_review"
+                    co.status === "pending" || co.status === "revised"
                 ).length === 0 ? (
                   <p className="text-sm text-muted-foreground py-4 text-center">
                     No open change orders
@@ -400,8 +400,8 @@ export default function JobDetailPage() {
                     {changeOrders
                       .filter(
                         (co) =>
-                          co.status === "submitted" ||
-                          co.status === "under_review"
+                          co.status === "pending" ||
+                          co.status === "revised"
                       )
                       .map((co) => (
                         <div

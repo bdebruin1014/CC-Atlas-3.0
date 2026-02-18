@@ -162,32 +162,32 @@ export const PO_STATUS_FLOW: Record<POStatus, POStatus | null> = {
   paid: null,
 }
 
-// ---- Change Order Status ----
+// ---- Change Order Status (matches DB approval_status) ----
 export type ChangeOrderStatus =
-  | "submitted"
-  | "under_review"
+  | "pending"
   | "approved"
-  | "denied"
+  | "rejected"
+  | "revised"
 
 export const CO_STATUS_CONFIG: Record<
   ChangeOrderStatus,
   { label: string; bgColor: string }
 > = {
-  submitted: {
-    label: "Submitted",
+  pending: {
+    label: "Pending Approval",
     bgColor: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200",
-  },
-  under_review: {
-    label: "Under Review",
-    bgColor: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
   },
   approved: {
     label: "Approved",
     bgColor: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
   },
-  denied: {
-    label: "Denied",
+  rejected: {
+    label: "Rejected",
     bgColor: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200",
+  },
+  revised: {
+    label: "Revised",
+    bgColor: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
   },
 }
 

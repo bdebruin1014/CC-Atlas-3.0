@@ -50,7 +50,7 @@ export default function ConstructionDashboardPage() {
   )
   const pendingInspections = 7 // Mock count
   const openCOs = MOCK_CHANGE_ORDERS.filter((co) =>
-    ["submitted", "under_review"].includes(co.status)
+    ["pending", "revised"].includes(co.status)
   )
 
   // ---- Filtered jobs ----
