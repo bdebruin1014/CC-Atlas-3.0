@@ -3,7 +3,19 @@
 import React from "react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import { Bell, Search, LogOut, Settings, User } from "lucide-react"
+import {
+  Bell,
+  Search,
+  LogOut,
+  Settings,
+  User,
+  ChevronDown,
+  CheckSquare,
+  Calendar,
+  BarChart3,
+  Shield,
+  Users,
+} from "lucide-react"
 
 import { cn } from "@/lib/utils/format"
 import { useUIStore } from "@/lib/stores/ui-store"
@@ -18,16 +30,22 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 
-const MODULE_TABS = [
+// Primary tabs — always visible in the top bar
+const PRIMARY_TABS = [
   { label: "Opportunities", href: "/opportunities" },
   { label: "Projects", href: "/projects" },
-  { label: "Disposition", href: "/disposition" },
   { label: "Construction", href: "/construction" },
-  { label: "Tasks", href: "/tasks" },
-  { label: "Contacts", href: "/contacts" },
-  { label: "Calendar", href: "/calendar" },
+  { label: "Disposition", href: "/disposition" },
   { label: "Accounting", href: "/accounting" },
-  { label: "Admin", href: "/admin" },
+] as const
+
+// Secondary modules — housed in the "More" dropdown
+const MORE_TABS = [
+  { label: "Tasks", href: "/tasks", icon: CheckSquare },
+  { label: "Calendar", href: "/calendar", icon: Calendar },
+  { label: "Contacts", href: "/contacts", icon: Users },
+  { label: "Reports", href: "/admin/reports", icon: BarChart3 },
+  { label: "Admin", href: "/admin", icon: Shield },
 ] as const
 
 interface TopNavProps {
@@ -76,7 +94,7 @@ export function TopNav({ user }: TopNavProps) {
 
       {/* Center: Module tabs */}
       <nav className="flex flex-1 items-center gap-0.5 overflow-x-auto">
-        {MODULE_TABS.map((tab) => {
+        {PRIMARY_TABS.map((tab) => {
           const isActive =
             pathname === tab.href || pathname.startsWith(`${tab.href}/`)
           return (
@@ -96,6 +114,49 @@ export function TopNav({ user }: TopNavProps) {
             </Link>
           )
         })}
+
+        {/* More dropdown for secondary modules */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button
+              className={cn(
+                "relative flex items-center gap-1 px-3 py-1.5 text-[14px] font-medium text-white/80 transition-colors hover:bg-white/10 rounded",
+                MORE_TABS.some(
+                  (t) =>
+                    pathname === t.href || pathname.startsWith(`${t.href}/`)
+                ) && "text-white"
+              )}
+            >
+              More
+              <ChevronDown className="h-3.5 w-3.5" />
+              {MORE_TABS.some(
+                (t) =>
+                  pathname === t.href || pathname.startsWith(`${t.href}/`)
+              ) && (
+                <span className="absolute bottom-0 left-1 right-1 h-[3px] rounded-t bg-primary" />
+              )}
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" className="w-48">
+            {MORE_TABS.map((tab) => {
+              const Icon = tab.icon
+              const isActive =
+                pathname === tab.href || pathname.startsWith(`${tab.href}/`)
+              return (
+                <DropdownMenuItem key={tab.href} asChild className="cursor-pointer">
+                  <Link
+                    href={tab.href}
+                    prefetch={true}
+                    className={cn(isActive && "font-medium")}
+                  >
+                    <Icon className="mr-2 h-4 w-4" />
+                    {tab.label}
+                  </Link>
+                </DropdownMenuItem>
+              )
+            })}
+          </DropdownMenuContent>
+        </DropdownMenu>
       </nav>
 
       {/* Right: Search, Notifications, User */}
